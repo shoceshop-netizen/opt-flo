@@ -578,19 +578,19 @@ async function loadAll(){
     parseOrders(res[0]);parseItems(res[1]);parseStock(res[2]);
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
     G('updTxt').textContent='Оновлено '+now;
-    G('updDot').className='sync-dot';
+    if(G('updDot'))G('updDot').className='upd-dot';
     setSyncState('ok','Підключено');
     renderAll();
   }catch(err){
-    console.error(err);G('updTxt').textContent='⚠️ Помилка';G('updDot').className='sync-dot err';
+    console.error(err);G('updTxt').textContent='⚠️ Помилка';if(G('updDot'))G('updDot').className='upd-dot err';
     setSyncState('err','Помилка зєднання');
     toast('Помилка завантаження: '+err.message,'er');
   }
 }
 function setSyncState(type,txt){
-  var dot=G('syncDot');var t=G('syncTxt');
-  dot.className='sync-dot'+(type==='err'?' err':type==='pend'?' pend':'');
-  t.textContent=txt;
+  var dot=G('updDot');var t=G('updTxt');
+  if(dot)dot.className='upd-dot'+(type==='err'?' err':type==='pend'?' pend':' ok');
+  if(t)t.textContent=txt;
 }
 
 function parseOrders(rows){
