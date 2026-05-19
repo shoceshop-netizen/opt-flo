@@ -493,8 +493,12 @@ async function fetchSheet(name,range){
 async function callScript(action,data){
   if(!SCRIPT_URL){console.warn('SCRIPT_URL не налаштовано');return{ok:false,msg:'Script URL не налаштовано'};}
   try{
-    var r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:SECRET,action,...data})});
-    return await r.json();
+    // Apps Script CORS: використовуємо GET з параметрами
+    var params=new URLSearchParams({secret:SECRET,action:action});
+    if(data){Object.keys(data).forEach(function(k){params.set(k,String(data[k]||''));});}
+    var r=await fetch(SCRIPT_URL+'?'+params.toString());
+    var text=await r.text();
+    try{return JSON.parse(text);}catch(e){return{ok:false,msg:'Invalid JSON: '+text.substring(0,100)};}
   }catch(e){return{ok:false,msg:e.message};}
 }
 
@@ -1034,6 +1038,25 @@ async function processIncomingScan(){
     if(res&&res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);loadAll();}
   }
   if(isDone)toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);
+}
+
+// ===== SCAN LOG =====
+function addScanLog(art,name,type){
+  var time=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  scanLog.unshift({art:art,name:name,type:type,time:time});
+  if(scanLog.length>50)scanLog.pop();
+  var wrap=G('slogWrap');var body=G('slogBody');
+  if(!wrap||!body)return;
+  wrap.style.display='';
+  body.innerHTML=scanLog.slice(0,12).map(function(l){
+    var cls=l.type==='ok'?'color:var(--g)':l.type==='wa'?'color:var(--o)':'color:var(--r)';
+    return '<div style="padding:7px 14px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;gap:8px;font-size:12px;">'
+      +'<span style="font-family:monospace;font-weight:700;color:var(--gd);min-width:80px;">'+esc(l.art)+'</span>'
+      +'<span style="flex:1">'+esc(l.name)+'</span>'
+      +'<span style="font-size:10px;font-weight:700;'+cls+'">'+( l.type==='ok'?'OK':l.type==='wa'?'Чужий':'Не той')+'</span>'
+      +'<span style="font-size:10px;color:var(--mu);margin-left:auto">'+l.time+'</span>'
+      +'</div>';
+  }).join('');
 }
 
 // ===== STOCK =====
