@@ -313,13 +313,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   </div>
   <div class="sb-nav">
     <div class="nav-sec">Робота</div>
-    <div class="ni on" id="nav-orders" onclick="nav('orders')"><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
-    <div class="ni" id="nav-picker" onclick="nav('picker')"><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
-    <div class="ni" id="nav-scan" onclick="nav('scan')"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
+    <div class="ni on" id="nav-orders" data-nav="orders" onclick="if(window.nav)nav('orders')"><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
+    <div class="ni" id="nav-picker" data-nav="picker" onclick="if(window.nav)nav('picker')"><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
+    <div class="ni" id="nav-scan" data-nav="scan" onclick="if(window.nav)nav('scan')"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
     <div class="nav-sec">Довідники</div>
-    <div class="ni" id="nav-stock" onclick="nav('stock')"><span class="ni-ic">🌿</span>Товари</div>
+    <div class="ni" id="nav-stock" data-nav="stock" onclick="if(window.nav)nav('stock')"><span class="ni-ic">🌿</span>Товари</div>
     <div class="nav-sec">Аналітика</div>
-    <div class="ni" id="nav-dash" onclick="nav('dash')"><span class="ni-ic">📊</span>Звіти</div>
+    <div class="ni" id="nav-dash" data-nav="dash" onclick="if(window.nav)nav('dash')"><span class="ni-ic">📊</span>Звіти</div>
   </div>
   <div class="sb-time" id="sbt"></div>
 </aside>
@@ -878,10 +878,10 @@ function renderScanList(){
     }).join('');
     var readyBtn=complete?'<div style="padding:10px 14px;background:#e8f5e9;display:flex;gap:8px;align-items:center;">'
       +'<span style="font-size:12px;color:var(--gd);font-weight:600;">Всі позиції зібрано!</span>'
-      +'<button class="btn sm pr" onclick="markOrderReady(''+o.num+'',''+esc(o.name)+'')">Позначити Готове</button>'
+      +'<button class="btn sm pr" onclick="markOrderReady(\"'+o.num+'\",\"'+esc(o.name)+'\")">Позначити Готове</button>'
       +'</div>':'';
     return '<div style="background:var(--card);border:1px solid '+(complete?'var(--gm)':'var(--bo)')+';border-radius:var(--rad);margin-bottom:10px;overflow:hidden;">'
-      +'<div style="padding:10px 14px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:'+(complete?'#f1f8e9':'var(--sf)')+'" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none'">'
+      +'<div style="padding:10px 14px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:'+(complete?'#f1f8e9':'var(--sf)')+'" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';">'
         +'<div><span style="font-size:12px;font-weight:700;color:var(--gd);">#'+esc(o.num)+'</span>'
         +'<span style="font-size:13px;font-weight:600;margin-left:8px">'+esc(o.name)+'</span></div>'
         +'<div style="display:flex;align-items:center;gap:8px;">'+pillH(o.status)
