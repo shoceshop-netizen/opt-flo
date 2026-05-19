@@ -313,13 +313,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   </div>
   <div class="sb-nav">
     <div class="nav-sec">Робота</div>
-    <div class="ni on" id="nav-orders" data-nav="orders" onclick="if(window.nav)nav('orders')"><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
-    <div class="ni" id="nav-picker" data-nav="picker" onclick="if(window.nav)nav('picker')"><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
-    <div class="ni" id="nav-scan" data-nav="scan" onclick="if(window.nav)nav('scan')"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
+    <div class="ni on" id="nav-orders" data-nav="orders" ><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
+    <div class="ni" id="nav-picker" data-nav="picker" ><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
+    <div class="ni" id="nav-scan" data-nav="scan" ><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
     <div class="nav-sec">Довідники</div>
-    <div class="ni" id="nav-stock" data-nav="stock" onclick="if(window.nav)nav('stock')"><span class="ni-ic">🌿</span>Товари</div>
+    <div class="ni" id="nav-stock" data-nav="stock" ><span class="ni-ic">🌿</span>Товари</div>
     <div class="nav-sec">Аналітика</div>
-    <div class="ni" id="nav-dash" data-nav="dash" onclick="if(window.nav)nav('dash')"><span class="ni-ic">📊</span>Звіти</div>
+    <div class="ni" id="nav-dash" data-nav="dash" ><span class="ni-ic">📊</span>Звіти</div>
   </div>
   <div class="sb-time" id="sbt"></div>
 </aside>
@@ -465,7 +465,16 @@ var SECRET    = 'florium_secret_2026';
 var SHEET_ID  = '1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // тільки для посилання на таблицю
 
 // ===== AUTH — відключено =====
-function checkAuth(){ init(); }
+function checkAuth(){
+  // Event delegation for nav items
+  document.querySelectorAll('.ni[id^="nav-"]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var id=el.id.replace('nav-','');
+      nav(id);
+    });
+  });
+  init();
+}
 
 // ===== HELPERS =====
 function G(id){return document.getElementById(id);}
@@ -847,6 +856,18 @@ function doPrint(o,its){
 // ===== SCAN - прийом по артикулу =====
 var scanTimer=null;
 
+function makeReadyBtn(num, name) {
+  var btn = document.createElement('div');
+  btn.style.cssText = 'padding:10px 14px;background:#e8f5e9;border-top:1px solid #a5d6a7;display:flex;gap:8px;align-items:center;';
+  btn.innerHTML = '<span style="font-size:12px;color:var(--gd);font-weight:600;">&#127881; Всі позиції зібрано!</span>';
+  var b = document.createElement('button');
+  b.className = 'btn sm pr';
+  b.textContent = 'Позначити Готове';
+  b.addEventListener('click', function(){ markOrderReady(num, name); });
+  btn.appendChild(b);
+  return btn;
+}
+
 function renderScanList(){
   var list=orders.filter(function(o){
     var k=sk(o.status);
@@ -854,46 +875,65 @@ function renderScanList(){
     return (items[o.num]||[]).length>0;
   });
   G('scCnt').textContent=list.length;
+  var container=G('scOrdersList');
   if(!list.length){
-    G('scOrdersList').innerHTML='<div class="es"><div class="es-ic">📦</div><div class="es-t">Немає замовлень з вигрузкою</div></div>';
+    container.innerHTML='<div class="es"><div class="es-ic">&#128230;</div><div class="es-t">Немає замовлень з вигрузкою</div></div>';
     return;
   }
-  G('scOrdersList').innerHTML=list.map(function(o){
+  container.innerHTML='';
+  list.forEach(function(o){
     var its=items[o.num]||[];
     var ss=scanState[o.num]||{};
     var done=its.filter(function(it){return(ss[it.art]||0)>=it.qty;}).length;
     var pct=its.length?Math.round(done/its.length*100):0;
     var complete=pct===100;
-    var itemsHtml=its.map(function(it){
+
+    // Create block
+    var block=document.createElement('div');
+    block.className='scan-order-block'+(complete?' complete':'');
+    block.style.marginBottom='8px';
+
+    // Header
+    var head=document.createElement('div');
+    head.className='sob-head';
+    var pctColor=complete?'var(--g)':'var(--mu)';
+    head.innerHTML='<div><span class="sob-num">#'+esc(o.num)+'</span><span class="sob-name">'+esc(o.name)+'</span></div>'
+      +'<div class="sob-right">'+pillH(o.status)
+      +'<span style="font-size:11px;font-weight:700;color:'+pctColor+'">'+done+'/'+its.length+'</span>'
+      +'<div class="pb-w"><div class="pb-f" style="width:'+pct+'%"></div></div>'
+      +(complete?'<span style="color:var(--g)">&#10003;</span>':'<span style="color:var(--mu);font-size:10px">&#9660;</span>')
+      +'</div>';
+
+    var body=document.createElement('div');
+    body.className='sob-body';
+    body.style.display='none';
+
+    // Items rows
+    its.forEach(function(it){
       var sc=ss[it.art]||0;var ok=sc>=it.qty;var part=sc>0&&!ok;
       var st=stock.find(function(s){return s.art===it.art;});
-      var loc=st?st.location:'---';
-      return '<tr style="'+(ok?'background:#f1f8e9':part?'background:#fffde7':'')+'">'
-        +'<td class="art">'+esc(it.art)+'</td>'
-        +'<td>'+esc(it.name)+'</td>'
-        +'<td style="font-size:10px;color:var(--mu)">'+esc(loc)+'</td>'
-        +'<td style="text-align:center;font-weight:700">'+it.qty+'</td>'
-        +'<td style="text-align:center;color:'+(ok?'var(--g)':part?'var(--o)':'var(--mu)')+';">'+(ok?'&#10003;':part?sc+'/'+it.qty:'---')+'</td>'
-        +'</tr>';
-    }).join('');
-    var readyBtn=complete?'<div style="padding:10px 14px;background:#e8f5e9;display:flex;gap:8px;align-items:center;">'
-      +'<span style="font-size:12px;color:var(--gd);font-weight:600;">Всі позиції зібрано!</span>'
-      +'<button class="btn sm pr" onclick="markOrderReady(\"'+o.num+'\",\"'+esc(o.name)+'\")">Позначити Готове</button>'
-      +'</div>':'';
-    return '<div style="background:var(--card);border:1px solid '+(complete?'var(--gm)':'var(--bo)')+';border-radius:var(--rad);margin-bottom:10px;overflow:hidden;">'
-      +'<div style="padding:10px 14px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:'+(complete?'#f1f8e9':'var(--sf)')+'" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';">'
-        +'<div><span style="font-size:12px;font-weight:700;color:var(--gd);">#'+esc(o.num)+'</span>'
-        +'<span style="font-size:13px;font-weight:600;margin-left:8px">'+esc(o.name)+'</span></div>'
-        +'<div style="display:flex;align-items:center;gap:8px;">'+pillH(o.status)
-        +'<span style="font-size:11px;font-weight:700;color:'+(complete?'var(--g)':'var(--mu)')+'">'+done+'/'+its.length+'</span>'
-        +'<div class="pb-wrap" style="width:60px;"><div class="pb-fill pb-g" style="width:'+pct+'%"></div></div></div>'
-      +'</div>'
-      +'<div style="display:none">'
-        +'<table class="dt" style="margin:0"><thead><tr><th>Арт</th><th>Назва</th><th>Місце</th><th style="text-align:center">Потр.</th><th style="text-align:center">Зібр.</th></tr></thead>'
-        +'<tbody>'+itemsHtml+'</tbody></table>'
-        +readyBtn
-      +'</div></div>';
-  }).join('');
+      var loc=st?st.location:'--';
+      var row=document.createElement('div');
+      row.className='sob-row'+(ok?' ok':part?' part':'');
+      row.innerHTML='<span class="sob-art">'+esc(it.art)+'</span>'
+        +'<span style="flex:1">'+esc(it.name)+'</span>'
+        +'<span class="sob-loc">'+esc(loc)+'</span>'
+        +'<span style="font-size:11px;color:var(--mu)">'+it.qty+' шт</span>'
+        +'<span class="sob-st" style="color:'+(ok?'var(--g)':part?'var(--o)':'var(--mu)')+';">'
+        +(ok?'&#10003;':part?sc+'/'+it.qty:'--')+'</span>';
+      body.appendChild(row);
+    });
+
+    if(complete){body.appendChild(makeReadyBtn(o.num,o.name));}
+
+    head.addEventListener('click',function(){
+      body.style.display=body.style.display==='none'?'block':'none';
+    });
+
+    block.appendChild(head);
+    block.appendChild(body);
+    container.appendChild(block);
+  });
 }
 
 async function markOrderReady(num,name){
