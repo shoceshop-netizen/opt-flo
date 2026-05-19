@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Склад — адмін панель</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a38;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Unbounded', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-text {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .nav { padding: 12px 8px; flex: 1; }
+
+  .nav-section {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 8px 4px;
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all .15s;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+  .nav-item.active {
+    background: rgba(59,130,246,.12);
+    color: var(--accent);
+    border-color: rgba(59,130,246,.2);
+  }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .badge {
+    margin-left: auto;
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .badge.green { background: var(--green); }
+  .badge.yellow { background: var(--yellow); color: #000; }
+
+  /* MAIN */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .page-title {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .btn.primary:hover { background: #2563eb; }
+
+  .content { padding: 24px; flex: 1; }
+
+  /* STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.blue::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.yellow::before { background: var(--yellow); }
+  .stat-card.red::before { background: var(--red); }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub { font-size: 10px; color: var(--muted); }
+
+  /* PANELS */
+  .panels { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-title {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .panel-count {
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .panel-actions { margin-left: auto; display: flex; gap: 6px; }
+
+  /* SEARCH */
+  .search-bar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px 6px 28px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color .15s;
+    position: relative;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+
+  .search-wrap { position: relative; flex: 1; }
+  .search-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .filter-btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(59,130,246,.1);
+  }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .1s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr.selected { background: rgba(59,130,246,.08); border-color: rgba(59,130,246,.2); }
+
+  td {
+    padding: 9px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .art-code {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .palette-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(59,130,246,.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59,130,246,.25);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .status-badge.green { background: rgba(34,197,94,.12); color: #86efac; border: 1px solid rgba(34,197,94,.2); }
+  .status-badge.yellow { background: rgba(245,158,11,.12); color: #fcd34d; border: 1px solid rgba(245,158,11,.2); }
+  .status-badge.red { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.2); }
+
+  .qty-ok { color: var(--green); font-weight: 600; }
+  .qty-warn { color: var(--yellow); font-weight: 600; }
+  .qty-bad { color: var(--red); font-weight: 600; }
+
+  /* ORDERS PANEL */
+  .order-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .1s;
+  }
+
+  .order-item:hover { background: var(--surface2); }
+  .order-item.active { background: rgba(59,130,246,.08); border-left: 2px solid var(--accent); }
+
+  .order-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .order-num { font-weight: 600; color: var(--text); font-size: 12px; }
+  .order-date { font-size: 10px; color: var(--muted); }
+  .order-client { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+
+  .order-progress {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .order-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .3s;
+  }
+
+  .order-meta { display: flex; gap: 8px; align-items: center; }
+
+  .order-stage {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  .order-items-count { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .detail-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .detail-order-num {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+
+  .detail-client { font-size: 11px; color: var(--muted); }
+
+  .stage-track {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+  }
+
+  .stage-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+
+  .stage-step::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+  }
+
+  .stage-step:last-child::after { display: none; }
+
+  .stage-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    margin: 0 auto 4px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    transition: all .2s;
+  }
+
+  .stage-step.done .stage-dot {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .stage-step.active .stage-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(59,130,246,.2);
+  }
+
+  .stage-step.done::after { background: var(--green); }
+
+  .stage-label { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .stage-step.active .stage-label { color: var(--accent); }
+  .stage-step.done .stage-label { color: var(--green); }
+
+  .detail-items { padding: 8px; max-height: 280px; overflow-y: auto; }
+
+  .detail-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all .15s;
+  }
+
+  .detail-item.found { border-color: rgba(34,197,94,.2); background: rgba(34,197,94,.04); }
+  .detail-item.missing { border-color: rgba(239,68,68,.2); background: rgba(239,68,68,.04); }
+
+  .detail-item-art { font-size: 10px; color: var(--muted); }
+  .detail-item-name { font-size: 11px; font-weight: 500; flex: 1; }
+  .detail-item-palette { font-size: 10px; color: #93c5fd; }
+  .detail-item-qty { font-size: 12px; font-weight: 600; }
+
+  .detail-actions { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+  /* PRINT PREVIEW */
+  .print-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .print-modal.open { display: flex; }
+
+  .print-box {
+    background: #fff;
+    color: #000;
+    border-radius: 8px;
+    width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .print-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .print-sub { font-size: 11px; color: #666; margin-bottom: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+  .print-row { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 12px; }
+  .print-row-num { width: 20px; color: #999; }
+  .print-row-art { width: 80px; font-weight: 700; }
+  .print-row-palette { width: 60px; color: #1d4ed8; font-weight: 700; }
+  .print-row-name { flex: 1; }
+  .print-row-qty { width: 40px; font-weight: 700; text-align: right; }
+  .print-footer { margin-top: 16px; font-size: 10px; color: #999; }
+  .print-close-btn { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.red { background: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-text">СКЛАД</div>
+    <div class="logo-sub">Адмін панель v0.1</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Головне</div>
+    <div class="nav-item active" onclick="showPage('orders')">
+      <span class="nav-icon">📦</span> Замовлення
+      <span class="badge">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('warehouse')">
+      <span class="nav-icon">🏭</span> Склад
+    </div>
+    <div class="nav-item" onclick="showPage('packing')">
+      <span class="nav-icon">📋</span> Фасування
+      <span class="badge yellow">2</span>
+    </div>
+
+    <div class="nav-section">Довідники</div>
+    <div class="nav-item" onclick="showPage('products')">
+      <span class="nav-icon">🌱</span> Товари
+    </div>
+    <div class="nav-item" onclick="showPage('palettes')">
+      <span class="nav-icon">📍</span> Палети
+    </div>
+
+    <div class="nav-section">Звіти</div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="nav-icon">📊</span> Аналітика
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="page-title" id="pageTitle">Замовлення</span>
+    <div class="topbar-actions">
+      <button class="btn" onclick="document.getElementById('fileInput').click()">
+        ⬆ Завантажити вигрузку
+      </button>
+      <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none">
+      <button class="btn primary" onclick="openPrint()">🖨 Роздруківка</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Нових замовлень</div>
+        <div class="stat-value" style="color:#3b82f6">3</div>
+        <div class="stat-sub">очікують обробки</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">В роботі</div>
+        <div class="stat-value" style="color:#f59e0b">5</div>
+        <div class="stat-sub">фасування / збірка</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Готово до відправки</div>
+        <div class="stat-value" style="color:#22c55e">2</div>
+        <div class="stat-sub">чекають відправки</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Проблемних</div>
+        <div class="stat-value" style="color:#ef4444">1</div>
+        <div class="stat-sub">немає залишку</div>
+      </div>
+    </div>
+
+    <!-- MAIN PANELS -->
+    <div class="panels">
+
+      <!-- ORDERS LIST -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Активні замовлення</div>
+          <span class="panel-count">10 замовлень</span>
+          <div class="panel-actions">
+            <button class="btn" style="font-size:10px; padding:4px 10px">Фільтр</button>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" placeholder="Пошук по номеру або клієнту..." oninput="filterOrders(this.value)">
+          </div>
+          <button class="filter-btn active" onclick="toggleFilter(this,'нове')">Нові</button>
+          <button class="filter-btn" onclick="toggleFilter(this,'всі')">Всі</button>
+        </div>
+
+        <div id="ordersList">
+          <!-- Заповнюється JS -->
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: ORDER DETAIL -->
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+          <div class="detail-order-num" id="detailNum"># Оберіть замовлення</div>
+          <div class="detail-client" id="detailClient">—</div>
+        </div>
+
+        <!-- STAGE TRACKER -->
+        <div class="stage-track">
+          <div class="stage-step done" id="stage0">
+            <div class="stage-dot">✓</div>
+            <div class="stage-label">Нове</div>
+          </div>
+          <div class="stage-step done" id="stage1">
+            <div class="stage-dot">✓</div>
+            <div class="stage-label">В роботі</div>
+          </div>
+          <div class="stage-step active" id="stage2">
+            <div class="stage-dot">●</div>
+            <div class="stage-label">Фасування</div>
+          </div>
+          <div class="stage-step" id="stage3">
+            <div class="stage-dot"></div>
+            <div class="stage-label">Готове</div>
+          </div>
+          <div class="stage-step" id="stage4">
+            <div class="stage-dot"></div>
+            <div class="stage-label">Відправлено</div>
+          </div>
+        </div>
+
+        <!-- ITEMS -->
+        <div class="detail-items" id="detailItems">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">
+            Оберіть замовлення зі списку
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn primary" style="flex:1" onclick="openPrint()">🖨 Роздруківка</button>
+          <button class="btn" onclick="nextStage()" style="flex:1">▶ Наступний етап</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- PRINT MODAL -->
+<div class="print-modal" id="printModal">
+  <div class="print-box">
+    <div class="print-close-btn">
+      <button onclick="closePrint()" style="background:#f3f4f6;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px">✕ Закрити</button>
+    </div>
+    <div class="print-title" id="printTitle">РОЗДРУКІВКА ДЛЯ ВАНТАЖНИКА</div>
+    <div class="print-sub" id="printSub">Замовлення #700003100 · Новий клієнт · 18.05.2026</div>
+    <div id="printRows"></div>
+    <div class="print-footer">Роздруковано: <span id="printDate"></span></div>
+  </div>
+</div>
+
+<script>
+const orders = [
+  {
+    id: '700003100', client: 'Новий клієнт', date: '18.05.2026',
+    stage: 2, progress: 40,
+    items: [
+      { art: '22210041', name: 'Бегонія Double Yellow', size: '5/6', palette: 38, qty: 3, inStock: 26, found: true },
+      { art: '13310151', name: 'Жоржина Edinburgh', size: 'I', palette: 12, qty: 5, inStock: 8, found: true },
+      { art: '17010131', name: 'Гладіолус Priscilla', size: '10/12', palette: 7, qty: 10, inStock: 3, found: false },
+    ]
+  },
+  {
+    id: '700003098', client: 'Гончарук Анатолій', date: '17.05.2026',
+    stage: 1, progress: 20,
+    items: [
+      { art: '16210041', name: 'Амарилліс American Dream', size: '28/30', palette: 15, qty: 2, inStock: 10, found: true },
+      { art: '23310009', name: 'Жоржина Café au Lait', size: 'I', palette: 9, qty: 4, inStock: 12, found: true },
+    ]
+  },
+  {
+    id: '700003095', client: 'Нагірняк Крістіна', date: '17.05.2026',
+    stage: 3, progress: 75,
+    items: [
+      { art: '13310258', name: 'Жоржина Bora Bora', size: 'I', palette: 22, qty: 7, inStock: 15, found: true },
+      { art: '27010032', name: 'Гладіолус Priscilla (дрібний)', size: '10/12', palette: 7, qty: 20, inStock: 50, found: true },
+    ]
+  },
+  {
+    id: '700003090', client: 'Буйвал', date: '16.05.2026',
+    stage: 4, progress: 100,
+    items: [
+      { art: '13310125', name: 'Жоржина Bilbao', size: 'I', palette: 18, qty: 6, inStock: 20, found: true },
+    ]
+  },
+  {
+    id: '700003088', client: 'Якименко Олена', date: '16.05.2026',
+    stage: 0, progress: 0,
+    items: [
+      { art: '22210036', name: 'Бегонія Double Pink', size: '5/6', palette: 38, qty: 5, inStock: 0, found: false },
+    ]
+  },
+];
+
+const stageNames = ['Нове', 'В роботі', 'Фасування', 'Готове', 'Відправлено'];
+const stageColors = ['#64748b', '#f59e0b', '#3b82f6', '#8b5cf6', '#22c55e'];
+
+let selectedOrder = null;
+
+function renderOrders(list) {
+  const el = document.getElementById('ordersList');
+  el.innerHTML = list.map(o => {
+    const hasProb = o.items.some(i => !i.found);
+    const color = stageColors[o.stage];
+    return `
+      <div class="order-item ${selectedOrder === o.id ? 'active' : ''}" onclick="selectOrder('${o.id}')">
+        <div class="order-top">
+          <span class="order-num">#${o.id}</span>
+          <span class="order-date">${o.date}</span>
+        </div>
+        <div class="order-client">${o.client}</div>
+        <div class="order-progress">
+          <div class="order-progress-fill" style="width:${o.progress}%;background:${color}"></div>
+        </div>
+        <div class="order-meta">
+          <span class="dot" style="background:${color}"></span>
+          <span class="order-stage" style="color:${color}">${stageNames[o.stage]}</span>
+          ${hasProb ? '<span style="font-size:9px;color:#ef4444;margin-left:4px">⚠ немає товару</span>' : ''}
+          <span class="order-items-count">${o.items.length} поз.</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectOrder(id) {
+  selectedOrder = id;
+  const o = orders.find(x => x.id === id);
+  renderOrders(orders);
+
+  document.getElementById('detailNum').textContent = '#' + o.id;
+  document.getElementById('detailClient').textContent = o.client + ' · ' + o.date;
+
+  // Stages
+  for (let i = 0; i <= 4; i++) {
+    const el = document.getElementById('stage' + i);
+    el.className = 'stage-step';
+    if (i < o.stage) { el.className += ' done'; el.querySelector('.stage-dot').textContent = '✓'; }
+    else if (i === o.stage) { el.className += ' active'; el.querySelector('.stage-dot').textContent = '●'; }
+    else { el.querySelector('.stage-dot').textContent = ''; }
+  }
+
+  // Items
+  document.getElementById('detailItems').innerHTML = o.items.map(item => `
+    <div class="detail-item ${item.found ? 'found' : 'missing'}">
+      <div>
+        <div class="detail-item-art">${item.art}</div>
+        <div class="detail-item-name">${item.name} <span style="color:var(--muted);font-size:10px">${item.size}</span></div>
+        ${item.found
+          ? `<div class="detail-item-palette">📍 Палета ${item.palette}</div>`
+          : `<div style="font-size:10px;color:#ef4444">⚠ Товару немає на складі</div>`}
+      </div>
+      <div style="text-align:right;margin-left:auto">
+        <div class="detail-item-qty ${item.inStock >= item.qty ? 'qty-ok' : item.inStock > 0 ? 'qty-warn' : 'qty-bad'}">
+          ${item.qty} шт
+        </div>
+        <div style="font-size:9px;color:var(--muted)">залишок: ${item.inStock}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function nextStage() {
+  if (!selectedOrder) return;
+  const o = orders.find(x => x.id === selectedOrder);
+  if (o.stage < 4) {
+    o.stage++;
+    o.progress = [0, 20, 40, 75, 100][o.stage];
+    selectOrder(selectedOrder);
+  }
+}
+
+function filterOrders(q) {
+  const filtered = orders.filter(o =>
+    o.id.includes(q) || o.client.toLowerCase().includes(q.toLowerCase())
+  );
+  renderOrders(filtered);
+}
+
+function toggleFilter(btn, type) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openPrint() {
+  const o = selectedOrder ? orders.find(x => x.id === selectedOrder) : orders[0];
+  document.getElementById('printTitle').textContent = 'РОЗДРУКІВКА ДЛЯ ВАНТАЖНИКА';
+  document.getElementById('printSub').textContent = `Замовлення #${o.id} · ${o.client} · ${o.date}`;
+  document.getElementById('printDate').textContent = new Date().toLocaleString('uk-UA');
+  document.getElementById('printRows').innerHTML = o.items.map((item, i) => `
+    <div class="print-row">
+      <div class="print-row-num">${i+1}.</div>
+      <div class="print-row-art">${item.art}</div>
+      <div class="print-row-palette">П-${item.palette}</div>
+      <div class="print-row-name">${item.name} (${item.size})</div>
+      <div class="print-row-qty">${item.qty}шт</div>
+    </div>
+  `).join('');
+  document.getElementById('printModal').classList.add('open');
+}
+
+function closePrint() {
+  document.getElementById('printModal').classList.remove('open');
+}
+
+function showPage(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = {
+    orders: 'Замовлення', warehouse: 'Склад', packing: 'Фасування',
+    products: 'Товари', palettes: 'Палети', reports: 'Аналітика'
+  };
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+}
+
+// Init
+renderOrders(orders);
+selectOrder('700003100');
+</script>
+</body>
+</html>
