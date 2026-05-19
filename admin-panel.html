@@ -559,7 +559,7 @@ function init(){
 }
 function initKb(){
   document.addEventListener('keydown',e=>{
-    if(G('lo').style.display!=='none')return;
+    if(G('lo')&&G('lo').style.display!=='none')return;
     if(e.target.tagName==='INPUT')return;
     if(e.key==='1')nav('dash');else if(e.key==='2')nav('orders');else if(e.key==='3')nav('picker');else if(e.key==='4')nav('scan');else if(e.key==='5')nav('stock');
     if(e.key==='F5'){e.preventDefault();loadAll();}
