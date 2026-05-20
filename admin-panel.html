@@ -28,12 +28,20 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 ::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
 
 /* PRINT */
+@page{size:A4 landscape;margin:8mm 10mm;}
 @media print{
-  body>*{display:none!important;}#pz{display:block!important;font-family:Arial,sans-serif;font-size:11px;padding:16px;}
-  .ph{border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;text-align:center;}
-  .ph h2{font-size:16px;font-weight:700;}.ph-m{font-size:10px;color:#555;margin-top:3px;}
-  .pt{width:100%;border-collapse:collapse;}.pt th,.pt td{border:1px solid #000;padding:5px 8px;font-size:11px;}
-  .pt th{background:#f0f0f0;font-weight:700;}.pf{margin-top:10px;font-size:10px;color:#555;text-align:center;}
+  body>*{display:none!important;}
+  #pz{display:block!important;font-family:Arial,Helvetica,sans-serif;color:#000;}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px;}
+  .ph-l{font-size:18px;font-weight:800;}
+  .ph-r{font-size:13px;font-weight:600;}
+  .pt{width:100%;border-collapse:collapse;table-layout:auto;}
+  .pt th,.pt td{border:1px solid #000;padding:6px 8px;font-size:13px;line-height:1.25;}
+  .pt th{background:#e8e8e8;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.3px;}
+  .pt td.c{text-align:center;font-weight:700;}
+  .pt td.m{font-family:'Courier New',monospace;font-weight:700;}
+  .pt tbody tr:nth-child(even){background:#f7f7f7;}
+  .pt .chk{display:inline-block;width:16px;height:16px;border:1.5px solid #000;}
 }
 #pz{display:none;}
 
@@ -912,39 +920,51 @@ function selectPicker(id){
   var tq=its.reduce((s,i)=>s+i.qty,0);
   G('pdB').innerHTML=(function(){
     var rows=its.map(function(it,i){
-      var st=stock.find(function(s){return s.art===it.art;});
-      var loc=st?st.location:'—';
       var fu=fury[it.art]||fury['b_'+it.art]||null;
       var artF=fu?fu.artFlorium:'—';
-      var packQ=fu?fu.packQty:(st&&st.packQty?st.packQty:'—');
+      var st=stock.find(function(s){return s.art===it.art;});
+      // якщо не знайшли по нашому артикулу — пробуємо знайти по Флоріум-артикулу
+      if(!st&&fu&&fu.artFlorium)st=stock.find(function(s){return s.art===fu.artFlorium;});
+      if(!st&&fu&&fu.artBox)st=stock.find(function(s){return s.art===fu.artBox;});
+      var loc=st&&st.location?st.location:'—';
+      var packQ=fu?fu.packQty:(st&&st.packQty?st.packQty:'');
+      var packNum=parseInt(packQ)||0;
+      var totalPcs=packNum>0?(it.qty*packNum):0;
       var ss=scanState[o.num]||{};
       var done=(ss[it.art]||0)>=it.qty;
       return '<tr style="'+(done?'background:#f1f8e9':'')+' font-size:14px">'
         +'<td style="color:var(--mu);text-align:center;width:30px">'+(i+1)+'</td>'
         +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
-        +'<td style="font-family:monospace;font-size:12px;color:#7b1fa2;font-weight:600">'+esc(artF)+'</td>'
         +'<td style="font-size:14px;font-weight:500">'+esc(it.name)+'</td>'
         +'<td style="text-align:center;font-weight:700;font-size:15px">'+it.qty+'</td>'
-        +'<td style="text-align:center;font-size:13px;color:var(--b);font-weight:600">'+esc(packQ)+'</td>'
+        +'<td style="text-align:center;font-size:13px;color:var(--b);font-weight:600">'+(packQ||'—')+'</td>'
+        +'<td style="text-align:center;font-weight:700;font-size:15px;color:var(--gd)">'+(totalPcs||'—')+'</td>'
+        +'<td style="font-family:monospace;font-size:12px;color:#7b1fa2;font-weight:600">'+esc(artF)+'</td>'
         +'<td style="font-size:12px;color:var(--mu)"><span style="background:var(--bo2);padding:2px 6px;border-radius:4px;white-space:nowrap">'+esc(loc)+'</span></td>'
         +'<td style="text-align:center"><div class="pk-chk" onclick="pkChkToggle(this)""></div></td>'
         +'</tr>';
     }).join('');
+    var grandTotal=its.reduce(function(s,it){
+      var fu=fury[it.art]||fury['b_'+it.art]||null;
+      var pq=fu?parseInt(fu.packQty)||0:0;
+      return s+(pq>0?it.qty*pq:0);
+    },0);
     return '<div style="overflow:auto;flex:1">'
       +'<table class="dt" style="font-size:14px">'
       +'<thead><tr style="font-size:11px">'
       +'<th style="text-align:center;width:30px">#</th>'
       +'<th>Артикул</th>'
-      +'<th style="color:#7b1fa2">Арт.Флоріум</th>'
       +'<th>Назва</th>'
       +'<th style="text-align:center">К-сть</th>'
       +'<th style="text-align:center;color:var(--b)">В уп.</th>'
+      +'<th style="text-align:center;color:var(--gd)">Всього шт</th>'
+      +'<th style="color:#7b1fa2">Арт.Флоріум</th>'
       +'<th>Розміщення</th>'
       +'<th style="text-align:center">&#10003;</th>'
       +'</tr></thead>'
       +'<tbody>'+rows+'</tbody>'
       +'</table></div>'
-      +'<div style="padding:8px 4px"><div class="tbl-total">Всього: '+its.length+' поз · '+tq+' шт</div></div>';
+      +'<div style="padding:8px 4px"><div class="tbl-total">Всього: '+its.length+' поз · '+tq+' уп · '+(grandTotal||'?')+' шт</div></div>';
   })();
   G('printBtn').onclick=function(){doPrint(o,its);};
   if(G('pkNext')){
@@ -956,8 +976,50 @@ function selectPicker(id){
   }
 }
 function doPrint(o,its){
-  var now=new Date().toLocaleString('uk-UA');var tq=its.reduce((s,i)=>s+i.qty,0);
-  G('pz').innerHTML=`<div class="ph"><h2>Florium — Список вантажника</h2><div class="ph-m">Замовлення: <strong>#${esc(o.num)}</strong> &nbsp;|&nbsp; Клієнт: <strong>${esc(o.name)}</strong> &nbsp;|&nbsp; ${now}</div><div class="ph-m">Позицій: ${its.length} &nbsp;|&nbsp; Штук: ${tq}</div></div><table class="pt"><thead><tr><th>#</th><th>Артикул</th><th>Назва</th><th>К-сть</th><th>Розміщення</th><th>✓ Взяв</th></tr></thead><tbody>${its.map((it,i)=>{var st=stock.find(s=>s.art===it.art);return`<tr><td>${i+1}</td><td style="font-family:monospace">${esc(it.art)}</td><td>${esc(it.name)}</td><td style="text-align:center;font-weight:700">${it.qty}</td><td>${esc(st?st.location:'—')}</td><td style="text-align:center">☐</td></tr>`;}).join('')}</tbody></table><div class="pf">Після друку — змінити статус #${esc(o.num)} на «Фасується» в Google Sheets або через панель</div>`;
+  var tq=its.reduce(function(s,i){return s+i.qty;},0);
+  var grandTotal=0;
+  var rowsHtml=its.map(function(it,i){
+    var fu=fury[it.art]||fury['b_'+it.art]||null;
+    var artF=fu?fu.artFlorium:'—';
+    var st=stock.find(function(s){return s.art===it.art;});
+    if(!st&&fu&&fu.artFlorium)st=stock.find(function(s){return s.art===fu.artFlorium;});
+    if(!st&&fu&&fu.artBox)st=stock.find(function(s){return s.art===fu.artBox;});
+    var loc=st&&st.location?st.location:'—';
+    var packQ=fu?fu.packQty:(st&&st.packQty?st.packQty:'');
+    var packNum=parseInt(packQ)||0;
+    var totalPcs=packNum>0?(it.qty*packNum):0;
+    grandTotal+=totalPcs;
+    return '<tr>'
+      +'<td class="c">'+(i+1)+'</td>'
+      +'<td class="m">'+esc(it.art)+'</td>'
+      +'<td>'+esc(it.name)+'</td>'
+      +'<td class="c">'+it.qty+'</td>'
+      +'<td class="c">'+(packQ||'—')+'</td>'
+      +'<td class="c">'+(totalPcs||'—')+'</td>'
+      +'<td class="m">'+esc(artF)+'</td>'
+      +'<td class="c">'+esc(loc)+'</td>'
+      +'<td class="c"><span class="chk"></span></td>'
+      +'</tr>';
+  }).join('');
+  G('pz').innerHTML=''
+    +'<div class="ph">'
+      +'<div class="ph-l">#'+esc(o.num)+' &nbsp; '+esc(o.name)+'</div>'
+      +'<div class="ph-r">'+its.length+' поз · '+tq+' уп · '+(grandTotal||'?')+' шт</div>'
+    +'</div>'
+    +'<table class="pt">'
+      +'<thead><tr>'
+        +'<th style="width:32px">#</th>'
+        +'<th>Артикул</th>'
+        +'<th>Назва</th>'
+        +'<th style="width:60px">К-сть</th>'
+        +'<th style="width:60px">В уп.</th>'
+        +'<th style="width:80px">Всього шт</th>'
+        +'<th>Арт.Флоріум</th>'
+        +'<th>Розміщення</th>'
+        +'<th style="width:40px">✓</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rowsHtml+'</tbody>'
+    +'</table>';
   window.print();
   setTimeout(async()=>{
     toast('Надруковано! Змінюємо статус на «Фасується»...','in',3000);
