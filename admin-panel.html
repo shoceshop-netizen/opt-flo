@@ -1253,32 +1253,135 @@ function applyCategoryFilter(){
 }
 
 async function printCombinedList(){
-  // зберігаємо локальну копію всіх потрібних даних, бо loadAll може очистити стан
+  // зберігаємо локальну копію
   var itemsCopy=combinedItems.slice();
   var ordersCopy=combinedOrders.slice();
-  // 1) запитуємо у Apps Script наступний номер списку та зберігаємо
+  
+  // 1) перевіряємо дублікати замовлень у "списки"
+  var duplicates=[];
+  if(SCRIPT_URL){
+    toast('Перевірка дублікатів...','in',1500);
+    try {
+      var dupRes=await callScript('checkListDupes',{
+        orderNums:JSON.stringify(ordersCopy.map(function(o){return o.num;}))
+      });
+      if(dupRes&&dupRes.ok&&dupRes.duplicates)duplicates=dupRes.duplicates;
+    } catch(e){}
+  }
+  
+  // 2) Якщо є дублікати — показуємо попередження
+  if(duplicates.length>0){
+    showDuplicateWarning(duplicates,itemsCopy,ordersCopy);
+    return; // продовжуємо тільки якщо користувач підтвердить
+  }
+  
+  // 3) Немає дублікатів — друкуємо нормально
+  doPrintAndSave(itemsCopy,ordersCopy,[]);
+}
+
+// Показ попередження про дублікати
+function showDuplicateWarning(duplicates,itemsCopy,ordersCopy){
+  var dupList=duplicates.map(function(n){return '#'+esc(n);}).join(', ');
+  var html=''
+    +'<div class="modal-box" style="width:480px">'
+      +'<div class="modal-t" style="color:#a04000">⚠️ Замовлення вже друкувались</div>'
+      +'<div style="font-size:14px;color:var(--tx2);margin-bottom:12px;line-height:1.5">'
+        +'Ці замовлення вже є в аркуші <strong>"списки"</strong>:<br>'
+        +'<div style="margin-top:8px;padding:8px 10px;background:#fff8e1;border-radius:6px;font-family:monospace;font-size:13px;color:#856404">'+dupList+'</div>'
+      +'</div>'
+      +'<div style="font-size:13px;color:var(--mu);margin-bottom:16px;line-height:1.5">'
+        +'Якщо продовжите — список <strong>надрукується повністю</strong>, але <strong>позиції цих замовлень не запишуться повторно</strong> в аркуш (щоб не дублювати).'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+        +'<button class="btn" style="flex:1" onclick="closeDuplicateWarning()">Скасувати</button>'
+        +'<button class="btn pr" style="flex:1" onclick="confirmDuplicatePrint()">Продовжити друк</button>'
+      +'</div>'
+    +'</div>';
+  var d=document.createElement('div');
+  d.className='modal-ov';
+  d.id='dupWarnModal';
+  d.style.zIndex='6000';
+  d.innerHTML=html;
+  document.body.appendChild(d);
+  // зберігаємо стан для confirm
+  window._pendingPrint={itemsCopy:itemsCopy,ordersCopy:ordersCopy,duplicates:duplicates};
+}
+
+function closeDuplicateWarning(){
+  var d=G('dupWarnModal');
+  if(d)d.remove();
+  window._pendingPrint=null;
+}
+
+function confirmDuplicatePrint(){
+  var p=window._pendingPrint;
+  closeDuplicateWarning();
+  if(!p)return;
+  doPrintAndSave(p.itemsCopy,p.ordersCopy,p.duplicates);
+}
+
+// Спільна функція друку + збереження
+async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders){
   var listNum=null;
   if(SCRIPT_URL){
     toast('Зберігаємо список...','in',2000);
-    var tq=itemsCopy.reduce(function(s,i){return s+i.qty;},0);
+    // готуємо позиції для запису (з усією інфо + orderNum + orderName кожна)
+    var itemsForSave=[];
+    ordersCopy.forEach(function(o){
+      var its=items[o.num]||[];
+      its.forEach(function(it){
+        var fu=fury[it.art]||fury['b_'+it.art]||fury['f_'+it.art]||null;
+        var st=findStockForItem(it.art);
+        var artFlorium=fu?fu.artFlorium:'';
+        var packQty=fu?fu.packQty:'';
+        var location=st&&st.location?st.location:'';
+        // якщо користувач відредагував у модалці — взяти його значення
+        var edited=itemsCopy.find(function(ci){return ci.art===it.art;});
+        if(edited){
+          if(edited.artFlorium)artFlorium=edited.artFlorium;
+          if(edited.packQty)packQty=edited.packQty;
+          if(edited.location)location=edited.location;
+        }
+        var packNum=parseInt(packQty)||0;
+        var totalPcs=packNum>0?(it.qty*packNum):0;
+        itemsForSave.push({
+          orderNum:o.num,
+          orderName:o.name,
+          art:it.art,
+          name:it.name||(fu?fu.name:''),
+          qty:it.qty,
+          packQty:packNum,
+          totalPcs:totalPcs,
+          artFlorium:artFlorium,
+          location:location
+        });
+      });
+    });
     try {
       var res=await callScript('createList',{
-        orders:ordersCopy.map(function(o){return o.num;}).join(', '),
-        positions:itemsCopy.length,
-        qty:tq
+        items:JSON.stringify(itemsForSave),
+        skipOrders:JSON.stringify(skipOrders),
+        operator:'Адмін'
       });
-      if(res&&res.ok&&res.listNum){listNum=res.listNum;toast('Список #'+listNum+' збережено','ok',2000);}
-      else{toast('Apps Script не оновлено для списків — друкую без №','wa',3000);}
+      if(res&&res.ok&&res.listNum){
+        listNum=res.listNum;
+        var msg='Список #'+listNum+' збережено';
+        if(skipOrders.length>0)msg+=' (пропущено: '+skipOrders.length+')';
+        toast(msg,'ok',3000);
+      } else {
+        toast('Apps Script помилка — друкую без №','wa',3000);
+      }
     } catch(e){
-      toast('Apps Script не оновлено для списків — друкую без №','wa',3000);
+      toast('Apps Script не оновлено — друкую без №','wa',3000);
     }
   }
-  // 2) ВАЖЛИВО: закрити модалку ПЕРЕД друком (інакше друк блокується)
+  
+  // закрити модалку перед друком
   closeCombinedModal();
   if(multiMode){multiMode=false;multiSel={};G('pkListWrap').classList.remove('multi-mode');G('multiBtn').classList.remove('on');G('multiBtn').textContent='☑ Вибрати кілька';renderPicker();}
-  // 3) друкуємо (з локальної копії, щоб гонитва з loadAll не зіпсувала)
+  // друк
   setTimeout(function(){doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum);},200);
-  // 4) міняємо статус усім замовленням на "Фасується" — ПІСЛЯ друку
+  // статуси
   if(SCRIPT_URL){
     setTimeout(async function(){
       for(var i=0;i<ordersCopy.length;i++){
