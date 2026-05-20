@@ -914,7 +914,7 @@ function selectPicker(id){
     var rows=its.map(function(it,i){
       var st=stock.find(function(s){return s.art===it.art;});
       var loc=st?st.location:'—';
-      var fu=fury[it.art]||fury['f_'+it.art]||null;
+      var fu=fury[it.art]||fury['b_'+it.art]||null;
       var artF=fu?fu.artFlorium:'—';
       var packQ=fu?fu.packQty:(st&&st.packQty?st.packQty:'—');
       var ss=scanState[o.num]||{};
@@ -1158,24 +1158,35 @@ async function processIncomingScan(){
 }
 
 // ===== PARSE FURY =====
-// інфо фури: A=Назва, B=Розмір, F=Артикул Флоріум, K=К-сть в упаковці, J=Артикул ящика
+// інфо фури:
+// A=Назва, B=Розмір, C=Постачальник
+// J=Артикул ящика (опт), K=К-сть в ящику, L=Куплено під J
+// M=Артикул дрібного гурту (наш, у замовленнях), N=К-сть в упаковці дрібного гурту, O=Куплено під M
+// Q=Артикул Флоріум (маркування ящиків на складі), R=К-сть цибульок на складі
 function parseFury(rows){
   fury={};
   for(var i=2;i<rows.length;i++){
     var r=rows[i]||[];
-    var artF=(r[5]||'').toString().trim(); // col F = Florium артикул
-    var artBox=(r[9]||'').toString().trim(); // col J = Артикул ящика
-    if(!artF&&!artBox)continue;
+    var artBox=(r[9]||'').toString().trim();     // J = артикул ящика
+    var artRetail=(r[12]||'').toString().trim(); // M = артикул дрібного гурту (наш)
+    var artFlorium=(r[16]||'').toString().trim();// Q = артикул Флоріум (склад)
+    if(!artBox&&!artRetail&&!artFlorium)continue;
     var obj={
       name:(r[0]||'').trim(),
       size:(r[1]||'').trim(),
-      artFlorium:artF,
-      artBox:artBox,
-      packQty:(r[10]||'').toString().trim(), // col K = К-сть в упаковці
       supplier:(r[2]||'').trim(),
+      artBox:artBox,                                  // J
+      packBoxQty:(r[10]||'').toString().trim(),       // K — к-сть в ящику
+      boughtBox:(r[11]||'').toString().trim(),        // L — куплено ящиком
+      artRetail:artRetail,                            // M
+      packQty:(r[13]||'').toString().trim(),          // N — к-сть в упаковці дрібного гурту
+      boughtRetail:(r[14]||'').toString().trim(),     // O — куплено дрібним гуртом
+      artFlorium:artFlorium,                          // Q — артикул Флоріум (склад)
+      stockQty:(r[17]||'').toString().trim(),         // R — к-сть на складі
     };
-    if(artBox)fury[artBox]=obj;
-    if(artF)fury['f_'+artF]=obj;
+    if(artRetail)fury[artRetail]=obj;        // основний ключ — артикул із замовлення (M)
+    if(artBox)fury['b_'+artBox]=obj;          // запасний — артикул ящика (J)
+    if(artFlorium)fury['f_'+artFlorium]=obj;  // запасний — артикул Флоріум (Q)
   }
   console.log('Fury loaded:', Object.keys(fury).length, 'items');
 }
