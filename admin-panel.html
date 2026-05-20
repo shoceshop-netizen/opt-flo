@@ -1099,12 +1099,17 @@ async function changeStatus(num,name,newStatus){
   closeStatusModal();
   toast('Змінюємо статус...','in',2000);
   var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
+  console.log('[changeStatus] response:',res,'num:',num,'newStatus:',newStatus);
   if(res.ok){
     toast('Статус змінено на «'+newStatus+'»','ok');
-    // Локально оновлюємо статус щоб одразу побачити зміну
-    var o=orders.find(function(x){return x.num===num;});
-    if(o){o.status=newStatus;renderAll();}
-    // Через 1.5с — повне перезавантаження з сервера
+    // Локально оновлюємо — порівнюємо як рядки, бо типи можуть розходитись
+    var ns=String(num).trim();
+    var o=orders.find(function(x){return String(x.num).trim()===ns;});
+    console.log('[changeStatus] found order:',o);
+    if(o){
+      o.status=newStatus;
+      renderAll();
+    }
     setTimeout(loadAll,1500);
   }
   else toast('Помилка: '+(res.error||res.msg||'?'),'er');
