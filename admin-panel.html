@@ -1076,11 +1076,13 @@ function getSelectedOrders(){
 }
 function openCombinedList(){
   var sel=getSelectedOrders();
+  console.log('[openCombinedList] sel:',sel.length,'multiSel:',multiSel);
   if(!sel.length){toast('Спочатку виберіть замовлення','wa');return;}
   // об'єднуємо всі позиції з усіх замовлень
   var merged={};
   sel.forEach(function(o){
     var its=items[o.num]||[];
+    console.log('[openCombinedList] order',o.num,'items:',its.length);
     its.forEach(function(it){
       var key=it.art;
       if(!merged[key]){
@@ -1097,6 +1099,7 @@ function openCombinedList(){
   });
   combinedItems=Object.values(merged);
   combinedOrders=sel.slice();
+  console.log('[openCombinedList] merged items:',combinedItems.length);
   // довантажуємо інфо з fury + stock для кожної позиції (з можливістю редагування)
   combinedItems.forEach(function(ci){
     var fu=fury[ci.art]||fury['b_'+ci.art]||fury['f_'+ci.art]||null;
@@ -1104,11 +1107,18 @@ function openCombinedList(){
     ci.artFlorium=fu?fu.artFlorium:'';
     ci.packQty=fu?fu.packQty:'';
     ci.location=st&&st.location?st.location:'';
-    // якщо не знайшли назву в замовленні — підтягнемо з fury/stock
     if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
   });
-  renderCombinedModal();
-  G('combinedModal').style.display='flex';
+  try{
+    renderCombinedModal();
+    var m=G('combinedModal');
+    console.log('[openCombinedList] modal element:',m);
+    if(m){m.style.display='flex';console.log('[openCombinedList] modal opened');}
+    else{toast('Модалка не знайдена! F12 → Console','er',5000);}
+  }catch(e){
+    console.error('[openCombinedList] render error:',e);
+    toast('Помилка: '+e.message,'er',5000);
+  }
 }
 
 function renderCombinedModal(){
