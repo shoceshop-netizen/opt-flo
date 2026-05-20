@@ -30,25 +30,26 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 /* PRINT */
 @page{size:A4 landscape;margin:7mm 9mm;}
 @media print{
-  html,body{height:auto!important;overflow:visible!important;background:#fff!important;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;margin:0;padding:0;}
   body>*{display:none!important;}
-  /* модалки сховати — друкуємо тільки #pz */
   .modal-ov{display:none!important;}
-  #pz{display:block!important;position:static!important;height:auto!important;overflow:visible!important;font-family:Arial,Helvetica,sans-serif;color:#000;font-weight:400;}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px;}
-  .ph-l{font-size:26px;font-weight:500;letter-spacing:-.5px;}
-  .ph-r{font-size:17px;font-weight:400;}
-  .pt{width:100%;border-collapse:collapse;table-layout:auto;}
-  .pt thead{display:table-header-group;}
-  .pt tbody{display:table-row-group;}
-  .pt tr{page-break-inside:avoid;page-break-after:auto;break-inside:avoid;}
-  .pt th,.pt td{border:1px solid #000;padding:10px 10px;font-size:16px;line-height:1.25;font-weight:400;vertical-align:middle;}
-  .pt th{background:#ececec;font-weight:500;font-size:13px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;}
-  .pt td.c{text-align:center;}
-  .pt td.m{font-family:'Courier New',monospace;font-size:15px;}
-  .pt td.big{font-size:20px;text-align:center;font-weight:400;}
-  .pt tbody tr:nth-child(even){background:#f5f5f5;}
-  .pt .chk{display:inline-block;width:22px;height:22px;border:1.2px solid #000;}
+  .tc{display:none!important;}
+  #pz{display:block!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;font-family:Arial,Helvetica,sans-serif;color:#000;font-weight:400;}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px;page-break-after:avoid;}
+  .ph-l{font-size:24px;font-weight:500;letter-spacing:-.5px;}
+  .ph-r{font-size:16px;font-weight:400;}
+  table.pt{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto!important;break-inside:auto!important;}
+  table.pt thead{display:table-header-group;}
+  table.pt tbody{display:table-row-group;}
+  table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:auto;}
+  table.pt th,table.pt td{border:1px solid #000;padding:8px 9px;font-size:15px;line-height:1.25;font-weight:400;vertical-align:middle;}
+  table.pt th{background:#ececec;font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:7px 9px;}
+  table.pt td.c{text-align:center;}
+  table.pt td.m{font-family:'Courier New',monospace;font-size:14px;}
+  table.pt td.big{font-size:19px;text-align:center;font-weight:400;}
+  table.pt tbody tr:nth-child(even){background:#f5f5f5;}
+  table.pt .chk{display:inline-block;width:20px;height:20px;border:1.2px solid #000;}
 }
 #pz{display:none;}
 
