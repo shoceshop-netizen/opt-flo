@@ -734,20 +734,22 @@ function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
 
 // ===== LOAD =====
-async function loadAll(){
+async function loadAll(skipCache){
   setSyncState('pend','Оновлення...');
-  // Показуємо кеш одразу поки вантажаться нові дані
-  try{
-    var cached=localStorage.getItem(CACHE_KEY);
-    if(cached){
-      var c=JSON.parse(cached);
-      if(c.orders&&c.items&&c.stock){
-        orders=c.orders;items=c.items;stock=c.stock;
-        renderAll();
-        G('updTxt').textContent='Кеш '+(c.time||'')+'...';
+  // Показуємо кеш одразу поки вантажаться нові дані (тільки якщо не skipCache)
+  if(!skipCache){
+    try{
+      var cached=localStorage.getItem(CACHE_KEY);
+      if(cached){
+        var c=JSON.parse(cached);
+        if(c.orders&&c.items&&c.stock){
+          orders=c.orders;items=c.items;stock=c.stock;
+          renderAll();
+          G('updTxt').textContent='Кеш '+(c.time||'')+'...';
+        }
       }
-    }
-  }catch(e){}
+    }catch(e){}
+  }
   try{
     var res=await Promise.all([fetchSheet('Замовлення','A:I'),fetchSheet('вигрузка','A:I'),fetchSheet('товар склад','A:Z'),fetchSheet('інфо фури','A:R'),fetchSheet('прихід','A:H')]);
     parseOrders(res[0]);parseItems(res[1]);parseStock(res[2]);parseFury(res[3]);parseIncome(res[4]);
@@ -1099,18 +1101,16 @@ async function changeStatus(num,name,newStatus){
   closeStatusModal();
   toast('Змінюємо статус...','in',2000);
   var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
-  console.log('[changeStatus] response:',res,'num:',num,'newStatus:',newStatus);
   if(res.ok){
     toast('Статус змінено на «'+newStatus+'»','ok');
-    // Локально оновлюємо — порівнюємо як рядки, бо типи можуть розходитись
     var ns=String(num).trim();
     var o=orders.find(function(x){return String(x.num).trim()===ns;});
-    console.log('[changeStatus] found order:',o);
     if(o){
       o.status=newStatus;
       renderAll();
     }
-    setTimeout(loadAll,1500);
+    // Через 1.5с — оновлюємо з сервера БЕЗ показу кешу
+    setTimeout(function(){loadAll(true);},1500);
   }
   else toast('Помилка: '+(res.error||res.msg||'?'),'er');
 }
@@ -1470,7 +1470,7 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders){
         try{await callScript('setStatus',{orderNum:o.num,orderName:o.name,status:'Фасується'});}catch(e){}
       }
       toast('Статуси оновлено → «Фасується»','ok',3000);
-      loadAll();
+      loadAll(true);
     },1500);
   }
 }
@@ -1627,7 +1627,7 @@ function doPrint(o,its){
     toast('Надруковано! Змінюємо статус на «Фасується»...','in',3000);
     if(SCRIPT_URL){
       var res=await callScript('setStatus',{orderNum:o.num,orderName:o.name,status:'Фасується'});
-      if(res.ok){toast('Статус змінено → «Фасується»','ok');loadAll();}
+      if(res.ok){toast('Статус змінено → «Фасується»','ok');loadAll(true);}
     } else {
       toast('Не забудьте змінити статус на «Фасується» в таблиці!','wa',5000);
     }
@@ -1724,7 +1724,7 @@ function renderScanList(){
 async function markOrderReady(num,name){
   if(SCRIPT_URL){
     var res=await callScript('setStatus',{orderNum:num,orderName:name,status:'Готове'});
-    if(res.ok){toast('Статус Готове','ok');loadAll();}
+    if(res.ok){toast('Статус Готове','ok');loadAll(true);}
     else toast('Помилка: '+(res.error||'?'),'er');
   } else {
     toast('Змініть статус в Google Sheets','wa',4000);
