@@ -314,6 +314,12 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .cm-inp{padding:5px 8px;border:1px solid var(--bo);border-radius:5px;font-size:13px;font-family:inherit;background:#fff;outline:none;width:100%;}
 .cm-inp:focus{border-color:var(--g);box-shadow:0 0 0 2px rgba(61,139,67,.12);}
 .cm-inp.cm-num{text-align:center;}
+.cm-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 4px 12px;border-bottom:1px dashed var(--bo);margin-bottom:8px;}
+.cm-chips-lbl{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;}
+.cm-chip{padding:5px 10px;font-size:12px;font-weight:600;border:1.5px solid var(--bo);background:#fff;color:var(--tx2);border-radius:14px;cursor:pointer;transition:all .12s;user-select:none;white-space:nowrap;}
+.cm-chip:hover{border-color:var(--gm);background:var(--gl);color:var(--gd);}
+.cm-chip.on{background:var(--g);color:#fff;border-color:var(--g);}
+.cm-group-row td{background:#e8f5e9!important;font-weight:800!important;color:var(--gd)!important;font-size:12px!important;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px!important;border-top:2px solid var(--g)!important;}
 
 /* MOBILE */
 @media(max-width:768px){
@@ -654,6 +660,8 @@ var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[];
 var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
 var multiMode=false,multiSel={};
 var combinedItems=[],combinedOrders=[];
+var combinedFilter=new Set(); // обрані категорії (порожньо = всі)
+var combinedAllItems=[]; // незмінений повний список для фільтрації
 
 // ===== INIT =====
 function init(){
@@ -1076,13 +1084,11 @@ function getSelectedOrders(){
 }
 function openCombinedList(){
   var sel=getSelectedOrders();
-  console.log('[openCombinedList] sel:',sel.length,'multiSel:',multiSel);
   if(!sel.length){toast('Спочатку виберіть замовлення','wa');return;}
   // об'єднуємо всі позиції з усіх замовлень
   var merged={};
   sel.forEach(function(o){
     var its=items[o.num]||[];
-    console.log('[openCombinedList] order',o.num,'items:',its.length);
     its.forEach(function(it){
       var key=it.art;
       if(!merged[key]){
@@ -1099,26 +1105,22 @@ function openCombinedList(){
   });
   combinedItems=Object.values(merged);
   combinedOrders=sel.slice();
-  console.log('[openCombinedList] merged items:',combinedItems.length);
-  // довантажуємо інфо з fury + stock для кожної позиції (з можливістю редагування)
+  // довантажуємо інфо з fury + stock для кожної позиції
   combinedItems.forEach(function(ci){
     var fu=fury[ci.art]||fury['b_'+ci.art]||fury['f_'+ci.art]||null;
     var st=findStockForItem(ci.art);
     ci.artFlorium=fu?fu.artFlorium:'';
     ci.packQty=fu?fu.packQty:'';
     ci.location=st&&st.location?st.location:'';
+    ci.category=st&&st.category?st.category:'';
     if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
   });
-  try{
-    renderCombinedModal();
-    var m=G('combinedModal');
-    console.log('[openCombinedList] modal element:',m);
-    if(m){m.style.display='flex';console.log('[openCombinedList] modal opened');}
-    else{toast('Модалка не знайдена! F12 → Console','er',5000);}
-  }catch(e){
-    console.error('[openCombinedList] render error:',e);
-    toast('Помилка: '+e.message,'er',5000);
-  }
+  combinedAllItems=combinedItems.slice();
+  combinedFilter=new Set();
+  // дефолтне сортування — по категорії, потім по назві
+  sortCombinedByCategory();
+  renderCombinedModal();
+  G('combinedModal').style.display='flex';
 }
 
 function renderCombinedModal(){
@@ -1127,22 +1129,44 @@ function renderCombinedModal(){
   G('cmHead').innerHTML='<div style="font-size:13px;color:var(--mu);margin-bottom:4px">Об\'єднано замовлень: '+combinedOrders.length+'</div>'
     +'<div style="font-size:12px;color:var(--tx2);word-break:break-word">'+esc(orderNums)+'</div>';
   G('cmStats').innerHTML='<strong>'+combinedItems.length+'</strong> позицій · <strong>'+tq+'</strong> уп';
+  // ЧІПИ КАТЕГОРІЙ
+  var cats=getCombinedCategories();
+  var chipsHtml='';
+  if(cats.length>1){
+    chipsHtml='<div class="cm-chips">'
+      +'<span class="cm-chips-lbl">Категорії:</span>'
+      +'<span class="cm-chip'+(combinedFilter.size===0?' on':'')+'" onclick="clearCategoryFilter()">Усі ('+combinedAllItems.length+')</span>'
+      +cats.map(function(c){
+        var isOn=combinedFilter.has(c.name);
+        return '<span class="cm-chip'+(isOn?' on':'')+'" onclick="toggleCategoryFilter(\''+esc(c.name).replace(/'/g,"\\'")+'\')">'+esc(c.name)+' ('+c.count+')</span>';
+      }).join('')
+      +'</div>';
+  }
+  // РЯДКИ З РОЗДІЛЬНИКАМИ КАТЕГОРІЙ
+  var lastCat=null;
   var rows=combinedItems.map(function(ci,i){
     var packNum=parseInt(ci.packQty)||0;
     var totalPcs=packNum>0?(ci.qty*packNum):0;
     var missing=(!ci.location||!ci.artFlorium);
-    return '<tr'+(missing?' style="background:#fff8e1"':'')+'>'
-      +'<td style="text-align:center;color:var(--mu)">'+(i+1)+'</td>'
-      +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(ci.art)+'</td>'
-      +'<td><input class="cm-inp" data-i="'+i+'" data-f="name" value="'+esc(ci.name||'')+'" style="width:100%"></td>'
-      +'<td style="text-align:center;font-weight:700">'+ci.qty+'</td>'
-      +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="packQty" value="'+esc(ci.packQty||'')+'"></td>'
-      +'<td style="text-align:center;color:var(--gd);font-weight:700">'+(totalPcs||'—')+'</td>'
-      +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="artFlorium" value="'+esc(ci.artFlorium||'')+'" style="font-family:monospace;color:#7b1fa2"></td>'
-      +'<td><input class="cm-inp" data-i="'+i+'" data-f="location" value="'+esc(ci.location||'')+'" placeholder="вкажіть..."></td>'
+    var cat=ci.category||'(без категорії)';
+    var groupHeader='';
+    if(cat!==lastCat){
+      groupHeader='<tr class="cm-group-row"><td colspan="8">'+esc(cat)+'</td></tr>';
+      lastCat=cat;
+    }
+    return groupHeader
+      +'<tr'+(missing?' style="background:#fff8e1"':'')+'>'
+        +'<td style="text-align:center;color:var(--mu)">'+(i+1)+'</td>'
+        +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(ci.art)+'</td>'
+        +'<td><input class="cm-inp" data-i="'+i+'" data-f="name" value="'+esc(ci.name||'')+'" style="width:100%"></td>'
+        +'<td style="text-align:center;font-weight:700">'+ci.qty+'</td>'
+        +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="packQty" value="'+esc(ci.packQty||'')+'"></td>'
+        +'<td style="text-align:center;color:var(--gd);font-weight:700">'+(totalPcs||'—')+'</td>'
+        +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="artFlorium" value="'+esc(ci.artFlorium||'')+'" style="font-family:monospace;color:#7b1fa2"></td>'
+        +'<td><input class="cm-inp" data-i="'+i+'" data-f="location" value="'+esc(ci.location||'')+'" placeholder="вкажіть..."></td>'
       +'</tr>';
   }).join('');
-  G('cmBody').innerHTML='<table class="dt" style="font-size:13px">'
+  G('cmBody').innerHTML=chipsHtml+'<table class="dt" style="font-size:13px">'
     +'<thead><tr style="font-size:11px">'
       +'<th style="width:30px">#</th>'
       +'<th>Артикул</th>'
@@ -1158,7 +1182,6 @@ function renderCombinedModal(){
     inp.addEventListener('input',function(){
       var i=parseInt(inp.dataset.i),f=inp.dataset.f;
       combinedItems[i][f]=inp.value;
-      // при зміні packQty — оновити "Всього шт"
       if(f==='packQty'){
         var packNum=parseInt(inp.value)||0;
         var ci=combinedItems[i];
@@ -1171,6 +1194,54 @@ function renderCombinedModal(){
 }
 
 function closeCombinedModal(){G('combinedModal').style.display='none';}
+
+// Сортування зведеного списку по категорії + назві
+function sortCombinedByCategory(){
+  combinedItems.sort(function(a,b){
+    var ca=(a.category||'я').toLowerCase();
+    var cb=(b.category||'я').toLowerCase();
+    if(ca<cb)return -1;
+    if(ca>cb)return 1;
+    var na=(a.name||'').toLowerCase();
+    var nb=(b.name||'').toLowerCase();
+    return na<nb?-1:na>nb?1:0;
+  });
+}
+
+// Унікальні категорії у поточному списку
+function getCombinedCategories(){
+  var set={};
+  combinedAllItems.forEach(function(ci){
+    var c=ci.category||'(без категорії)';
+    set[c]=(set[c]||0)+1;
+  });
+  return Object.keys(set).sort().map(function(c){return {name:c,count:set[c]};});
+}
+
+// Перемикання категорії у фільтрі
+function toggleCategoryFilter(cat){
+  if(combinedFilter.has(cat))combinedFilter.delete(cat);
+  else combinedFilter.add(cat);
+  applyCategoryFilter();
+}
+
+function clearCategoryFilter(){
+  combinedFilter.clear();
+  applyCategoryFilter();
+}
+
+function applyCategoryFilter(){
+  if(combinedFilter.size===0){
+    combinedItems=combinedAllItems.slice();
+  } else {
+    combinedItems=combinedAllItems.filter(function(ci){
+      var c=ci.category||'(без категорії)';
+      return combinedFilter.has(c);
+    });
+  }
+  sortCombinedByCategory();
+  renderCombinedModal();
+}
 
 async function printCombinedList(){
   // 1) запитуємо у Apps Script наступний номер списку та зберігаємо
