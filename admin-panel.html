@@ -30,13 +30,15 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 /* PRINT */
 @page{size:A4 landscape;margin:7mm 9mm;}
 @media print{
-  html,body{height:100%;}
   body>*{display:none!important;}
-  #pz{display:flex!important;flex-direction:column;height:100vh;font-family:Arial,Helvetica,sans-serif;color:#000;font-weight:400;}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px;flex-shrink:0;}
+  #pz{display:block!important;font-family:Arial,Helvetica,sans-serif;color:#000;font-weight:400;}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px;}
   .ph-l{font-size:26px;font-weight:500;letter-spacing:-.5px;}
   .ph-r{font-size:17px;font-weight:400;}
-  .pt{width:100%;height:100%;border-collapse:collapse;table-layout:auto;flex:1;}
+  .pt{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto;}
+  .pt thead{display:table-header-group;}
+  .pt tbody{display:table-row-group;}
+  .pt tr{page-break-inside:avoid;page-break-after:auto;}
   .pt th,.pt td{border:1px solid #000;padding:14px 12px;font-size:17px;line-height:1.3;font-weight:400;vertical-align:middle;}
   .pt th{background:#ececec;font-weight:500;font-size:14px;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;}
   .pt td.c{text-align:center;}
@@ -136,6 +138,31 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .oi-name{font-size:16px;font-weight:600;color:var(--tx);margin-bottom:5px;}
 .oi-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .li-badge{background:var(--bo2);border:1px solid var(--bo);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;color:var(--tx2);}
+
+/* PICKER CARDS */
+.pk-card{background:#fff;border:1.5px solid var(--bo);border-radius:10px;padding:12px 14px;margin:8px 10px;cursor:pointer;transition:all .12s;display:flex;gap:10px;align-items:flex-start;}
+.pk-card:hover{border-color:var(--gm);background:#fafdfa;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.pk-card.on{border-color:var(--g);background:var(--gl);box-shadow:0 2px 8px rgba(61,139,67,.15);}
+.pk-card.sel{border-color:var(--g);background:#e8f5e9;}
+.pk-card-cb{width:22px;height:22px;border:2px solid var(--bo);border-radius:5px;flex-shrink:0;margin-top:2px;display:none;align-items:center;justify-content:center;background:#fff;font-size:14px;color:#fff;}
+.pk-card.sel .pk-card-cb{background:var(--g);border-color:var(--g);}
+.multi-mode .pk-card-cb{display:inline-flex;}
+.pk-card-body{flex:1;min-width:0;}
+.pk-card-r1{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
+.pk-card-num{font-size:13px;font-weight:700;color:var(--gd);font-family:monospace;}
+.pk-card-name{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px;line-height:1.25;}
+.pk-card-meta{font-size:12px;color:var(--mu);}
+
+/* MULTI BAR */
+.pk-head{padding:10px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;}
+.pk-head-title{font-size:13px;font-weight:700;color:var(--tx2);display:flex;align-items:center;gap:8px;}
+.pk-multi-btn{padding:6px 12px;font-size:12px;font-weight:600;border:1.5px solid var(--bo);background:#fff;color:var(--tx2);border-radius:7px;cursor:pointer;transition:all .12s;}
+.pk-multi-btn:hover{background:var(--gl);border-color:var(--gm);color:var(--gd);}
+.pk-multi-btn.on{background:var(--g);color:#fff;border-color:var(--g);}
+.multi-bar{display:none;padding:10px 12px;background:var(--gl);border-bottom:1.5px solid var(--gm);align-items:center;gap:8px;flex-wrap:wrap;}
+.multi-mode .multi-bar{display:flex;}
+.multi-count{font-size:13px;font-weight:700;color:var(--gd);}
+.multi-bar .btn{padding:7px 14px;font-size:12px;}
 
 /* PILLS */
 .pill{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:700;white-space:nowrap;}
@@ -374,8 +401,17 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
   <!-- PICKER -->
   <div class="page" id="page-picker">
     <div class="picker-layout">
-      <div class="picker-list">
-        <div class="olc-head"><span class="olc-title">Активні замовлення</span><span class="olc-cnt" id="pkCnt">0</span></div>
+      <div class="picker-list" id="pkListWrap">
+        <div class="pk-head">
+          <div class="pk-head-title">Активні замовлення <span class="olc-cnt" id="pkCnt">0</span></div>
+          <button class="pk-multi-btn" id="multiBtn" onclick="toggleMultiMode()">☑ Вибрати кілька</button>
+        </div>
+        <div class="multi-bar">
+          <span class="multi-count" id="multiCount">Вибрано: 0</span>
+          <button class="btn sm" onclick="selectAllPicker()">Усі</button>
+          <button class="btn sm" onclick="clearMultiSelection()">Очистити</button>
+          <button class="btn pr sm" style="margin-left:auto" onclick="openCombinedList()">▶ Створити список</button>
+        </div>
         <div class="order-list" id="pkList"></div>
       </div>
       <div class="picker-detail">
@@ -577,6 +613,7 @@ function stagesH(status){
 // ===== STATE =====
 var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[];
 var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
+var multiMode=false,multiSel={};
 
 // ===== INIT =====
 function init(){
@@ -908,13 +945,68 @@ async function changeStatus(num,name,newStatus){
 function renderPicker(){
   var list=orders.filter(o=>{var k=sk(o.status);return k==='work'||k==='pack';});
   G('pkCnt').textContent=list.length;
+  updateMultiCount();
   if(!list.length){G('pkList').innerHTML='<div class="es"><div class="es-ic">✅</div><div class="es-t">Немає активних</div></div>';return;}
-  G('pkList').innerHTML=list.map(o=>{var its=items[o.num]||[];var tq=its.reduce((s,i)=>s+i.qty,0);return`<div class="li${selPk===o.id?' on':''}" data-id="${o.id}"><div class="li-r1"><span class="li-num">#${esc(o.num)}</span>${pillH(o.status)}</div><div class="li-name">${esc(o.name)}</div><div class="li-meta"><span class="li-badge">${its.length} поз · ${tq} шт</span></div></div>`;}).join('');
-  G('pkList').querySelectorAll('.li').forEach(el=>el.addEventListener('click',()=>selectPicker(el.dataset.id)));
+  G('pkList').innerHTML=list.map(function(o){
+    var its=items[o.num]||[];
+    var tq=its.reduce(function(s,i){return s+i.qty;},0);
+    var isSel=!!multiSel[o.id];
+    var isCur=selPk===o.id;
+    var cls='pk-card'+(isCur&&!multiMode?' on':'')+(isSel?' sel':'');
+    return '<div class="'+cls+'" data-id="'+o.id+'">'
+      +'<div class="pk-card-cb">'+(isSel?'✓':'')+'</div>'
+      +'<div class="pk-card-body">'
+        +'<div class="pk-card-r1"><span class="pk-card-num">#'+esc(o.num)+'</span>'+pillH(o.status)+'</div>'
+        +'<div class="pk-card-name">'+esc(o.name)+'</div>'
+        +'<div class="pk-card-meta">'+its.length+' поз · '+tq+' шт</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  G('pkList').querySelectorAll('.pk-card').forEach(function(el){
+    el.addEventListener('click',function(){
+      if(multiMode)togglePickerSelection(el.dataset.id);
+      else selectPicker(el.dataset.id);
+    });
+  });
+}
+
+// ===== MULTI-SELECT =====
+function toggleMultiMode(){
+  multiMode=!multiMode;
+  var wrap=G('pkListWrap');
+  if(multiMode){wrap.classList.add('multi-mode');G('multiBtn').classList.add('on');G('multiBtn').textContent='✕ Скасувати';}
+  else{wrap.classList.remove('multi-mode');G('multiBtn').classList.remove('on');G('multiBtn').textContent='☑ Вибрати кілька';multiSel={};}
+  renderPicker();
+}
+function togglePickerSelection(id){
+  if(multiSel[id])delete multiSel[id];else multiSel[id]=true;
+  renderPicker();
+}
+function selectAllPicker(){
+  var list=orders.filter(function(o){var k=sk(o.status);return k==='work'||k==='pack';});
+  list.forEach(function(o){multiSel[o.id]=true;});
+  renderPicker();
+}
+function clearMultiSelection(){
+  multiSel={};
+  renderPicker();
+}
+function updateMultiCount(){
+  var n=Object.keys(multiSel).length;
+  var el=G('multiCount');if(el)el.textContent='Вибрано: '+n;
+}
+function getSelectedOrders(){
+  return orders.filter(function(o){return multiSel[o.id];});
+}
+function openCombinedList(){
+  var sel=getSelectedOrders();
+  if(!sel.length){toast('Спочатку виберіть замовлення','wa');return;}
+  toast('Створено список з '+sel.length+' замовлень (друк у розробці)','in',3000);
+  // TODO: етап 2 — об'єднати товари, відкрити модалку списку, друкувати
 }
 function selectPicker(id){
   selPk=id;var o=orders.find(x=>x.id===id);if(!o)return;
-  G('pkList').querySelectorAll('.li').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
+  G('pkList').querySelectorAll('.pk-card').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
   if(G('pkEmpty'))G('pkEmpty').style.display='none';var dv=G('pkDetail');if(dv)dv.style.cssText='display:flex;flex:1;flex-direction:column;overflow:hidden;';
   G('pdN').textContent='#'+esc(o.num);G('pdC').textContent=esc(o.name);G('pdP').innerHTML=pillH(o.status,true);
   var its=items[o.num]||[];
