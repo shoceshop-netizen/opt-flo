@@ -27,31 +27,34 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
 
-/* PRINT */
-@page{size:A4 landscape;margin:5mm;}
+/* PRINT — Варіант 1: Мінімалізм */
+@page{size:A4 landscape;margin:8mm;}
 @media print{
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:Arial,Helvetica,sans-serif!important;}
-  html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;margin:0;padding:0;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,Arial,sans-serif!important;font-weight:400!important;}
+  html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;margin:0;padding:0;color:#1a1a1a;}
   body>*{display:none!important;}
   .modal-ov{display:none!important;}
   .tc{display:none!important;}
-  #pz{display:block!important;position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;color:#000;font-weight:400;}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding:0 2mm 6px;margin-bottom:8px;page-break-after:avoid;}
-  .ph-l{font-size:20px;font-weight:600;letter-spacing:-.3px;}
-  .ph-r{font-size:14px;font-weight:400;color:#333;}
+  #pz{display:block!important;position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
+  /* шапка */
+  .ph{display:flex;justify-content:space-between;align-items:baseline;padding:0 0 14px;margin-bottom:18px;border-bottom:0.5px solid #d2d2d7;page-break-after:avoid;}
+  .ph-l{font-size:22px;font-weight:500!important;letter-spacing:-.4px;color:#1a1a1a;}
+  .ph-r{font-size:13px;color:#86868b;letter-spacing:.1px;}
+  /* таблиця — без рамок, просто лінії знизу рядків */
   table.pt{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto!important;break-inside:auto!important;}
   table.pt thead{display:table-header-group;}
   table.pt tbody{display:table-row-group;}
-  table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:auto;}
-  /* єдиний стиль для всіх клітинок — без винятків */
-  table.pt th,table.pt td{border:1px solid #000;padding:7px 8px;font-size:14px;line-height:1.25;font-weight:400;vertical-align:middle;text-align:left;}
-  table.pt th{background:#ececec;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;}
+  table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;}
+  /* єдиний стиль клітинок */
+  table.pt th,table.pt td{border:none;border-bottom:0.5px solid #e5e5e7;padding:11px 10px;font-size:13px;line-height:1.4;text-align:left;vertical-align:middle;color:#1a1a1a;}
+  /* заголовки колонок — дрібні, lowercase, сірі */
+  table.pt th{font-size:10px;font-weight:500!important;text-transform:uppercase;letter-spacing:.6px;color:#86868b;padding:6px 10px 10px;border-bottom:1px solid #1a1a1a;}
   table.pt td.c{text-align:center;}
-  /* монотонність — артикул, к-сть і всього шт усі без винятків */
-  table.pt td.m{font-weight:400;}
-  table.pt td.big{text-align:center;font-weight:400;}
-  table.pt tbody tr:nth-child(even){background:#f5f5f5;}
-  table.pt .chk{display:inline-block;width:18px;height:18px;border:1.2px solid #000;}
+  table.pt td.m,table.pt td.big{font-weight:400!important;text-align:center;}
+  /* без зебри — просто лінії */
+  table.pt tbody tr:nth-child(even){background:transparent;}
+  /* чекбокс — тонкий і малий */
+  table.pt .chk{display:inline-block;width:16px;height:16px;border:0.8px solid #1a1a1a;border-radius:3px;}
 }
 #pz{display:none;}
 
