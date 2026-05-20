@@ -235,6 +235,17 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .sec-t::after{content:'';flex:1;height:1px;background:var(--bo2);}
 .sec-t:first-child{margin-top:0;}
 
+/* SUMMARY TAGS */
+.sum-tag{display:inline-flex;align-items:center;gap:8px;background:var(--gray6);padding:8px 14px;border-radius:10px;}
+.sum-l{font-size:11px;color:var(--tx4);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.sum-v{font-size:18px;font-weight:700;color:var(--tx);font-feature-settings:'tnum';letter-spacing:-.5px;}
+
+/* STOCK BADGES */
+.stk-b{display:inline-block;min-width:32px;padding:3px 8px;border-radius:8px;font-size:12px;font-weight:600;font-feature-settings:'tnum';}
+.stk-ok{background:var(--green-l);color:var(--green-d);}
+.stk-no{background:var(--red-l);color:var(--red);}
+.stk-unk{background:var(--gray6);color:var(--tx4);}
+
 /* ORDER ITEMS */
 .od-item{background:var(--card);border:1px solid var(--bo);border-radius:var(--rad);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;}
 .od-item.no-stock{background:#fff8f8;border-color:#f5c0c0;}
@@ -937,7 +948,7 @@ function setFilter(f){
 }
 function renderFilters(){
   var c=getCounts();
-  var fs=[{k:'all',l:'Всі',n:c.all},{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel}];
+  var fs=[{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel},{k:'all',l:'Всі',n:c.all}];
   G('orFilters').innerHTML=fs.map(f=>`<span class="chip${filter===f.k?' on':''}" data-f="${f.k}">${f.l}${f.n?' ('+f.n+')':''}</span>`).join('');
   G('orFilters').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{filter=c.dataset.f;renderOrders();}));
 }
@@ -983,8 +994,8 @@ function selectOrder(id){
   var k=sk(o.status);
   G('odPicker').style.display=(k==='work'||k==='pack')?'':'none';
   G('odPicker').onclick=()=>{nav('picker');selectPicker(id);};
-  G('odScan').style.display=k==='pack'?'':'none';
-  G('odScan').onclick=()=>{nav('scan');selectScan(id);};
+  G('odScan')&&(G('odScan').style.display=k==='pack'?'':'none');
+  G('odScan')&&(G('odScan').onclick=()=>{nav('scan');selectScan(id);});
   G('odStatus').style.display=SCRIPT_URL?'':'none';
   G('odStatus').onclick=()=>openStatusModal(o);
   var its=items[o.num]||[];
@@ -992,25 +1003,62 @@ function selectOrder(id){
   var body='';
   if(k==='cancel')body+='<div class="canc-c">❌ Замовлення відмовлено</div>';
   if(its.length){
-    body+='<div class="od-sec-title">ПОЗИЦІЇ ЗАМОВЛЕННЯ</div>';
-    body+=its.map(function(it){
+    body+='<div class="sec-t">📦 ПОЗИЦІЇ ЗАМОВЛЕННЯ</div>';
+    // підрахунок загальних метрик
+    var grandTotalPcs=0;
+    var missingStock=0;
+    var rowsHtml=its.map(function(it,i){
+      var fu=fury[it.art]||fury['b_'+it.art]||fury['f_'+it.art]||null;
+      var artF=fu?fu.artFlorium:'—';
       var st=findStockForItem(it.art);
+      var loc=st&&st.location?st.location:'—';
+      var packQ=fu?fu.packQty:'';
+      var packNum=parseInt(packQ)||0;
+      var totalPcs=packNum>0?(it.qty*packNum):0;
+      grandTotalPcs+=totalPcs;
       var stk=st?st.qty:null;
-      var hasStock=stk!==null&&stk>=it.qty;
       var noStock=stk!==null&&stk<it.qty;
-      var loc=st?st.location:'—';
-      return '<div class="od-item'+(noStock?' od-item-warn':hasStock?' od-item-ok':'')+'">'
-        +'<div class="od-item-art">'+esc(it.art)+'</div>'
-        +'<div class="od-item-name">'+esc(it.name)+'</div>'
-        +'<div class="od-item-loc">'+esc(loc)+'</div>'
-        +'<div class="od-item-right">'
-        +(noStock?'<span class="od-no-stock">Немає</span>':hasStock?'<span class="od-has-stock">Є</span>':'<span class="od-unknown-stock">—</span>')
-        +'<div class="od-item-nums">'
-        +'<span>Потрібно: <b>'+it.qty+' шт</b></span>'
-        +(stk!==null?'<span>Залишок: <b style="color:'+(noStock?'var(--r)':'var(--g)')+'">'+stk+' шт</b></span>':'')
-        +'</div></div></div>';
+      if(noStock)missingStock++;
+      var stockBadge='';
+      if(stk===null)stockBadge='<span class="stk-b stk-unk">—</span>';
+      else if(stk>=it.qty)stockBadge='<span class="stk-b stk-ok">'+stk+'</span>';
+      else stockBadge='<span class="stk-b stk-no">'+stk+'</span>';
+      return '<tr'+(noStock?' style="background:#fff0ef"':'')+'>'
+        +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
+        +'<td style="font-size:13px">'+esc(it.name)+'</td>'
+        +'<td style="text-align:center;font-weight:600">'+it.qty+'</td>'
+        +'<td style="text-align:center;color:var(--blue);font-weight:500">'+(packQ||'—')+'</td>'
+        +'<td style="text-align:center;color:var(--green-d);font-weight:600">'+(totalPcs||'—')+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:11px;color:var(--purple)">'+esc(artF)+'</td>'
+        +'<td><span style="background:var(--gray6);padding:2px 7px;border-radius:5px;font-size:11px;color:var(--tx3);white-space:nowrap">'+esc(loc)+'</span></td>'
+        +'<td style="text-align:center">'+stockBadge+'</td>'
+        +'</tr>';
     }).join('');
-    body+='<div class="tbl-total">Всього: '+its.length+' поз · '+tq+' шт</div>';
+    body+='<div style="overflow:auto;border:1px solid var(--bo);border-radius:10px;background:#fff">'
+      +'<table class="dt" style="font-size:13px;width:100%">'
+      +'<thead><tr style="font-size:10px;background:var(--gray6)">'
+        +'<th style="text-align:center">#</th>'
+        +'<th>Артикул</th>'
+        +'<th>Назва</th>'
+        +'<th style="text-align:center">К-сть</th>'
+        +'<th style="text-align:center;color:var(--blue)">В уп.</th>'
+        +'<th style="text-align:center;color:var(--green-d)">Всього шт</th>'
+        +'<th style="color:var(--purple)">Арт.Флоріум</th>'
+        +'<th>Розміщення</th>'
+        +'<th style="text-align:center">Склад</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rowsHtml+'</tbody>'
+      +'</table></div>';
+    // Підсумок
+    body+='<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">'
+      +'<div class="sum-tag"><span class="sum-l">Позицій</span><span class="sum-v">'+its.length+'</span></div>'
+      +'<div class="sum-tag"><span class="sum-l">Упаковок</span><span class="sum-v">'+tq+'</span></div>'
+      +'<div class="sum-tag"><span class="sum-l">Всього шт</span><span class="sum-v" style="color:var(--green-d)">'+(grandTotalPcs||'?')+'</span></div>'
+      +(missingStock>0?'<div class="sum-tag" style="background:var(--red-l);color:var(--red)"><span class="sum-l" style="color:var(--red)">⚠️ Немає в наявності</span><span class="sum-v" style="color:var(--red)">'+missingStock+'</span></div>':'')
+      +'</div>';
+  } else {
+    body+='<div style="padding:32px;text-align:center;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px">Немає позицій</div><div style="font-size:12px;margin-top:4px">Додайте дані в аркуш «вигрузка»</div></div>';
   }
   body+=`<div class="sc-title">🚚 Доставка</div><div class="ig">`;
   if(o.ttn)body+=`<div class="ic sp"><div class="ic-l">ТТН</div><div class="ttn-r"><span class="ic-v mo">${esc(o.ttn)}</span><button class="cpbtn" onclick="navigator.clipboard.writeText('${esc(o.ttn)}');toast('ТТН скопійовано','ok',2000)">📋</button></div></div>`;
@@ -1051,7 +1099,14 @@ async function changeStatus(num,name,newStatus){
   closeStatusModal();
   toast('Змінюємо статус...','in',2000);
   var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
-  if(res.ok){toast('Статус змінено на «'+newStatus+'»','ok');loadAll();}
+  if(res.ok){
+    toast('Статус змінено на «'+newStatus+'»','ok');
+    // Локально оновлюємо статус щоб одразу побачити зміну
+    var o=orders.find(function(x){return x.num===num;});
+    if(o){o.status=newStatus;renderAll();}
+    // Через 1.5с — повне перезавантаження з сервера
+    setTimeout(loadAll,1500);
+  }
   else toast('Помилка: '+(res.error||res.msg||'?'),'er');
 }
 
