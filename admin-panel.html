@@ -751,8 +751,16 @@ async function loadAll(skipCache){
     }catch(e){}
   }
   try{
-    var res=await Promise.all([fetchSheet('Замовлення','A:I'),fetchSheet('вигрузка','A:I'),fetchSheet('товар склад','A:Z'),fetchSheet('інфо фури','A:R'),fetchSheet('прихід','A:H')]);
-    parseOrders(res[0]);parseItems(res[1]);parseStock(res[2]);parseFury(res[3]);parseIncome(res[4]);
+    // Додаємо аркуш "статуси" — щоб мати свіжі статуси які не залежать від IMPORTRANGE
+    var res=await Promise.all([
+      fetchSheet('Замовлення','A:I'),
+      fetchSheet('вигрузка','A:I'),
+      fetchSheet('товар склад','A:Z'),
+      fetchSheet('інфо фури','A:R'),
+      fetchSheet('прихід','A:H'),
+      fetchSheet('статуси','A:C').catch(function(){return [];})
+    ]);
+    parseOrders(res[0],res[5]);parseItems(res[1]);parseStock(res[2]);parseFury(res[3]);parseIncome(res[4]);
     // Зберегти в кеш
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
@@ -772,15 +780,27 @@ function setSyncState(type,txt){
   if(t)t.textContent=txt;
 }
 
-function parseOrders(rows){
+function parseOrders(rows,statusRows){
+  // Будуємо мапу статусів з аркуша "статуси" (якщо є)
+  var statusMap={};
+  if(statusRows&&statusRows.length){
+    for(var i=1;i<statusRows.length;i++){
+      var sr=statusRows[i]||[];
+      var sn=String(sr[0]||'').trim();
+      var st=String(sr[1]||'').trim();
+      if(sn&&st)statusMap[sn]=st;
+    }
+  }
   orders=[];
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
     var name=(r[0]||'').trim(),num=(r[1]||'').trim();
     if(!name&&!num)continue;
-    // Skip rows with #REF! error
     if(name.includes('#REF')||name.includes('#ERR')||name.includes('#N/A'))continue;
-    orders.push({id:'r'+i,num,name,comment:(r[2]||'').trim(),address:(r[3]||'').trim(),note:(r[4]||'').trim(),ttn:(r[5]||'').trim(),declared:(r[6]||'').trim(),status:(r[7]||'').trim(),extra:(r[8]||'').trim()});
+    var status=(r[7]||'').trim();
+    // Якщо є запис в аркуші "статуси" — підмінюємо
+    if(num&&statusMap[num])status=statusMap[num];
+    orders.push({id:'r'+i,num,name,comment:(r[2]||'').trim(),address:(r[3]||'').trim(),note:(r[4]||'').trim(),ttn:(r[5]||'').trim(),declared:(r[6]||'').trim(),status:status,extra:(r[8]||'').trim()});
   }
 }
 function parseItems(rows){
