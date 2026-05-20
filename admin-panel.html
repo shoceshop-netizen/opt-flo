@@ -22,7 +22,7 @@
   --rad:10px;--rad2:6px;
 }
 html,body{height:100%;overflow:hidden;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--tx);background:var(--bg);display:flex;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:#d0d0d0;border-radius:2px;}
 
@@ -41,11 +41,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .sb{width:200px;height:100vh;background:#fff;border-right:1px solid var(--bo);display:flex;flex-direction:column;flex-shrink:0;}
 .sb-logo{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bo);}
 .sb-icon{width:34px;height:34px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.sb-name{font-size:14px;font-weight:700;color:var(--gd);}
+.sb-name{font-size:15px;font-weight:700;color:var(--gd);}
 .sb-sub{font-size:10px;color:var(--mu);}
 .sb-nav{flex:1;padding:8px;overflow-y:auto;}
 .nav-sec{font-size:9px;font-weight:700;color:#bbb;letter-spacing:1px;text-transform:uppercase;padding:10px 8px 4px;}
-.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;color:var(--mu);font-size:13px;transition:all .12s;margin-bottom:1px;user-select:none;}
+.ni{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:6px;cursor:pointer;color:var(--mu);font-size:14px;transition:all .12s;margin-bottom:1px;user-select:none;}
 .ni:hover,.ni.on{background:var(--gl);color:var(--gd);}
 .ni.on{font-weight:600;}
 .ni-ic{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
@@ -58,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .tb{height:50px;background:var(--card);border-bottom:1px solid var(--bo);padding:0 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:var(--sh);}
-.tb-title{font-size:15px;font-weight:700;}
+.tb-title{font-size:17px;font-weight:700;}
 .tb-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
 .upd{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mu);}
 .udot{width:7px;height:7px;border-radius:50%;background:#ccc;}
@@ -68,7 +68,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* BUTTONS */
-.btn{padding:7px 14px;border-radius:6px;border:1px solid var(--bo);background:#fff;color:var(--tx);font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:500;}
+.btn{padding:8px 14px;border-radius:6px;border:1px solid var(--bo);background:#fff;color:var(--tx);font-size:13px;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:500;}
 .btn:hover{background:var(--bg);}
 .btn.sm{padding:5px 10px;font-size:11px;}
 .btn.pr{background:var(--g);color:#fff;border-color:var(--g);}
@@ -96,7 +96,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .stat-item{cursor:pointer;transition:opacity .12s;min-width:60px;}
 .stat-item:hover{opacity:.7;}
 .stat-item.af .stat-num{text-decoration:underline;}
-.stat-num{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1.1;}
+.stat-num{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1.1;}
 .stat-lbl{font-size:10px;color:var(--mu);margin-top:2px;white-space:nowrap;}
 .c-new{color:var(--b);}
 .c-work{color:var(--y);}
@@ -108,13 +108,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* Left list */
 .order-list-col{width:260px;border-right:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;background:#fff;}
 .olc-head{padding:10px 14px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;}
-.olc-title{font-size:12px;font-weight:700;}
+.olc-title{font-size:13px;font-weight:700;}
 .olc-cnt{font-size:11px;color:var(--mu);background:var(--bo2);padding:1px 7px;border-radius:10px;}
 .olc-search{padding:8px 10px;border-bottom:1px solid var(--bo2);}
-.si{width:100%;border:1px solid var(--bo);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;background:var(--bg);color:var(--tx);}
+.si{width:100%;border:1px solid var(--bo);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;background:var(--bg);color:var(--tx);}
 .si:focus{border-color:var(--g);background:#fff;}
 .olc-filters{padding:6px 10px;border-bottom:1px solid var(--bo2);display:flex;gap:4px;flex-wrap:wrap;}
-.chip{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--bo);background:#fff;color:var(--mu);transition:all .12s;white-space:nowrap;}
+.chip{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--bo);background:#fff;color:var(--mu);transition:all .12s;white-space:nowrap;}
 .chip.on{background:var(--gl);color:var(--gd);border-color:#a5d6a7;}
 .order-list{flex:1;overflow-y:auto;}
 
@@ -123,9 +123,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .oi:hover{background:#f9fdf9;}
 .oi.on{background:var(--gl);border-left-color:var(--g);}
 .oi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
-.oi-num{font-size:12px;font-weight:700;color:var(--gd);}
+.oi-num{font-size:13px;font-weight:700;color:var(--gd);}
 .oi-date{font-size:10px;color:var(--mu);}
-.oi-name{font-size:13px;font-weight:500;margin-bottom:3px;}
+.oi-name{font-size:14px;font-weight:500;margin-bottom:3px;}
 .oi-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .warn-tag{font-size:10px;color:var(--r);font-weight:500;}
 
@@ -149,8 +149,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* Detail header */
 .dh{background:var(--card);padding:14px 20px;border-bottom:1px solid var(--bo);flex-shrink:0;}
 .dh-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px;}
-.dh-num{font-size:22px;font-weight:800;color:var(--gd);letter-spacing:-1px;}
-.dh-name{font-size:14px;font-weight:600;margin-top:2px;}
+.dh-num{font-size:24px;font-weight:800;color:var(--gd);letter-spacing:-1px;}
+.dh-name{font-size:16px;font-weight:600;margin-top:2px;}
 .dh-sub{font-size:12px;color:var(--mu);margin-top:1px;}
 .dh-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
 
@@ -179,7 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .od-item.no-stock{background:#fff8f8;border-color:#ffcdd2;}
 .od-item.has-stock{background:#f9fdf9;}
 .od-art{font-family:monospace;font-size:11px;font-weight:700;color:var(--mu);min-width:70px;}
-.od-name{flex:1;font-size:13px;font-weight:500;}
+.od-name{flex:1;font-size:14px;font-weight:500;}
 .od-loc{font-size:10px;color:var(--mu);background:var(--bo2);padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;}
 .od-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;text-align:right;min-width:80px;}
 .od-status{font-size:11px;font-weight:700;}
@@ -212,7 +212,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* Picker items */
 .pk-item{background:var(--card);border:1px solid var(--bo);border-radius:var(--rad);padding:9px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
 .pk-art{font-family:monospace;font-size:11px;font-weight:700;color:var(--gd);min-width:70px;}
-.pk-name{flex:1;font-size:13px;font-weight:500;}
+.pk-name{flex:1;font-size:14px;font-weight:500;}
 .pk-qty{font-size:14px;font-weight:700;min-width:30px;text-align:center;}
 .pk-loc{font-size:10px;color:var(--mu);background:var(--bo2);padding:2px 7px;border-radius:4px;}
 .pk-done{font-size:11px;font-weight:700;color:var(--g);}
@@ -221,13 +221,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 
 /* ===== SCAN PAGE ===== */
 .scan-top{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--bo);flex-shrink:0;}
-.scan-lbl{font-size:12px;font-weight:700;color:var(--gd);margin-bottom:8px;}
+.scan-lbl{font-size:14px;font-weight:700;color:var(--gd);margin-bottom:8px;}
 .scan-wrap{max-width:540px;}
-.s-inp{width:100%;border:2px solid var(--g);border-radius:8px;padding:12px 16px;font-size:20px;font-family:monospace;outline:none;text-align:center;letter-spacing:4px;background:#fff;transition:box-shadow .2s;}
+.s-inp{width:100%;border:2px solid var(--g);border-radius:8px;padding:14px 18px;font-size:22px;font-family:monospace;outline:none;text-align:center;letter-spacing:4px;background:#fff;transition:box-shadow .2s;}
 .s-inp:focus{box-shadow:0 0 0 4px rgba(61,139,67,.15);}
 .s-inp.shake{animation:shk .3s ease;}
 @keyframes shk{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.s-fb{margin-top:8px;padding:9px 14px;border-radius:6px;font-size:13px;font-weight:500;min-height:38px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+.s-fb{margin-top:8px;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:500;min-height:38px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
 .sf-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;}
 .sf-er{background:#ffebee;color:#c62828;border:1px solid #ef9a9a;}
 .sf-wa{background:#fff3e0;color:#e65100;border:1px solid #ffcc80;}
@@ -243,7 +243,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .pb-w{width:70px;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
 .pb-f{height:100%;border-radius:3px;background:var(--g);transition:width .3s;}
 .sob-body{display:none;border-top:1px solid var(--bo);}
-.sob-row{padding:7px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bo2);font-size:12px;}
+.sob-row{padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bo2);font-size:13px;}
 .sob-row:last-child{border-bottom:none;}
 .sob-row.ok{background:#f9fdf9;}
 .sob-row.part{background:#fffde7;}
@@ -259,7 +259,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 /* ===== STOCK PAGE ===== */
 .stk-tb{padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bo);display:flex;gap:8px;align-items:center;flex-shrink:0;}
 .stk-wrap{flex:1;overflow:auto;}
-.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt{width:100%;border-collapse:collapse;font-size:13px;}
 .dt th{background:#f5f5f5;border-bottom:2px solid var(--bo);padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;position:sticky;top:0;}
 .dt td{padding:7px 10px;border-bottom:1px solid var(--bo2);vertical-align:middle;}
 .dt tbody tr:hover td{background:#f9fdf9;}
@@ -466,10 +466,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SECRET='florium_secret_2026';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94';
+var API_KEY='AIzaSyAD7gY9HHPqtML5eSMJrc_HjpFVWtoTj8Q';
+var CACHE_KEY='fl_cache';
 
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SECRET='florium_secret_2026';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94';
+var API_KEY='AIzaSyAD7gY9HHPqtML5eSMJrc_HjpFVWtoTj8Q';
+var CACHE_KEY='fl_cache';
 
 // ===== CONFIG =====
 // Всі секрети збережені в Apps Script — тут тільки публічний URL
@@ -493,12 +497,11 @@ function checkAuth(){
 function G(id){return document.getElementById(id);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 async function fetchSheet(name,range){
-  // Дані завантажуються через Apps Script — API ключ захищений на сервері
-  var url=SCRIPT_URL+'?action=getData&sheet='+encodeURIComponent(name)+'&range='+encodeURIComponent(range)+'&secret='+SECRET;
+  // Пряме читання через Google Sheets API (швидко)
+  var url='https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/'+encodeURIComponent(name)+'!'+range+'?key='+API_KEY;
   var r=await fetch(url);
-  if(!r.ok)throw new Error('HTTP '+r.status);
   var d=await r.json();
-  if(!d.ok)throw new Error(d.error||'Помилка завантаження');
+  if(!r.ok)throw new Error('HTTP '+r.status+': '+(d.error&&d.error.message||'?'));
   return d.values||[];
 }
 
@@ -525,8 +528,37 @@ function toast(msg,type,dur){
 }
 
 // Sound
-function beep(ok){
-  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=ok?880:300;o.type=ok?'sine':'square';g.gain.setValueAtTime(.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+(ok?.15:.3));o.start();o.stop(ctx.currentTime+(ok?.15:.3));}catch(e){}
+function beep(type){
+  // type: 'ok', 'error', 'warn', 'complete'
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator();var g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    if(type==='ok'||type===true){
+      o.frequency.value=880;o.type='sine';
+      g.gain.setValueAtTime(.25,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
+      o.start();o.stop(ctx.currentTime+.12);
+    } else if(type==='complete'){
+      // Double beep for complete
+      o.frequency.value=660;o.type='sine';
+      g.gain.setValueAtTime(.2,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.1);
+      o.start();o.stop(ctx.currentTime+.1);
+      var o2=ctx.createOscillator();var g2=ctx.createGain();
+      o2.connect(g2);g2.connect(ctx.destination);
+      o2.frequency.value=880;o2.type='sine';
+      g2.gain.setValueAtTime(.2,ctx.currentTime+.15);
+      g2.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.28);
+      o2.start(ctx.currentTime+.15);o2.stop(ctx.currentTime+.28);
+    } else {
+      // error
+      o.frequency.value=220;o.type='sawtooth';
+      g.gain.setValueAtTime(.2,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.25);
+      o.start();o.stop(ctx.currentTime+.25);
+    }
+  }catch(e){}
 }
 
 // Status
@@ -555,7 +587,7 @@ function stagesH(status){
 }
 
 // ===== STATE =====
-var orders=[],items={},stock=[],scanState={},scanLog=[];
+var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[];
 var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
 
 // ===== INIT =====
@@ -590,12 +622,26 @@ function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove(
 // ===== LOAD =====
 async function loadAll(){
   setSyncState('pend','Оновлення...');
+  // Показуємо кеш одразу поки вантажаться нові дані
   try{
-    var res=await Promise.all([fetchSheet('Замовлення','A:I'),fetchSheet('вигрузка','A:I'),fetchSheet('товар склад','A:K')]);
-    parseOrders(res[0]);parseItems(res[1]);parseStock(res[2]);
+    var cached=localStorage.getItem(CACHE_KEY);
+    if(cached){
+      var c=JSON.parse(cached);
+      if(c.orders&&c.items&&c.stock){
+        orders=c.orders;items=c.items;stock=c.stock;
+        renderAll();
+        G('updTxt').textContent='Кеш '+(c.time||'')+'...';
+      }
+    }
+  }catch(e){}
+  try{
+    var res=await Promise.all([fetchSheet('Замовлення','A:I'),fetchSheet('вигрузка','A:I'),fetchSheet('товар склад','A:Z'),fetchSheet('інфо фури','A:R'),fetchSheet('прихід','A:H')]);
+    parseOrders(res[0]);parseItems(res[1]);parseStock(res[2]);parseFury(res[3]);parseIncome(res[4]);
+    // Зберегти в кеш
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
     G('updTxt').textContent='Оновлено '+now;
-    if(G('updDot'))G('updDot').className='upd-dot';
+    if(G('updDot'))G('updDot').className='upd-dot ok';
     setSyncState('ok','Підключено');
     renderAll();
   }catch(err){
@@ -616,6 +662,8 @@ function parseOrders(rows){
     var r=rows[i]||[];
     var name=(r[0]||'').trim(),num=(r[1]||'').trim();
     if(!name&&!num)continue;
+    // Skip rows with #REF! error
+    if(name.includes('#REF')||name.includes('#ERR')||name.includes('#N/A'))continue;
     orders.push({id:'r'+i,num,name,comment:(r[2]||'').trim(),address:(r[3]||'').trim(),note:(r[4]||'').trim(),ttn:(r[5]||'').trim(),declared:(r[6]||'').trim(),status:(r[7]||'').trim(),extra:(r[8]||'').trim()});
   }
 }
@@ -828,6 +876,25 @@ function selectOrder(id){
   if(o.extra)body+=`<div class="ic"><div class="ic-l">Додаток</div><div class="ic-v">${esc(o.extra)}</div></div>`;
   body+=`</div>`;
   if(o.note)body+=`<div class="note-c">📝 <span>${esc(o.note)}</span></div>`;
+
+  // Історія приходу з аркушу "прихід"
+  var orderHistory=income.filter(function(r){return r.orderNum===o.num;});
+  if(orderHistory.length){
+    body+='<div class="sec-t">📥 Історія приходу</div>';
+    body+='<div style="overflow:auto"><table class="dt" style="font-size:13px"><thead><tr><th>Дата</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th><th>Оператор</th></tr></thead><tbody>';
+    orderHistory.forEach(function(r){
+      body+='<tr><td style="font-size:11px;color:var(--mu)">'+esc(r.date)+'</td>'
+        +'<td class="art">'+esc(r.art)+'</td>'
+        +'<td style="font-size:13px">'+esc(r.name)+'</td>'
+        +'<td style="text-align:center;font-weight:700">'+r.qty+'</td>'
+        +'<td style="font-size:11px;color:var(--mu)">'+esc(r.operator)+'</td>'
+        +'</tr>';
+    });
+    body+='</tbody></table></div>';
+    var totalScanned=orderHistory.reduce(function(s,r){return s+r.qty;},0);
+    body+='<div class="tbl-total">Всього отримано: '+totalScanned+' шт</div>';
+  }
+
   G('odB').innerHTML=body;
 }
 
@@ -861,7 +928,42 @@ function selectPicker(id){
   var its=items[o.num]||[];
   if(!its.length){G('pdB').innerHTML='<div class="es"><div class="es-ic">📋</div><div class="es-t">Немає позицій</div><div class="es-s">Додайте дані в аркуш «вигрузка»</div></div>';return;}
   var tq=its.reduce((s,i)=>s+i.qty,0);
-  G('pdB').innerHTML=`<div style="overflow:auto;flex:1;padding:2px"><table class="dt"><thead><tr><th>#</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th><th>Розміщення</th><th style="text-align:center">✓</th></tr></thead><tbody>${its.map((it,i)=>{var st=stock.find(s=>s.art===it.art);var loc=st?st.location:'—';return`<tr><td style="color:var(--mu);font-size:11px">${i+1}</td><td class="art">${esc(it.art)}</td><td>${esc(it.name)}</td><td style="text-align:center;font-weight:700">${it.qty}</td><td><span class="loc-tag" title="${esc(loc)}">${esc(loc)}</span></td><td style="text-align:center"><div class="chk" onclick="this.classList.toggle('on');this.textContent=this.classList.contains('on')?'✓':''"></div></td></tr>`;}).join('')}</tbody></table></div><div style="padding:8px 4px"><div class="tbl-total">Всього: ${its.length} поз · ${tq} шт</div></div>`;
+  G('pdB').innerHTML=(function(){
+    var rows=its.map(function(it,i){
+      var st=stock.find(function(s){return s.art===it.art;});
+      var loc=st?st.location:'—';
+      var fu=fury[it.art]||fury['f_'+it.art]||null;
+      var artF=fu?fu.artFlorium:'—';
+      var packQ=fu?fu.packQty:(st&&st.packQty?st.packQty:'—');
+      var ss=scanState[o.num]||{};
+      var done=(ss[it.art]||0)>=it.qty;
+      return '<tr style="'+(done?'background:#f1f8e9':'')+' font-size:14px">'
+        +'<td style="color:var(--mu);text-align:center;width:30px">'+(i+1)+'</td>'
+        +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
+        +'<td style="font-family:monospace;font-size:12px;color:#7b1fa2;font-weight:600">'+esc(artF)+'</td>'
+        +'<td style="font-size:14px;font-weight:500">'+esc(it.name)+'</td>'
+        +'<td style="text-align:center;font-weight:700;font-size:15px">'+it.qty+'</td>'
+        +'<td style="text-align:center;font-size:13px;color:var(--b);font-weight:600">'+esc(packQ)+'</td>'
+        +'<td style="font-size:12px;color:var(--mu)"><span style="background:var(--bo2);padding:2px 6px;border-radius:4px;white-space:nowrap">'+esc(loc)+'</span></td>'
+        +'<td style="text-align:center"><div class="pk-chk" onclick="pkChkToggle(this)""></div></td>'
+        +'</tr>';
+    }).join('');
+    return '<div style="overflow:auto;flex:1">'
+      +'<table class="dt" style="font-size:14px">'
+      +'<thead><tr style="font-size:11px">'
+      +'<th style="text-align:center;width:30px">#</th>'
+      +'<th>Артикул</th>'
+      +'<th style="color:#7b1fa2">Арт.Флоріум</th>'
+      +'<th>Назва</th>'
+      +'<th style="text-align:center">К-сть</th>'
+      +'<th style="text-align:center;color:var(--b)">В уп.</th>'
+      +'<th>Розміщення</th>'
+      +'<th style="text-align:center">&#10003;</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table></div>'
+      +'<div style="padding:8px 4px"><div class="tbl-total">Всього: '+its.length+' поз · '+tq+' шт</div></div>';
+  })();
   G('printBtn').onclick=function(){doPrint(o,its);};
   if(G('pkNext')){
     var k2=sk(o.status);
@@ -889,6 +991,10 @@ function doPrint(o,its){
 // ===== SCAN - прийом по артикулу =====
 var scanTimer=null;
 
+function pkChkToggle(el){
+  el.classList.toggle('on');
+  el.innerHTML=el.classList.contains('on')?'&#10003;':'';
+}
 function makeReadyBtn(num, name) {
   var btn = document.createElement('div');
   btn.style.cssText = 'padding:10px 14px;background:#e8f5e9;border-top:1px solid #a5d6a7;display:flex;gap:8px;align-items:center;';
@@ -1008,7 +1114,7 @@ async function processIncomingScan(){
     });
 
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
-    beep(false);
+    beep('error');
 
     if(allDone.length){
       fb.className='s-fb sf-wa';
@@ -1022,7 +1128,7 @@ async function processIncomingScan(){
     return;
   }
 
-  beep(true);
+  beep('ok');
   var o=best.order;var item=best.item;
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=(scanState[o.num][art]||0)+1;
@@ -1066,7 +1172,51 @@ async function processIncomingScan(){
     var res=await callScript('scan',{art:art,name:item.name,qty:1,orderNum:o.num,orderName:o.name});
     if(res&&res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);loadAll();}
   }
-  if(isDone)toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);
+  if(isDone){toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);beep('ok');}
+}
+
+// ===== PARSE FURY =====
+// інфо фури: A=Назва, B=Розмір, F=Артикул Флоріум, K=К-сть в упаковці, J=Артикул ящика
+function parseFury(rows){
+  fury={};
+  for(var i=2;i<rows.length;i++){
+    var r=rows[i]||[];
+    var artF=(r[5]||'').toString().trim(); // col F = Florium артикул
+    var artBox=(r[9]||'').toString().trim(); // col J = Артикул ящика
+    if(!artF&&!artBox)continue;
+    var obj={
+      name:(r[0]||'').trim(),
+      size:(r[1]||'').trim(),
+      artFlorium:artF,
+      artBox:artBox,
+      packQty:(r[10]||'').toString().trim(), // col K = К-сть в упаковці
+      supplier:(r[2]||'').trim(),
+    };
+    if(artBox)fury[artBox]=obj;
+    if(artF)fury['f_'+artF]=obj;
+  }
+  console.log('Fury loaded:', Object.keys(fury).length, 'items');
+}
+
+// ===== PARSE INCOME (прихід) =====
+// прихід: A=Дата/час, B=Артикул, C=Назва, D=К-сть, E=№ замовлення, F=Клієнт, G=Оператор, H=Тип
+function parseIncome(rows){
+  income=[];
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i]||[];
+    if(!(r[1]||'').trim())continue;
+    income.push({
+      date:(r[0]||'').trim(),
+      art:(r[1]||'').trim(),
+      name:(r[2]||'').trim(),
+      qty:parseInt(r[3])||0,
+      orderNum:(r[4]||'').trim(),
+      client:(r[5]||'').trim(),
+      operator:(r[6]||'').trim(),
+      type:(r[7]||'').trim()
+    });
+  }
+  console.log('Income loaded:', income.length, 'records');
 }
 
 // ===== SCAN LOG =====
