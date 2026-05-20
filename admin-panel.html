@@ -28,28 +28,30 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 ::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
 
 /* PRINT */
-@page{size:A4 landscape;margin:7mm 9mm;}
+@page{size:A4 landscape;margin:5mm;}
 @media print{
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:Arial,Helvetica,sans-serif!important;}
   html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;margin:0;padding:0;}
   body>*{display:none!important;}
   .modal-ov{display:none!important;}
   .tc{display:none!important;}
-  #pz{display:block!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;font-family:Arial,Helvetica,sans-serif;color:#000;font-weight:400;}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:10px;page-break-after:avoid;}
-  .ph-l{font-size:24px;font-weight:500;letter-spacing:-.5px;}
-  .ph-r{font-size:16px;font-weight:400;}
+  #pz{display:block!important;position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;color:#000;font-weight:400;}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #000;padding:0 2mm 6px;margin-bottom:8px;page-break-after:avoid;}
+  .ph-l{font-size:20px;font-weight:600;letter-spacing:-.3px;}
+  .ph-r{font-size:14px;font-weight:400;color:#333;}
   table.pt{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto!important;break-inside:auto!important;}
   table.pt thead{display:table-header-group;}
   table.pt tbody{display:table-row-group;}
   table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:auto;}
-  table.pt th,table.pt td{border:1px solid #000;padding:8px 9px;font-size:15px;line-height:1.25;font-weight:400;vertical-align:middle;}
-  table.pt th{background:#ececec;font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:7px 9px;}
+  /* єдиний стиль для всіх клітинок — без винятків */
+  table.pt th,table.pt td{border:1px solid #000;padding:7px 8px;font-size:14px;line-height:1.25;font-weight:400;vertical-align:middle;text-align:left;}
+  table.pt th{background:#ececec;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;}
   table.pt td.c{text-align:center;}
-  table.pt td.m{font-family:'Courier New',monospace;font-size:14px;}
-  table.pt td.big{font-size:19px;text-align:center;font-weight:400;}
+  /* монотонність — артикул, к-сть і всього шт усі без винятків */
+  table.pt td.m{font-weight:400;}
+  table.pt td.big{text-align:center;font-weight:400;}
   table.pt tbody tr:nth-child(even){background:#f5f5f5;}
-  table.pt .chk{display:inline-block;width:20px;height:20px;border:1.2px solid #000;}
+  table.pt .chk{display:inline-block;width:18px;height:18px;border:1.2px solid #000;}
 }
 #pz{display:none;}
 
