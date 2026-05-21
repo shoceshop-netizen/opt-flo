@@ -689,9 +689,11 @@ function checkAuth(){
 }
 
 function showLogin(){
-  // Ховаємо весь UI
+  // Ховаємо весь UI — крім loginScreen, scripts, styles
   document.querySelectorAll('body > *').forEach(function(el){
-    if(el.id!=='loginScreen'&&el.tagName!=='SCRIPT'&&el.tagName!=='STYLE')el.style.display='none';
+    if(el.id==='loginScreen')return;
+    if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
+    el.style.display='none';
   });
   // Створюємо/показуємо екран логіну
   var ls=G('loginScreen');
@@ -791,16 +793,15 @@ function getDeviceName(){
 }
 
 function showApp(){
-  // Закриваємо всі модалки що могли залишитись з минулої сесії
-  ['combinedModal','verifyModal','statusModal','dupWarnModal'].forEach(function(id){
-    var m=G(id);if(m)m.style.display='none';
-  });
-  // Показуємо UI
+  // Показуємо UI — але НЕ чіпаємо модалки (їх display керується inline-style)
   document.querySelectorAll('body > *').forEach(function(el){
-    if(el.tagName!=='SCRIPT'&&el.tagName!=='STYLE'&&el.id!=='loginScreen'){
-      el.style.display='';
-    }
+    if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
+    if(el.id==='loginScreen')return;
+    if(el.classList&&el.classList.contains('modal-ov'))return; // ← модалки пропускаємо
+    el.style.display='';
   });
+  // Усі модалки явно закриваємо
+  document.querySelectorAll('.modal-ov').forEach(function(m){m.style.display='none';});
   var ls=G('loginScreen');if(ls)ls.remove();
   // Event delegation for nav items
   document.querySelectorAll('.ni[id^="nav-"]').forEach(function(el){
