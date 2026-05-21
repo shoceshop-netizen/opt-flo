@@ -1401,14 +1401,13 @@ function openVerifyModal(o){
   verifyState.scanned={};
   verifyState.strangers=[];
   G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:3px">#'+esc(o.num)+' · '+esc(o.name)+'</div>'
-    +'<div style="font-size:12px;color:var(--tx4)">Скануй штрихкоди — система автоматично рахує. Можна також ввести вручну і натиснути Enter.</div>';
+    +'<div style="font-size:12px;color:var(--tx4)">Скануй штрихкоди — система рахує автоматично. Можна ввести вручну і натиснути Enter.</div>';
   renderVerifyTable();
   G('verifyModal').style.display='flex';
   setTimeout(function(){
     var inp=G('vmInput');
     if(inp){
       inp.focus();
-      // Автофокус — якщо клік не на input/button, повертаємо фокус
       var modal=G('verifyModal');
       modal.onclick=function(e){
         if(e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON'){
@@ -1417,11 +1416,26 @@ function openVerifyModal(o){
       };
     }
   },100);
-  // Enter в полі — додає скан (сканери штрихкодів зазвичай шлють Enter після коду)
-  G('vmInput').onkeydown=function(e){
-    if(e.key==='Enter'){
+  // Скидаємо попередній таймер дебаунсу
+  if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+  var inp=G('vmInput');
+  // Enter — миттєвий скан
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'||e.key==='Tab'){
       e.preventDefault();
+      if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
       verifyScanArt();
+    }
+  };
+  // Дебаунс — якщо введено >=3 символів і немає вводу >180мс, виконати скан
+  // Це покриває сканери що не шлють Enter
+  inp.oninput=function(){
+    if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+    var v=inp.value.trim();
+    if(v.length>=3){
+      window._verifyDebounce=setTimeout(function(){
+        verifyScanArt();
+      },200);
     }
   };
 }
