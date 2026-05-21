@@ -455,6 +455,9 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
     <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span>Товари</div>
   </div>
   <div class="sb-foot" id="sbt"></div>
+  <div style="padding:10px 18px;border-top:1px solid var(--bo)">
+    <button onclick="logout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid var(--bo);color:var(--tx3);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='var(--red-l)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--tx3)';this.style.borderColor='var(--bo)'">🔒 Вийти</button>
+  </div>
 </aside>
 
 <!-- MAIN -->
@@ -619,7 +622,134 @@ var SECRET    = 'florium_secret_2026';
 var SHEET_ID  = '1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // тільки для посилання на таблицю
 
 // ===== AUTH — відключено =====
+// ===== AUTH =====
+var AUTH_KEY='florium_session_v1';
+
 function checkAuth(){
+  // Перевіряємо токен у localStorage
+  var sess=null;
+  try{sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}
+  
+  if(sess&&sess.token&&sess.expiresAt&&Date.now()<sess.expiresAt){
+    // Токен валідний — заходимо
+    showApp();
+    return;
+  }
+  
+  // Токен невалідний/відсутній — показуємо логін
+  showLogin();
+}
+
+function showLogin(){
+  // Ховаємо весь UI
+  document.querySelectorAll('body > *').forEach(function(el){
+    if(el.id!=='loginScreen'&&el.tagName!=='SCRIPT'&&el.tagName!=='STYLE')el.style.display='none';
+  });
+  // Створюємо/показуємо екран логіну
+  var ls=G('loginScreen');
+  if(!ls){
+    ls=document.createElement('div');
+    ls.id='loginScreen';
+    ls.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929,#1a3a52);z-index:99999;font-family:var(--font);';
+    ls.innerHTML='<div style="background:#fff;border-radius:20px;padding:36px 32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3);">'
+      +'<div style="text-align:center;margin-bottom:24px">'
+        +'<div style="width:64px;height:64px;background:linear-gradient(135deg,#34c759,#248a3d);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px;box-shadow:0 6px 20px rgba(52,199,89,.3)">🌱</div>'
+        +'<div style="font-size:22px;font-weight:700;color:#1d1d1f;letter-spacing:-.5px">Florium Admin</div>'
+        +'<div style="font-size:13px;color:#86868b;margin-top:4px">Введіть пароль для входу</div>'
+      +'</div>'
+      +'<div style="margin-bottom:14px">'
+        +'<input id="loginPwd" type="password" placeholder="Пароль" autocomplete="current-password" style="width:100%;padding:13px 16px;border:1.5px solid #d2d2d7;border-radius:10px;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor=\'#0071e3\'" onblur="this.style.borderColor=\'#d2d2d7\'">'
+      +'</div>'
+      +'<div id="loginErr" style="font-size:13px;color:#ff3b30;margin-bottom:14px;min-height:18px;text-align:center;font-weight:500"></div>'
+      +'<button onclick="doLogin()" id="loginBtn" style="width:100%;padding:14px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background=\'#0060c0\'" onmouseout="this.style.background=\'#0071e3\'">Увійти</button>'
+      +'<div style="text-align:center;margin-top:18px;font-size:11px;color:#86868b">Сесія діє 24 години</div>'
+    +'</div>';
+    document.body.appendChild(ls);
+  } else {
+    ls.style.display='flex';
+  }
+  setTimeout(function(){G('loginPwd')&&G('loginPwd').focus();},100);
+  // Enter — submit
+  G('loginPwd').onkeydown=function(e){if(e.key==='Enter')doLogin();};
+}
+
+async function doLogin(){
+  var pwdInp=G('loginPwd');
+  var errEl=G('loginErr');
+  var btn=G('loginBtn');
+  var pwd=pwdInp.value;
+  if(!pwd){errEl.textContent='Введіть пароль';return;}
+  
+  btn.disabled=true;
+  btn.textContent='Вхід...';
+  btn.style.opacity='.7';
+  errEl.textContent='';
+  
+  try{
+    if(!SCRIPT_URL){
+      errEl.textContent='SCRIPT_URL не налаштовано';
+      btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+      return;
+    }
+    var device=getDeviceName();
+    var ua=navigator.userAgent;
+    var res=await callScript('login',{password:pwd,device:device,userAgent:ua});
+    
+    if(res&&res.ok&&res.token){
+      // Зберігаємо сесію
+      localStorage.setItem(AUTH_KEY,JSON.stringify({
+        token:res.token,
+        expiresAt:res.expiresAt,
+        loggedAt:Date.now()
+      }));
+      // Показуємо додаток
+      var ls=G('loginScreen');if(ls)ls.remove();
+      showApp();
+    } else {
+      errEl.textContent='Невірний пароль';
+      pwdInp.value='';
+      pwdInp.focus();
+      btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+      // shake
+      pwdInp.style.animation='alertShake .4s';
+      setTimeout(function(){pwdInp.style.animation='';},400);
+    }
+  }catch(e){
+    errEl.textContent='Помилка з\'єднання: '+e.message;
+    btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+  }
+}
+
+function logout(){
+  if(!confirm('Вийти з адмін-панелі?'))return;
+  localStorage.removeItem(AUTH_KEY);
+  location.reload();
+}
+
+function getDeviceName(){
+  var ua=navigator.userAgent;
+  var os='Unknown';
+  if(/Windows/.test(ua))os='Windows';
+  else if(/Mac/.test(ua))os='Mac';
+  else if(/Android/.test(ua))os='Android';
+  else if(/iPhone|iPad/.test(ua))os='iOS';
+  else if(/Linux/.test(ua))os='Linux';
+  var browser='Browser';
+  if(/Chrome/.test(ua)&&!/Edg/.test(ua))browser='Chrome';
+  else if(/Firefox/.test(ua))browser='Firefox';
+  else if(/Safari/.test(ua))browser='Safari';
+  else if(/Edg/.test(ua))browser='Edge';
+  return os+' · '+browser;
+}
+
+function showApp(){
+  // Показуємо UI
+  document.querySelectorAll('body > *').forEach(function(el){
+    if(el.tagName!=='SCRIPT'&&el.tagName!=='STYLE'&&el.id!=='loginScreen'){
+      el.style.display='';
+    }
+  });
+  var ls=G('loginScreen');if(ls)ls.remove();
   // Event delegation for nav items
   document.querySelectorAll('.ni[id^="nav-"]').forEach(function(el){
     el.addEventListener('click',function(){
@@ -628,6 +758,18 @@ function checkAuth(){
     });
   });
   init();
+  // Перевіряємо expiry кожні 5 хв
+  setInterval(checkSessionExpiry,5*60*1000);
+}
+
+function checkSessionExpiry(){
+  try{
+    var sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
+    if(!sess||Date.now()>=sess.expiresAt){
+      toast('Сесія завершилась — потрібно увійти знову','wa',5000);
+      setTimeout(function(){location.reload();},3000);
+    }
+  }catch(e){}
 }
 
 // ===== HELPERS =====
