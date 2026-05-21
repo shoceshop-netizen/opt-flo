@@ -126,48 +126,43 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 @keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
 @keyframes alertShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}25%{transform:translateX(8px)}40%{transform:translateX(-6px)}55%{transform:translateX(6px)}70%{transform:translateX(-3px)}85%{transform:translateX(3px)}}
 
-/* WELCOME SCREEN */
+/* WELCOME SCREEN — оптимізовано */
 @keyframes wfadeIn{from{opacity:0}to{opacity:1}}
 @keyframes wlogoIn{
-  0%{opacity:0;transform:translateY(-30px) scale(.7);letter-spacing:-20px;filter:blur(20px);}
-  60%{opacity:1;filter:blur(0);}
-  100%{opacity:1;transform:translateY(0) scale(1);letter-spacing:-2px;filter:blur(0);}
+  0%{opacity:0;transform:translateY(-20px) scale(.9);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
 }
 @keyframes wcardIn{
-  from{opacity:0;transform:translateY(40px) scale(.9);}
-  to{opacity:1;transform:translateY(0) scale(1);}
-}
-@keyframes worbFloat{
-  0%,100%{transform:translate(0,0) scale(1);}
-  33%{transform:translate(60px,-40px) scale(1.1);}
-  66%{transform:translate(-40px,30px) scale(.9);}
-}
-@keyframes wbreath{
-  0%,100%{transform:scale(1);}
-  50%{transform:scale(1.08);}
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
 }
 
-#welcomeScreen{animation:wfadeIn .4s ease;}
-.wbg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.4;animation:worbFloat 15s ease-in-out infinite;}
-.wbg-orb-1{width:400px;height:400px;background:#0071e3;top:-100px;left:-100px;}
-.wbg-orb-2{width:500px;height:500px;background:#34c759;bottom:-150px;right:-100px;animation-delay:-5s;}
-.wbg-orb-3{width:350px;height:350px;background:#af52de;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-10s;opacity:.25;}
+#welcomeScreen{animation:wfadeIn .3s ease;will-change:opacity;}
+/* Один статичний градієнт замість трьох анімованих орбів */
+.wbg-orb{display:none;}
+#welcomeScreen::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 20% 30%,rgba(0,113,227,.3) 0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(52,199,89,.25) 0%,transparent 50%),radial-gradient(circle at 50% 100%,rgba(175,82,222,.2) 0%,transparent 50%);
+  pointer-events:none;
+}
 
 .wlogo-wrap{text-align:center;margin-bottom:50px;position:relative;z-index:2;}
-.wlogo-icon{font-size:60px;margin-bottom:14px;animation:wbreath 3s ease-in-out infinite;}
-.wtitle{font-size:96px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:10px;animation:wlogoIn 1s cubic-bezier(.2,.7,.3,1) backwards;background:linear-gradient(135deg,#fff 0%,#a8d8ff 50%,#fff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.wsubtitle{font-size:15px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:2px;text-transform:uppercase;animation:wfadeIn 1s .4s backwards;}
+.wlogo-icon{font-size:60px;margin-bottom:14px;}
+.wtitle{font-size:96px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:10px;animation:wlogoIn .5s cubic-bezier(.2,.7,.3,1) backwards;background:linear-gradient(135deg,#fff 0%,#a8d8ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.wsubtitle{font-size:15px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:2px;text-transform:uppercase;animation:wfadeIn .5s .2s backwards;}
 
 .wcards{display:grid;grid-template-columns:repeat(4,200px);gap:18px;position:relative;z-index:2;}
-.wcard{background:rgba(255,255,255,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px 20px;cursor:pointer;transition:all .25s cubic-bezier(.2,.7,.3,1);text-align:center;animation:wcardIn .6s cubic-bezier(.2,.7,.3,1) backwards;}
-.wcard:hover{transform:translateY(-6px) scale(1.03);background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);box-shadow:0 16px 40px rgba(0,0,0,.3);}
-.wcard:active{transform:translateY(-3px) scale(1.01);}
-.wcard-ic{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.wcard{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:22px 20px;cursor:pointer;transition:transform .2s ease,background .2s ease;text-align:center;animation:wcardIn .4s ease backwards;}
+.wcard:hover{transform:translateY(-4px);background:rgba(255,255,255,.16);}
+.wcard:active{transform:translateY(-2px);}
+.wcard-ic{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;}
 .wcard-t{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:4px;}
 .wcard-s{font-size:12px;color:rgba(255,255,255,.55);font-weight:500;}
 
-.wskip{position:absolute;bottom:32px;right:32px;color:rgba(255,255,255,.45);font-size:13px;font-weight:500;cursor:pointer;transition:color .15s;animation:wfadeIn 1s 1.2s backwards;}
-.wskip:hover{color:rgba(255,255,255,.85);}
+.wskip{position:absolute;bottom:32px;right:32px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;transition:color .15s;animation:wfadeIn .5s .6s backwards;z-index:3;}
+.wskip:hover{color:rgba(255,255,255,.9);}
 
 @media (max-width:900px){
   .wcards{grid-template-columns:repeat(2,180px);}
@@ -825,9 +820,6 @@ function showWelcomeScreen(){
   ws.id='welcomeScreen';
   ws.style.cssText='position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929 0%,#1a3a52 50%,#0a1929 100%);z-index:9998;font-family:var(--font);overflow:hidden;';
   ws.innerHTML=''
-    +'<div class="wbg-orb wbg-orb-1"></div>'
-    +'<div class="wbg-orb wbg-orb-2"></div>'
-    +'<div class="wbg-orb wbg-orb-3"></div>'
     +'<div class="wlogo-wrap">'
       +'<div class="wlogo-icon">🌱</div>'
       +'<div class="wtitle">ОПТ</div>'
