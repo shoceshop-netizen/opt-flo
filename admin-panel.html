@@ -606,8 +606,11 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
         <div class="vc-bar" id="voiceBar">
           <span class="vc-ic">🔊</span>
           <select id="voiceSel" class="vc-sel"></select>
-          <label class="vc-rate-wrap"><span class="vc-rate-lbl">Швидкість</span><input id="voiceRate" type="range" min="0.7" max="1.6" step="0.05" value="1.15"><span id="voiceRateVal" class="vc-rate-val">1.15×</span></label>
+          <label class="vc-rate-wrap"><span class="vc-rate-lbl">Швидкість</span><input id="voiceRate" type="range" min="0.7" max="1.6" step="0.05" value="1.0"><span id="voiceRateVal" class="vc-rate-val">1.00×</span></label>
           <button class="btn sm" onclick="testVoice()">▶ Тест</button>
+        </div>
+        <div style="font-size:11px;color:var(--tx4);margin-bottom:10px;padding:6px 10px;background:#e8f0fe;border-radius:6px;line-height:1.5">
+          💡 Український голос завантажується з інтернету (1-3 сек на перший раз). Кожне імʼя + номер кешується в браузері — наступного разу одразу. Якщо сервер недоступний — переключається на системний голос автоматично.
         </div>
         <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
         <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
@@ -934,9 +937,61 @@ function toast(msg,type,dur){
 }
 
 // Sound
-// Голосовий асистент — каже імʼя клієнта і останні 4 цифри номера замовлення
+// ============================================================
+//  ГІБРИДНИЙ ГОЛОСОВИЙ АСИСТЕНТ
+//  1) Український TTS (Hugging Face) → 2) Кеш в IndexedDB → 3) Браузерний голос як fallback
+// ============================================================
 var VOICE_KEY='florium_voice_v1';
 var _voiceCache=null;
+var UA_TTS_URL='https://robinhad-ukrainian-tts.hf.space';
+var UA_TTS_VOICE='dmytro';
+var _idb=null;
+
+function openVoiceCache(){
+  return new Promise(function(resolve){
+    if(_idb)return resolve(_idb);
+    try{
+      var req=indexedDB.open('florium_voice_v2',1);
+      req.onupgradeneeded=function(e){
+        var db=e.target.result;
+        if(!db.objectStoreNames.contains('audio'))db.createObjectStore('audio',{keyPath:'key'});
+      };
+      req.onsuccess=function(e){_idb=e.target.result;resolve(_idb);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function cacheGet(key){
+  var db=await openVoiceCache();if(!db)return null;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').get(key);
+      req.onsuccess=function(){resolve(req.result?req.result.blob:null);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function cacheSet(key,blob){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').put({key:key,blob:blob,ts:Date.now()});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+async function clearVoiceCache(){
+  var db=await openVoiceCache();if(!db)return;
+  var tx=db.transaction('audio','readwrite');
+  tx.objectStore('audio').clear();
+  tx.oncomplete=function(){console.log('Voice cache cleared');};
+}
 
 function getVoices(){
   if(!window.speechSynthesis)return [];
@@ -954,30 +1009,102 @@ function pickVoice(){
   var vs=getVoices();
   if(!vs.length)return null;
   var pref=getVoicePrefs();
-  // 1) Збережений користувачем
   if(pref.voiceName){
     var v=vs.find(function(x){return x.name===pref.voiceName;});
     if(v)return v;
   }
-  // 2) Українська
   var v=vs.find(function(x){return /uk[-_]/i.test(x.lang);});
   if(v)return v;
-  // 3) Російська
   v=vs.find(function(x){return /ru[-_]/i.test(x.lang);});
   if(v)return v;
-  // 4) Перший
   return vs[0];
 }
 
-function speakOrder(clientName,orderNum){
+async function fetchUkrainianTTS(text){
+  try{
+    var pref=getVoicePrefs();
+    var voice=pref.uaVoice||UA_TTS_VOICE;
+    var post=await fetch(UA_TTS_URL+'/call/synthesize',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({data:[text,voice,'dictionary']})
+    });
+    if(!post.ok)throw new Error('POST '+post.status);
+    var pj=await post.json();
+    var eventId=pj.event_id;
+    if(!eventId)throw new Error('No event_id');
+    var getRes=await fetch(UA_TTS_URL+'/call/synthesize/'+eventId);
+    if(!getRes.ok)throw new Error('GET failed');
+    var textStream=await getRes.text();
+    var lines=textStream.split('\n');
+    var dataLine=null;
+    for(var i=0;i<lines.length;i++){
+      if(lines[i].indexOf('event: complete')===0&&lines[i+1]){
+        dataLine=lines[i+1].replace(/^data:\s*/,'');
+        break;
+      }
+    }
+    if(!dataLine)throw new Error('No complete event');
+    var parsed=JSON.parse(dataLine);
+    var audioInfo=parsed[0];
+    var audioUrl=audioInfo&&(audioInfo.url||audioInfo.path);
+    if(!audioUrl)throw new Error('No audio URL');
+    if(!audioUrl.startsWith('http')){
+      audioUrl=UA_TTS_URL+'/file='+audioUrl.replace(/^\//,'');
+    }
+    var audioRes=await fetch(audioUrl);
+    if(!audioRes.ok)throw new Error('Audio fetch failed');
+    return await audioRes.blob();
+  }catch(e){
+    console.warn('UA TTS error:',e.message);
+    return null;
+  }
+}
+
+async function speakOrder(clientName,orderNum){
+  if(!clientName&&!orderNum)return;
+  var lastFour=String(orderNum||'').slice(-4);
+  var pref=getVoicePrefs();
+  if(pref.disableUkrainian){
+    return speakWithBrowser(clientName,lastFour);
+  }
+  var cacheKey='ua:'+(pref.uaVoice||UA_TTS_VOICE)+':'+clientName+':'+lastFour;
+  try{
+    var cached=await cacheGet(cacheKey);
+    if(cached){playBlob(cached);return;}
+  }catch(e){}
+  var digitsWords=lastFour.split('').map(function(d){
+    return ({'0':'нуль','1':'один','2':'два','3':'три','4':'чотири','5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'})[d]||d;
+  }).join(' ');
+  var ttsText=(clientName||'')+'. Замовлення '+digitsWords+'.';
+  var blob=await fetchUkrainianTTS(ttsText);
+  if(blob){
+    cacheSet(cacheKey,blob);
+    playBlob(blob);
+    return;
+  }
+  speakWithBrowser(clientName,lastFour);
+}
+
+function playBlob(blob){
+  try{
+    var url=URL.createObjectURL(blob);
+    var audio=new Audio(url);
+    var pref=getVoicePrefs();
+    audio.playbackRate=parseFloat(pref.rate)||1.0;
+    audio.volume=1.0;
+    audio.onended=function(){URL.revokeObjectURL(url);};
+    audio.play().catch(function(e){console.warn('Audio play:',e.message);});
+  }catch(e){console.warn('playBlob:',e);}
+}
+
+function speakWithBrowser(clientName,lastFour){
   if(!window.speechSynthesis)return;
   try{
     window.speechSynthesis.cancel();
-    var lastFour=String(orderNum||'').slice(-4);
     var v=pickVoice();
     var name=clientName||'';
     var digits=lastFour.split('').join(' ');
-    // Якщо голос не український — застосовуємо обхід для кращої вимови
     if(v&&!/uk/i.test(v.lang)){
       name=adaptNameForVoice(name,v.lang);
       digits=adaptDigitsForVoice(lastFour,v.lang);
@@ -993,39 +1120,6 @@ function speakOrder(clientName,orderNum){
   }catch(e){}
 }
 
-// Адаптуємо українські імена під вимову російського/польського голосу
-function adaptNameForVoice(name,lang){
-  if(!name)return '';
-  // Для російського голосу замінюємо українські букви на російські еквіваленти
-  if(/ru/i.test(lang)){
-    return name
-      .replace(/і/g,'и').replace(/І/g,'И')
-      .replace(/ї/g,'йи').replace(/Ї/g,'Йи')
-      .replace(/є/g,'е').replace(/Є/g,'Е')
-      .replace(/ґ/g,'г').replace(/Ґ/g,'Г')
-      .replace(/'/g,'');
-  }
-  // Для англійського голосу — транслітерація
-  if(/en/i.test(lang)){
-    var map={'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};
-    return name.toLowerCase().split('').map(function(c){return map[c]!==undefined?map[c]:c;}).join('');
-  }
-  return name;
-}
-
-// Цифри для російського голосу — словами замість окремих звуків
-function adaptDigitsForVoice(digitsStr,lang){
-  if(/ru/i.test(lang)){
-    var ruDigits={'0':'ноль','1':'один','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
-    return digitsStr.split('').map(function(d){return ruDigits[d]||d;}).join(' ');
-  }
-  if(/en/i.test(lang)){
-    var enDigits={'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine'};
-    return digitsStr.split('').map(function(d){return enDigits[d]||d;}).join(' ');
-  }
-  return digitsStr.split('').join(' ');
-}
-
 function speak(text){
   if(!window.speechSynthesis)return;
   try{
@@ -1039,60 +1133,92 @@ function speak(text){
   }catch(e){}
 }
 
-// Заповнюємо випадаючий список голосів
+function adaptNameForVoice(name,lang){
+  if(!name)return '';
+  if(/ru/i.test(lang)){
+    return name
+      .replace(/і/g,'и').replace(/І/g,'И')
+      .replace(/ї/g,'йи').replace(/Ї/g,'Йи')
+      .replace(/є/g,'е').replace(/Є/g,'Е')
+      .replace(/ґ/g,'г').replace(/Ґ/g,'Г')
+      .replace(/'/g,'');
+  }
+  if(/en/i.test(lang)){
+    var map={'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};
+    return name.toLowerCase().split('').map(function(c){return map[c]!==undefined?map[c]:c;}).join('');
+  }
+  return name;
+}
+
+function adaptDigitsForVoice(digitsStr,lang){
+  if(/ru/i.test(lang)){
+    var ruDigits={'0':'ноль','1':'один','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
+    return digitsStr.split('').map(function(d){return ruDigits[d]||d;}).join(' ');
+  }
+  if(/en/i.test(lang)){
+    var enDigits={'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine'};
+    return digitsStr.split('').map(function(d){return enDigits[d]||d;}).join(' ');
+  }
+  return digitsStr.split('').join(' ');
+}
+
 function fillVoiceSelector(){
   var sel=document.getElementById('voiceSel');
   if(!sel)return;
   var vs=getVoices();
-  if(!vs.length){sel.innerHTML='<option>Голоси завантажуються...</option>';return;}
   var pref=getVoicePrefs();
-  var hasUk=vs.some(function(v){return /uk/i.test(v.lang);});
-  var selected=pref.voiceName||(pickVoice()&&pickVoice().name);
-  // Сортуємо: uk → ru → інші слов'янські → решта
-  var langOrder=function(lang){
-    if(/uk/i.test(lang))return 0;
-    if(/ru/i.test(lang))return 1;
-    if(/pl|cs|sk|bg/i.test(lang))return 2;
-    if(/en/i.test(lang))return 3;
-    return 4;
-  };
-  var sorted=vs.slice().sort(function(a,b){
-    var d=langOrder(a.lang)-langOrder(b.lang);
-    if(d!==0)return d;
-    return a.name.localeCompare(b.name);
-  });
-  sel.innerHTML=sorted.map(function(v){
-    var flag='';
-    if(/uk/i.test(v.lang))flag='🇺🇦 ';
-    else if(/ru/i.test(v.lang))flag='🇷🇺 ';
-    else if(/en/i.test(v.lang))flag='🇬🇧 ';
-    else if(/pl/i.test(v.lang))flag='🇵🇱 ';
-    else if(/de/i.test(v.lang))flag='🇩🇪 ';
-    var sel_attr=v.name===selected?' selected':'';
-    return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+sel_attr+'>'+flag+v.name+' ('+v.lang+')</option>';
-  }).join('');
-  // Підказка якщо немає українського
-  var hint=document.getElementById('voiceHint');
-  if(hint)hint.remove();
-  if(!hasUk){
-    var h=document.createElement('div');
-    h.id='voiceHint';
-    h.style.cssText='font-size:11px;color:var(--orange);margin-top:6px;padding:6px 10px;background:#fff4e5;border-radius:6px;cursor:pointer';
-    h.innerHTML='⚠️ Українського голосу немає. <strong>Як встановити →</strong>';
-    h.onclick=showVoiceInstallHelp;
-    var bar=document.getElementById('voiceBar');
-    if(bar)bar.parentNode.insertBefore(h,bar.nextSibling);
+  var html='<optgroup label="🇺🇦 Український онлайн TTS">'
+    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (онлайн)</option>'
+    +'<option value="ua:olena" '+(pref.uaVoice==='olena'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олена (онлайн)</option>'
+    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (онлайн)</option>'
+    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (онлайн)</option>'
+    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (онлайн)</option>'
+    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (онлайн)</option>'
+    +'</optgroup>';
+  if(vs.length){
+    var langOrder=function(lang){
+      if(/uk/i.test(lang))return 0;
+      if(/ru/i.test(lang))return 1;
+      if(/pl|cs|sk|bg/i.test(lang))return 2;
+      if(/en/i.test(lang))return 3;
+      return 4;
+    };
+    var sorted=vs.slice().sort(function(a,b){
+      var d=langOrder(a.lang)-langOrder(b.lang);
+      if(d!==0)return d;
+      return a.name.localeCompare(b.name);
+    });
+    html+='<optgroup label="🖥 Системні (офлайн)">';
+    html+=sorted.map(function(v){
+      var flag='';
+      if(/uk/i.test(v.lang))flag='🇺🇦 ';
+      else if(/ru/i.test(v.lang))flag='🇷🇺 ';
+      else if(/en/i.test(v.lang))flag='🇬🇧 ';
+      else if(/pl/i.test(v.lang))flag='🇵🇱 ';
+      else if(/de/i.test(v.lang))flag='🇩🇪 ';
+      var selFlag=(pref.disableUkrainian&&v.name===pref.voiceName)?' selected':'';
+      return '<option value="sys:'+v.name.replace(/"/g,'&quot;')+'"'+selFlag+'>'+flag+v.name+' ('+v.lang+')</option>';
+    }).join('');
+    html+='</optgroup>';
   }
+  sel.innerHTML=html;
   sel.onchange=function(){
+    var val=sel.value;
     var p=getVoicePrefs();
-    p.voiceName=sel.value;
+    if(val.indexOf('ua:')===0){
+      p.uaVoice=val.substring(3);
+      p.disableUkrainian=false;
+    } else if(val.indexOf('sys:')===0){
+      p.voiceName=val.substring(4);
+      p.disableUkrainian=true;
+    }
     saveVoicePrefs(p);
     testVoice();
   };
   var rateInput=document.getElementById('voiceRate');
   var rateVal=document.getElementById('voiceRateVal');
   if(rateInput){
-    rateInput.value=pref.rate||1.15;
+    rateInput.value=pref.rate||1.0;
     if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
     rateInput.oninput=function(){
       var p=getVoicePrefs();
@@ -1104,49 +1230,17 @@ function fillVoiceSelector(){
   }
 }
 
-function showVoiceInstallHelp(){
-  var html='<div class="modal-box" style="width:480px">'
-    +'<div class="modal-t">🇺🇦 Як встановити український голос</div>'
-    +'<div style="font-size:13px;line-height:1.7;color:var(--tx2)">'
-      +'<p style="margin-bottom:10px"><strong>Windows 10:</strong></p>'
-      +'<ol style="padding-left:22px;margin-bottom:14px">'
-        +'<li>Натисни <kbd>Win + I</kbd> (Налаштування)</li>'
-        +'<li>Час і мова → Мова</li>'
-        +'<li>Додати мову → Українська</li>'
-        +'<li>Опції → Завантажити "Мовлення"</li>'
-        +'<li>Перезавантажити браузер</li>'
-      +'</ol>'
-      +'<p style="margin-bottom:10px"><strong>Windows 11:</strong></p>'
-      +'<ol style="padding-left:22px;margin-bottom:14px">'
-        +'<li><kbd>Win + I</kbd> → Час та мова → Мова та регіон</li>'
-        +'<li>Додати мову → Українська</li>'
-        +'<li>В пункті "Українська" → Параметри → завантажити "Мовлення"</li>'
-        +'<li>Перезавантажити браузер</li>'
-      +'</ol>'
-      +'<p style="background:#fff4e5;padding:10px;border-radius:6px;font-size:12px"><strong>Поки немає українського</strong> — російський голос буде озвучувати, але я адаптував текст для кращого звучання.</p>'
-    +'</div>'
-    +'<div style="margin-top:14px;text-align:right"><button class="btn pr" onclick="this.closest(\'.modal-ov\').remove()">Зрозуміло</button></div>'
-  +'</div>';
-  var d=document.createElement('div');
-  d.className='modal-ov';
-  d.style.cssText='display:flex;z-index:9999';
-  d.innerHTML=html;
-  d.onclick=function(e){if(e.target===d)d.remove();};
-  document.body.appendChild(d);
-}
-
 function testVoice(){
-  // Приклад: вигадане імʼя + 4 цифри
   speakOrder('Гелетей','3013');
 }
 
-// Готуємо голос заздалегідь (voices завантажуються асинхронно)
 if(window.speechSynthesis){
   window.speechSynthesis.onvoiceschanged=function(){
     _voiceCache=null;
     fillVoiceSelector();
   };
 }
+
 
 function beep(type){
   try{
