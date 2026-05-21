@@ -944,7 +944,16 @@ function toast(msg,type,dur){
 var VOICE_KEY='florium_voice_v1';
 var _voiceCache=null;
 var UA_TTS_URL='https://robinhad-ukrainian-tts.hf.space';
+var UA_TTS_API_NAME='/predict'; // gr.Interface default endpoint
 var UA_TTS_VOICE='dmytro';
+// Mapping voice keys → labels with emoji (as expected by the Gradio Space)
+var UA_VOICE_LABELS={
+  tetiana: 'Тетяна (жіночий) 👩',
+  mykyta:  'Микита (чоловічий) 👨',
+  lada:    'Лада (жіночий) 👩',
+  dmytro:  'Дмитро (чоловічий) 👨',
+  oleksa:  'Олекса (чоловічий) 👨'
+};
 var _idb=null;
 
 function openVoiceCache(){
@@ -1023,17 +1032,20 @@ function pickVoice(){
 async function fetchUkrainianTTS(text){
   try{
     var pref=getVoicePrefs();
-    var voice=pref.uaVoice||UA_TTS_VOICE;
-    var post=await fetch(UA_TTS_URL+'/call/synthesize',{
+    var voiceKey=pref.uaVoice||UA_TTS_VOICE;
+    var voiceLabel=UA_VOICE_LABELS[voiceKey]||UA_VOICE_LABELS.dmytro;
+    // POST на /call/predict — отримуємо event_id
+    var post=await fetch(UA_TTS_URL+'/call/predict',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:[text,voice,'dictionary']})
+      body:JSON.stringify({data:[text,voiceLabel]})
     });
     if(!post.ok)throw new Error('POST '+post.status);
     var pj=await post.json();
     var eventId=pj.event_id;
     if(!eventId)throw new Error('No event_id');
-    var getRes=await fetch(UA_TTS_URL+'/call/synthesize/'+eventId);
+    // GET — стримуємо результат SSE
+    var getRes=await fetch(UA_TTS_URL+'/call/predict/'+eventId);
     if(!getRes.ok)throw new Error('GET failed');
     var textStream=await getRes.text();
     var lines=textStream.split('\n');
@@ -1046,14 +1058,16 @@ async function fetchUkrainianTTS(text){
     }
     if(!dataLine)throw new Error('No complete event');
     var parsed=JSON.parse(dataLine);
+    // Перший елемент — аудіо (path/url), другий — текст з наголосами
     var audioInfo=parsed[0];
-    var audioUrl=audioInfo&&(audioInfo.url||audioInfo.path);
+    if(!audioInfo)throw new Error('No audio info');
+    var audioUrl=audioInfo.url||audioInfo.path;
     if(!audioUrl)throw new Error('No audio URL');
     if(!audioUrl.startsWith('http')){
       audioUrl=UA_TTS_URL+'/file='+audioUrl.replace(/^\//,'');
     }
     var audioRes=await fetch(audioUrl);
-    if(!audioRes.ok)throw new Error('Audio fetch failed');
+    if(!audioRes.ok)throw new Error('Audio fetch '+audioRes.status);
     return await audioRes.blob();
   }catch(e){
     console.warn('UA TTS error:',e.message);
@@ -1168,12 +1182,11 @@ function fillVoiceSelector(){
   var vs=getVoices();
   var pref=getVoicePrefs();
   var html='<optgroup label="🇺🇦 Український онлайн TTS">'
-    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (онлайн)</option>'
-    +'<option value="ua:olena" '+(pref.uaVoice==='olena'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олена (онлайн)</option>'
-    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (онлайн)</option>'
-    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (онлайн)</option>'
-    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (онлайн)</option>'
-    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (онлайн)</option>'
+    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (чоловік)</option>'
+    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (жінка)</option>'
+    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (чоловік)</option>'
+    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (чоловік)</option>'
+    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (жінка)</option>'
     +'</optgroup>';
   if(vs.length){
     var langOrder=function(lang){
