@@ -2087,9 +2087,15 @@ async function processIncomingScan(){
     } else {
       fb.className='s-fb sf-er';
       fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в жодному активному замовленні';
-      toast('Артикул '+art+' не знайдено','er',2000);
+      toast('Артикул '+art+' не знайдено — записано в прихід як «загальний»','wa',3000);
     }
     addScanLog(art,'','er');
+    // Записуємо в прихід навіть якщо не знайдено в замовленнях (тип "загальний")
+    if(SCRIPT_URL){
+      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+      var fallbackName=furyInfo?furyInfo.name:'';
+      try{await callScript('scan',{art:art,name:fallbackName,qty:1,orderNum:'',orderName:''});}catch(e){}
+    }
     return;
   }
 
@@ -2192,7 +2198,14 @@ function parseIncome(rows){
       type:(r[7]||'').trim()
     });
   }
-  console.log('Income loaded:', income.length, 'records');
+  // Відновлюємо scanState з реальних даних "прихід" (щоб прогрес зберігався після оновлення)
+  scanState={};
+  income.forEach(function(inc){
+    if(!inc.orderNum||!inc.art)return; // пропускаємо "загальний" тип і порожні
+    if(!scanState[inc.orderNum])scanState[inc.orderNum]={};
+    scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+(inc.qty||1);
+  });
+  console.log('scanState відновлено для',Object.keys(scanState).length,'замовлень');
 }
 
 // ===== SCAN LOG =====
