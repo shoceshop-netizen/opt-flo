@@ -328,6 +328,14 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .scan-top{background:var(--card);padding:18px 24px;border-bottom:1px solid var(--bo);flex-shrink:0;}
 .scan-lbl{font-size:14px;font-weight:700;color:var(--gd);margin-bottom:10px;}
 .scan-wrap{max-width:580px;}
+.vc-bar{display:flex;align-items:center;gap:10px;background:var(--gray6);border-radius:10px;padding:8px 12px;margin-bottom:10px;flex-wrap:wrap;}
+.vc-ic{font-size:16px;}
+.vc-sel{flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--bo);border-radius:7px;background:#fff;font-size:12px;font-family:inherit;color:var(--tx);cursor:pointer;outline:none;}
+.vc-sel:focus{border-color:var(--blue);}
+.vc-rate-wrap{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx3);font-weight:500;}
+.vc-rate-lbl{white-space:nowrap;}
+.vc-rate-val{font-feature-settings:'tnum';color:var(--blue);font-weight:600;min-width:34px;text-align:right;}
+#voiceRate{width:90px;cursor:pointer;}
 .s-inp{width:100%;border:2.5px solid var(--g);border-radius:9px;padding:15px 20px;font-size:24px;font-family:monospace;outline:none;text-align:center;letter-spacing:5px;background:#fff;transition:box-shadow .2s;}
 .s-inp:focus{box-shadow:0 0 0 4px rgba(61,139,67,.15);}
 .s-inp.shake{animation:shk .3s ease;}
@@ -595,6 +603,12 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
     <div class="scan-top">
       <div class="scan-wrap">
         <div class="scan-lbl">📱 Сканування приходу — система знайде замовлення автоматично</div>
+        <div class="vc-bar" id="voiceBar">
+          <span class="vc-ic">🔊</span>
+          <select id="voiceSel" class="vc-sel"></select>
+          <label class="vc-rate-wrap"><span class="vc-rate-lbl">Швидкість</span><input id="voiceRate" type="range" min="0.7" max="1.6" step="0.05" value="1.15"><span id="voiceRateVal" class="vc-rate-val">1.15×</span></label>
+          <button class="btn sm" onclick="testVoice()">▶ Тест</button>
+        </div>
         <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
         <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
       </div>
@@ -921,36 +935,51 @@ function toast(msg,type,dur){
 
 // Sound
 // Голосовий асистент — каже імʼя клієнта і останні 4 цифри номера замовлення
-var _ukVoice=null;
-function _findUkVoice(){
-  if(_ukVoice)return _ukVoice;
-  if(!window.speechSynthesis)return null;
-  var voices=window.speechSynthesis.getVoices()||[];
-  // 1) Українська якщо є
-  _ukVoice=voices.find(function(v){return /uk[-_]/i.test(v.lang);});
-  // 2) Російська (схожа фонетика, краще ніж англ для українських слів)
-  if(!_ukVoice)_ukVoice=voices.find(function(v){return /ru[-_]/i.test(v.lang);});
-  // 3) Будь-який слов'янський або перший доступний
-  if(!_ukVoice)_ukVoice=voices[0];
-  return _ukVoice;
+var VOICE_KEY='florium_voice_v1';
+var _voiceCache=null;
+
+function getVoices(){
+  if(!window.speechSynthesis)return [];
+  if(_voiceCache)return _voiceCache;
+  _voiceCache=window.speechSynthesis.getVoices()||[];
+  return _voiceCache;
 }
-// Готуємо голос заздалегідь (voices завантажуються асинхронно)
-if(window.speechSynthesis){
-  window.speechSynthesis.onvoiceschanged=function(){_ukVoice=null;_findUkVoice();};
-  _findUkVoice();
+
+function getVoicePrefs(){
+  try{return JSON.parse(localStorage.getItem(VOICE_KEY)||'{}');}catch(e){return {};}
+}
+function saveVoicePrefs(p){try{localStorage.setItem(VOICE_KEY,JSON.stringify(p));}catch(e){}}
+
+function pickVoice(){
+  var vs=getVoices();
+  if(!vs.length)return null;
+  var pref=getVoicePrefs();
+  // 1) Збережений користувачем
+  if(pref.voiceName){
+    var v=vs.find(function(x){return x.name===pref.voiceName;});
+    if(v)return v;
+  }
+  // 2) Українська
+  var v=vs.find(function(x){return /uk[-_]/i.test(x.lang);});
+  if(v)return v;
+  // 3) Російська
+  v=vs.find(function(x){return /ru[-_]/i.test(x.lang);});
+  if(v)return v;
+  // 4) Перший
+  return vs[0];
 }
 
 function speakOrder(clientName,orderNum){
   if(!window.speechSynthesis)return;
   try{
-    // Зупиняємо попереднє озвучування — не накладуємо
     window.speechSynthesis.cancel();
     var lastFour=String(orderNum||'').slice(-4);
-    var text=(clientName||'')+', '+lastFour.split('').join(' '); // "Гелетей, 3 0 1 3"
+    var text=(clientName||'')+', '+lastFour.split('').join(' ');
     var u=new SpeechSynthesisUtterance(text);
-    var v=_findUkVoice();
+    var v=pickVoice();
     if(v){u.voice=v;u.lang=v.lang;}
-    u.rate=1.15;     // швидше за дефолт
+    var pref=getVoicePrefs();
+    u.rate=parseFloat(pref.rate)||1.15;
     u.pitch=1.0;
     u.volume=1.0;
     window.speechSynthesis.speak(u);
@@ -962,11 +991,78 @@ function speak(text){
   try{
     window.speechSynthesis.cancel();
     var u=new SpeechSynthesisUtterance(text);
-    var v=_findUkVoice();
+    var v=pickVoice();
     if(v){u.voice=v;u.lang=v.lang;}
-    u.rate=1.1;
+    var pref=getVoicePrefs();
+    u.rate=parseFloat(pref.rate)||1.1;
     window.speechSynthesis.speak(u);
   }catch(e){}
+}
+
+// Заповнюємо випадаючий список голосів
+function fillVoiceSelector(){
+  var sel=document.getElementById('voiceSel');
+  if(!sel)return;
+  var vs=getVoices();
+  if(!vs.length){sel.innerHTML='<option>Голоси завантажуються...</option>';return;}
+  var pref=getVoicePrefs();
+  var selected=pref.voiceName||(pickVoice()&&pickVoice().name);
+  // Сортуємо: uk → ru → інші слов'янські → решта
+  var langOrder=function(lang){
+    if(/uk/i.test(lang))return 0;
+    if(/ru/i.test(lang))return 1;
+    if(/pl|cs|sk|bg/i.test(lang))return 2;
+    if(/en/i.test(lang))return 3;
+    return 4;
+  };
+  var sorted=vs.slice().sort(function(a,b){
+    var d=langOrder(a.lang)-langOrder(b.lang);
+    if(d!==0)return d;
+    return a.name.localeCompare(b.name);
+  });
+  sel.innerHTML=sorted.map(function(v){
+    var flag='';
+    if(/uk/i.test(v.lang))flag='🇺🇦 ';
+    else if(/ru/i.test(v.lang))flag='🇷🇺 ';
+    else if(/en/i.test(v.lang))flag='🇬🇧 ';
+    else if(/pl/i.test(v.lang))flag='🇵🇱 ';
+    else if(/de/i.test(v.lang))flag='🇩🇪 ';
+    var sel_attr=v.name===selected?' selected':'';
+    return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+sel_attr+'>'+flag+v.name+' ('+v.lang+')</option>';
+  }).join('');
+  sel.onchange=function(){
+    var p=getVoicePrefs();
+    p.voiceName=sel.value;
+    saveVoicePrefs(p);
+    testVoice(); // одразу демо
+  };
+  // Швидкість
+  var rateInput=document.getElementById('voiceRate');
+  var rateVal=document.getElementById('voiceRateVal');
+  if(rateInput){
+    rateInput.value=pref.rate||1.15;
+    if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
+    rateInput.oninput=function(){
+      var p=getVoicePrefs();
+      p.rate=parseFloat(rateInput.value);
+      saveVoicePrefs(p);
+      if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
+    };
+    rateInput.onchange=function(){testVoice();}; // тест коли користувач відпустив
+  }
+}
+
+function testVoice(){
+  // Приклад: вигадане імʼя + 4 цифри
+  speakOrder('Гелетей','3013');
+}
+
+// Готуємо голос заздалегідь (voices завантажуються асинхронно)
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){
+    _voiceCache=null;
+    fillVoiceSelector();
+  };
 }
 
 function beep(type){
@@ -2463,6 +2559,8 @@ function initScanPage(){
     clearTimeout(scanTimer);
     if(inp.value.trim().length>=5)scanTimer=setTimeout(processIncomingScan,250);
   };
+  // Заповнюємо випадаючий список голосів
+  fillVoiceSelector();
 }
 
 async function processIncomingScan(){
