@@ -530,6 +530,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
     <div class="ni" id="nav-scan"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
     <div class="nav-sec">Довідники</div>
     <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span>Товари</div>
+    <div class="ni" id="nav-reserve"><span class="ni-ic">📦</span>Запас<span class="nb nb-g" id="bReserve">0</span></div>
     <div class="ni" id="nav-voices"><span class="ni-ic">🎙</span>Голоси</div>
   </div>
   <div class="sb-foot" id="sbt"></div>
@@ -670,6 +671,44 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
         </tr></thead>
         <tbody id="stkBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- RESERVE PAGE -->
+  <div class="page" id="page-reserve">
+    <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">📦 Запас</h2>
+          <div style="font-size:13px;color:var(--mu);margin-top:4px">Зайві товари які залишились при пакуванні — підрахунок автоматичний</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="reserveSearch" placeholder="Пошук..." oninput="renderReserve()">
+          <button class="btn sm" onclick="loadReserve()">🔄 Оновити</button>
+          <button class="btn sm" onclick="exportReserve()">📥 Експорт</button>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:0;overflow:hidden">
+        <div style="padding:14px 18px;background:#fafafa;border-bottom:1px solid var(--bo);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+          <span style="color:var(--mu)">Усього позицій: <strong id="reserveTotal" style="color:var(--tx)">0</strong></span>
+          <span style="color:var(--mu)">Всього шт: <strong id="reserveTotalQty" style="color:var(--green)">0</strong></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="dt">
+            <thead><tr>
+              <th style="width:140px">Дата</th>
+              <th style="width:120px">Артикул</th>
+              <th>Назва</th>
+              <th style="text-align:right;width:80px">К-сть</th>
+              <th style="width:180px">Звідки</th>
+              <th style="width:120px">Оператор</th>
+              <th style="width:120px;text-align:center">Дії</th>
+            </tr></thead>
+            <tbody id="reserveBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1874,7 +1913,7 @@ var TTS_PHRASES={
   'phrase-order-complete':'Замовлення повністю зібрано',
   'phrase-order-verified':'Замовлення перевірено перед відправкою',
   'phrase-not-in-order':'Цього артикула немає в замовленні',
-  'phrase-already-packed':'Цей артикул вже запакований',
+  'phrase-already-packed':'Цей товар вже запакований, постав в запас',
   'phrase-unknown':'Невідомий артикул',
   'phrase-scan-ok':'Скан правильний',
   'phrase-scan-error':'Помилка сканування',
@@ -2118,6 +2157,143 @@ async function ttsGenerateAll(category){
   renderClientVoices();
 }
 
+// ============================================================
+//  ЗАПАС — управління аркушем "запас"
+// ============================================================
+var reserveItems=[];
+
+async function loadReserve(){
+  try{
+    var res=await callScript('reserveList',{});
+    if(res&&res.ok){
+      reserveItems=res.items||[];
+      // Сортуємо: останні дати зверху
+      reserveItems.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+      renderReserve();
+      updateReserveBadge();
+    }
+  }catch(e){console.warn('loadReserve:',e);}
+}
+
+function updateReserveBadge(){
+  var b=document.getElementById('bReserve');
+  if(b)b.textContent=reserveItems.length;
+}
+
+function renderReserve(){
+  var body=document.getElementById('reserveBody');
+  if(!body)return;
+  var q=(document.getElementById('reserveSearch')||{}).value||'';
+  q=q.trim().toLowerCase();
+  var filtered=q?reserveItems.filter(function(it){
+    return (it.art||'').toLowerCase().indexOf(q)>=0
+      || (it.name||'').toLowerCase().indexOf(q)>=0
+      || (it.from||'').toLowerCase().indexOf(q)>=0;
+  }):reserveItems;
+  // Підрахунок
+  document.getElementById('reserveTotal').textContent=filtered.length;
+  var totalQty=filtered.reduce(function(s,it){return s+(parseInt(it.qty)||0);},0);
+  document.getElementById('reserveTotalQty').textContent=totalQty;
+  if(!filtered.length){
+    body.innerHTML='<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--mu);font-size:13px">'
+      +(q?'Не знайдено за пошуком "'+esc(q)+'"':'📦 Запас порожній — нічого зайвого не сканувалось')
+      +'</td></tr>';
+    return;
+  }
+  body.innerHTML=filtered.map(function(it){
+    return '<tr>'
+      +'<td style="font-size:11px;color:var(--mu);font-family:monospace">'+esc(it.date||'')+'</td>'
+      +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
+      +'<td>'+esc(it.name||'')+'</td>'
+      +'<td style="text-align:right">'
+        +'<input type="number" min="0" value="'+(parseInt(it.qty)||0)+'" '
+        +'data-row="'+it.row+'" class="cm-inp cm-num" '
+        +'onchange="updateReserveQty('+it.row+',this.value)" '
+        +'style="width:60px;text-align:center;font-weight:700;color:var(--green)">'
+      +'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(it.from||'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(it.operator||'—')+'</td>'
+      +'<td style="text-align:center">'
+        +'<button class="dig-btn" onclick="deleteReserveItem('+it.row+')" title="Видалити">✕</button>'
+      +'</td>'
+    +'</tr>';
+  }).join('');
+}
+
+async function updateReserveQty(row,newQty){
+  try{
+    var q=parseInt(newQty)||0;
+    if(q<0)return;
+    if(q===0){
+      if(!confirm('Кількість 0 — видалити позицію?'))return;
+      await deleteReserveItem(row);
+      return;
+    }
+    await callScript('reserveUpdate',{row:row,qty:q});
+    var it=reserveItems.find(function(x){return x.row===row;});
+    if(it)it.qty=q;
+    renderReserve();
+    toast('✓ Оновлено','ok',1500);
+  }catch(e){
+    toast('Помилка оновлення','er',2000);
+  }
+}
+
+async function deleteReserveItem(row){
+  if(!confirm('Видалити цю позицію з запасу?'))return;
+  try{
+    await callScript('reserveDelete',{row:row});
+    reserveItems=reserveItems.filter(function(x){return x.row!==row;});
+    renderReserve();
+    updateReserveBadge();
+    toast('✓ Видалено','ok',1500);
+  }catch(e){
+    toast('Помилка видалення','er',2000);
+  }
+}
+
+function exportReserve(){
+  if(!reserveItems.length){toast('Немає що експортувати','wa');return;}
+  var rows=[['Дата','Артикул','Назва','К-сть','Звідки','Оператор']];
+  reserveItems.forEach(function(it){
+    rows.push([it.date,it.art,it.name,it.qty,it.from,it.operator]);
+  });
+  var csv=rows.map(function(r){
+    return r.map(function(c){
+      var s=String(c||'');
+      return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+    }).join(';');
+  }).join('\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='florium-zapas-'+(new Date().toISOString().substring(0,10))+'.csv';
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},5000);
+  toast('✓ Експортовано: '+reserveItems.length+' позицій','ok',3000);
+}
+
+// Додає товар в запас (викликається коли скан вже запакованого товару)
+async function addToReserve(art,name,qty,fromOrder){
+  try{
+    await callScript('reserveAdd',{
+      art:art,
+      name:name||'',
+      qty:qty||1,
+      fromOrder:fromOrder||'',
+      operator:'',
+      note:'Автоматично: товар вже запакований'
+    });
+    // Підвантажуємо оновлений список
+    loadReserve();
+  }catch(e){console.warn('addToReserve:',e);}
+}
+
+function initReservePage(){
+  loadReserve();
+}
+
 async function initVoicesPage(){
   // Цифри і клієнти — миттєво (з локального IndexedDB)
   renderDigitsGrid().catch(function(e){console.warn('digits error:',e);});
@@ -2233,7 +2409,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)'};
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -2242,6 +2418,7 @@ function nav(p){
   sbClose();
   if(p==='scan'){setTimeout(()=>{initScanPage();G('scInp')?.focus();},100);}
   if(p==='voices'){setTimeout(initVoicesPage,100);}
+  if(p==='reserve'){setTimeout(initReservePage,100);}
 }
 function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
@@ -3033,9 +3210,11 @@ async function verifyScanArt(){
     
     // ЗАХИСТ: якщо вже зібрано повну к-сть — не додаємо, тривога
     if(got>=needed){
-      showVerifyAlert('⛔ ВЖЕ ЗАПАКОВАНО','Артикул '+art+' ('+itemMatch.name+') уже зібрано: '+got+'/'+needed+'. НЕ кидати в пакет!');
+      showVerifyAlert('⛔ ВЖЕ ЗАПАКОВАНО','Артикул '+art+' ('+itemMatch.name+') уже зібрано: '+got+'/'+needed+'. НЕ кидати в пакет — постав в ЗАПАС!');
       beepAlert();
       speakPhrase('phrase-already-packed');
+      // Автоматично додаємо в запас
+      addToReserve(art,itemMatch.name,qty||1,'#'+verifyState.order.num+' '+verifyState.order.name);
       input.value='';input.focus();
       return;
     }
@@ -3717,6 +3896,12 @@ async function processIncomingScan(){
       fb.className='s-fb sf-wa';
       fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ');
       speakPhrase('phrase-already-packed');
+      // Автоматично додаємо в запас
+      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+      var itemName=furyInfo?furyInfo.name:'';
+      var fromOrders=allDone.map(function(o){return '#'+o.num+' '+o.name;}).join(', ');
+      addToReserve(art,itemName,1,fromOrders);
+      toast('📦 Товар додано в Запас','wa',3000);
     } else {
       fb.className='s-fb sf-er';
       fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в жодному активному замовленні';
