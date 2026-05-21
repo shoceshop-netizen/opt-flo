@@ -1515,10 +1515,17 @@ async function renderDigitsGrid(){
 async function renderClientVoices(){
   var box=document.getElementById('clientVoicesList');
   if(!box)return;
+  // Захист — якщо замовлення ще не завантажились
+  if(!window.orders||!Array.isArray(window.orders)||!orders.length){
+    box.innerHTML='<div style="padding:30px;text-align:center;color:var(--mu);font-size:13px">Завантаження замовлень... Якщо триває довго — оновити сторінку (F5).</div>';
+    var np=document.getElementById('namesProgress');if(np)np.textContent='0';
+    var nt=document.getElementById('namesTotal');if(nt)nt.textContent='0';
+    return;
+  }
   // Збираємо унікальні імена з замовлень
   var nameSet={};
   orders.forEach(function(o){
-    if(o.name){
+    if(o&&o.name){
       var n=String(o.name).trim();
       if(n){
         if(!nameSet[n])nameSet[n]={count:0};
@@ -1675,8 +1682,10 @@ function playSequence(blobs){
 
 // Ініціалізація сторінки голосів
 function initVoicesPage(){
-  renderDigitsGrid();
-  renderClientVoices();
+  // Цифри завжди рендеримо першими — вони не залежать від замовлень
+  renderDigitsGrid().catch(function(e){console.warn('digits error:',e);});
+  // Клієнти — окремо, не блокує цифри
+  renderClientVoices().catch(function(e){console.warn('clients error:',e);});
 }
 
 
