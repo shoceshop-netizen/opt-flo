@@ -200,6 +200,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .p-work{background:var(--orange-l);color:var(--orange);border:none;}
 .p-pack{background:#fdf2e8;color:#a04000;}
 .p-ready{background:#f0f9f0;color:#1b5e20;}
+.p-verified{background:#f5ebff;color:#6b21a8;}
 .p-defer{background:#edf7f6;color:#004d40;}
 .p-sent{background:#f5f0fb;color:#4a148c;}
 .p-partial{background:#f0edf7;color:#311b92;}
@@ -414,6 +415,30 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
   </div>
 </div>
 
+<!-- VERIFY MODAL -->
+<div class="modal-ov" id="verifyModal" style="display:none" onclick="if(event.target===this)closeVerifyModal()">
+  <div class="cm-box" style="max-width:900px">
+    <div class="cm-top" style="background:#f5ebff;border-bottom-color:#d8b4fe">
+      <div class="cm-title" style="color:#6b21a8">🔍 Перевірка перед відправкою</div>
+      <div class="cm-close" onclick="closeVerifyModal()">✕</div>
+    </div>
+    <div class="cm-sub">
+      <div id="vmHead"></div>
+      <div id="vmStats" class="cm-stats"></div>
+    </div>
+    <div style="padding:14px 20px;background:#fafafa;border-bottom:1px solid var(--bo);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input id="vmInput" type="text" placeholder="Скануй або введи артикул і натисни Enter..." style="flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--purple);border-radius:8px;font-size:15px;font-family:inherit;outline:none" autofocus>
+      <input id="vmQty" type="number" min="1" value="1" style="width:80px;padding:12px 10px;border:1px solid var(--bo);border-radius:8px;font-size:15px;text-align:center;font-family:inherit;outline:none">
+      <button class="btn pr" onclick="verifyScanArt()" style="padding:12px 18px">+ Додати</button>
+    </div>
+    <div id="vmBody" class="cm-body"></div>
+    <div class="cm-foot">
+      <button class="btn" onclick="closeVerifyModal()">Закрити</button>
+      <button class="btn" id="vmFinish" style="margin-left:auto;background:var(--purple);color:#fff;border-color:var(--purple)" disabled>✓ Підтвердити перевірку</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <aside class="sb" id="sb">
   <div class="sb-logo">
@@ -474,6 +499,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
             <button class="btn wa sm" id="odPicker" style="display:none">🚛 Вантажник</button>
             <button class="btn sm" id="odStatus" style="display:none">✏️ Статус</button>
             <button class="btn sm" onclick="window.open('https://docs.google.com/spreadsheets/d/'+SHEET_ID,'_blank')">↗ Таблиця</button>
+            <button class="btn next" id="odVerify" style="display:none;margin-left:auto;background:var(--purple);border-color:var(--purple)">🔍 Перевірити перед відправкою</button>
             <button class="btn next" id="odNext" style="display:none;margin-left:auto">▶ Перевести на наступний етап</button>
           </div>
         </div>
@@ -678,17 +704,18 @@ function sk(s){
   if(s.includes('частин')||s.includes('частков'))return'partial';
   if(s.includes('відправ'))return'sent';
   if(s.includes('відклад'))return'defer';
+  if(s.includes('перевір'))return'verified';
   if(s.includes('фасу'))return'pack';
   if(s.includes('готов'))return'ready';
   if(s.includes('робот'))return'work';
   return'new';
 }
-var SM={new:{l:'Нове',p:'p-new'},work:{l:'В роботі',p:'p-work'},pack:{l:'Фасується',p:'p-pack'},ready:{l:'Готове',p:'p-ready'},defer:{l:'Відкладжено',p:'p-defer'},sent:{l:'Відправлено',p:'p-sent'},partial:{l:'Частково',p:'p-partial'},cancel:{l:'Відмова',p:'p-cancel'}};
-var STATUSES_LIST=['Нове','В роботі','Фасується','Готове','Відкладжено','Відправлено','відправлено частинами','Відмова'];
+var SM={new:{l:'Нове',p:'p-new'},work:{l:'В роботі',p:'p-work'},pack:{l:'Фасується',p:'p-pack'},ready:{l:'Готове',p:'p-ready'},verified:{l:'Перевірено',p:'p-verified'},defer:{l:'Відкладжено',p:'p-defer'},sent:{l:'Відправлено',p:'p-sent'},partial:{l:'Частково',p:'p-partial'},cancel:{l:'Відмова',p:'p-cancel'}};
+var STATUSES_LIST=['Нове','В роботі','Фасується','Готове','Перевірено','Відкладжено','Відправлено','відправлено частинами','Відмова'];
 function pillH(s,big){var k=sk(s);var m=SM[k]||SM.new;return`<span class="pill${big?' lg':''} ${m.p}">${esc(s||m.l)}</span>`;}
-var STAGES=[{k:'new',l:'Нове'},{k:'work',l:'В роботі'},{k:'pack',l:'Фасується'},{k:'ready',l:'Готове'},{k:'sent',l:'Відправлено'}];
+var STAGES=[{k:'new',l:'Нове'},{k:'work',l:'В роботі'},{k:'pack',l:'Фасується'},{k:'ready',l:'Готове'},{k:'verified',l:'Перевірено'},{k:'sent',l:'Відправлено'}];
 function stagesH(status){
-  var k=sk(status);var order=['new','work','pack','ready','sent'];var si=order.indexOf(k);
+  var k=sk(status);var order=['new','work','pack','ready','verified','sent'];var si=order.indexOf(k);
   return STAGES.map((st,i)=>{
     var cls=k==='cancel'?(i===0?'canc':''):(i<si?'done':i===si?'curr':'');
     var ic=cls==='done'?'✓':cls==='curr'?'●':cls==='canc'?'✕':'';
@@ -1007,9 +1034,37 @@ function selectOrder(id){
   var k2=sk(o.status);
   if(G('odPicker')){G('odPicker').style.display=(k2==='work'||k2==='pack')?'':'none';G('odPicker').onclick=function(){nav('picker');selectPicker(id);};}
   if(G('odStatus')){G('odStatus').style.display=SCRIPT_URL?'':'none';G('odStatus').onclick=function(){openStatusModal(o);};}
-  var nextMap={new:'В роботі',work:'Фасується',pack:'Готове',ready:'Відправлено'};
+  // Кнопка "Перевірити" — показуємо тільки при статусі "Готове"
+  if(G('odVerify')){
+    G('odVerify').style.display=(k2==='ready'&&SCRIPT_URL)?'':'none';
+    G('odVerify').onclick=function(){openVerifyModal(o);};
+  }
+  var nextMap={new:'В роботі',work:'Фасується',pack:'Готове',verified:'Відправлено'};
   var nextSt=nextMap[k2];
-  if(G('odNext')){G('odNext').style.display=nextSt?'':'none';if(nextSt)G('odNext').onclick=function(){changeStatus(o.num,o.name,nextSt);};}
+  if(G('odNext')){
+    G('odNext').style.display=nextSt?'':'none';
+    if(nextSt){
+      var itsForCheck=items[o.num]||[];
+      // Захист: для переходу в "Готове" — потрібен повний скан
+      if(nextSt==='Готове'){
+        var collected=checkOrderCollected(o.num,itsForCheck);
+        if(!collected.allDone){
+          G('odNext').style.opacity='.5';
+          G('odNext').style.cursor='not-allowed';
+          G('odNext').title='Відскануйте всі позиції в прихід ('+collected.scannedQty+' з '+collected.neededQty+' шт)';
+          G('odNext').onclick=function(){
+            toast('⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт ('+collected.missing.length+' не вистачає)','wa',5000);
+          };
+        } else {
+          G('odNext').style.opacity='';G('odNext').style.cursor='';G('odNext').title='';
+          G('odNext').onclick=function(){changeStatus(o.num,o.name,nextSt);};
+        }
+      } else {
+        G('odNext').style.opacity='';G('odNext').style.cursor='';G('odNext').title='';
+        G('odNext').onclick=function(){changeStatus(o.num,o.name,nextSt);};
+      }
+    }
+  }
   curTTN=o.ttn;
   G('odTTN').style.display=o.ttn?'':'none';
   G('odTTN').onclick=()=>{navigator.clipboard.writeText(o.ttn);toast('ТТН скопійовано','ok',2000);};
@@ -1113,12 +1168,45 @@ function selectOrder(id){
 
 // ===== STATUS MODAL =====
 function openStatusModal(o){
-  G('statusBtns').innerHTML=STATUSES_LIST.map(s=>`<button class="btn sm${sk(s)===sk(o.status)?' pr':''}" onclick="changeStatus('${esc(o.num)}','${esc(o.name)}','${esc(s)}')">${s}</button>`).join('');
+  var itsForCheck=items[o.num]||[];
+  var collected=checkOrderCollected(o.num,itsForCheck);
+  G('statusBtns').innerHTML=STATUSES_LIST.map(function(s){
+    var isReady=s==='Готове';
+    var disabled=isReady&&!collected.allDone;
+    var cur=sk(s)===sk(o.status);
+    var cls='btn sm'+(cur?' pr':'')+(disabled?' is-disabled':'');
+    var style=disabled?'opacity:.5;cursor:not-allowed;position:relative':'';
+    var title=disabled?' title="Спочатку відскануйте всі позиції в прихід ('+collected.scannedQty+'/'+collected.neededQty+' шт)"':'';
+    var click=disabled
+      ?'onclick="toast(\'⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт\',\'wa\',5000)"'
+      :'onclick="changeStatus(\''+esc(o.num)+'\',\''+esc(o.name)+'\',\''+esc(s)+'\')"';
+    var lockIcon=disabled?' 🔒':'';
+    return '<button class="'+cls+'" style="'+style+'"'+title+' '+click+'>'+s+lockIcon+'</button>';
+  }).join('');
   G('statusModal').style.display='flex';
 }
 function closeStatusModal(){G('statusModal').style.display='none';}
 async function changeStatus(num,name,newStatus){
   closeStatusModal();
+  // ЗАХИСТ: не дозволяємо ставити "Готове" якщо не всі позиції просканувалися в прихід
+  if(newStatus==='Готове'){
+    var ns0=String(num).trim();
+    var ord=orders.find(function(x){return String(x.num).trim()===ns0;});
+    if(ord){
+      var its0=items[ord.num]||[];
+      var collected=checkOrderCollected(ord.num,its0);
+      if(!collected.allDone){
+        var msg='⛔ Не можна перевести в «Готове»: відскановано '+collected.scannedQty+' з '+collected.neededQty+' шт';
+        if(collected.missing.length){
+          var miss=collected.missing.slice(0,3).map(function(m){return m.art+' ('+m.got+'/'+m.need+')';}).join(', ');
+          if(collected.missing.length>3)miss+=' та ще '+(collected.missing.length-3);
+          msg+='. Не вистачає: '+miss;
+        }
+        toast(msg,'er',6000);
+        return;
+      }
+    }
+  }
   toast('Змінюємо статус...','in',2000);
   var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
   if(res.ok){
@@ -1129,7 +1217,6 @@ async function changeStatus(num,name,newStatus){
       o.status=newStatus;
       renderAll();
     }
-    // Через 1.5с — оновлюємо з сервера БЕЗ показу кешу
     setTimeout(function(){loadAll(true);},1500);
   }
   else toast('Помилка: '+(res.error||res.msg||'?'),'er');
@@ -1304,6 +1391,169 @@ function renderCombinedModal(){
 }
 
 function closeCombinedModal(){G('combinedModal').style.display='none';}
+
+// ============= VERIFY MODAL =============
+var verifyState={order:null,items:[],scanned:{},strangers:[]};
+
+function openVerifyModal(o){
+  verifyState.order=o;
+  verifyState.items=items[o.num]||[];
+  verifyState.scanned={};
+  verifyState.strangers=[];
+  G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:3px">#'+esc(o.num)+' · '+esc(o.name)+'</div>'
+    +'<div style="font-size:12px;color:var(--tx4)">Відскануйте кожен товар з пакету. Після збору всіх позицій → "Підтвердити перевірку".</div>';
+  renderVerifyTable();
+  G('verifyModal').style.display='flex';
+  setTimeout(function(){G('vmInput')&&G('vmInput').focus();},100);
+  // Enter в полі — додає скан
+  G('vmInput').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();verifyScanArt();}};
+}
+
+function closeVerifyModal(){
+  G('verifyModal').style.display='none';
+  verifyState={order:null,items:[],scanned:{},strangers:[]};
+}
+
+function renderVerifyTable(){
+  var its=verifyState.items;
+  var totalNeed=its.reduce(function(s,i){return s+i.qty;},0);
+  var totalScanned=0;
+  var allDone=its.length>0;
+  
+  var rows=its.map(function(it,i){
+    var got=verifyState.scanned[it.art]||0;
+    totalScanned+=Math.min(got,it.qty);
+    var done=got>=it.qty;
+    var partial=got>0&&!done;
+    if(!done)allDone=false;
+    var bg=done?'background:#e8fdf0':partial?'background:#fff8e1':'';
+    return '<tr style="'+bg+'">'
+      +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
+      +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
+      +'<td style="font-size:13px">'+esc(it.name)+'</td>'
+      +'<td style="text-align:center;font-weight:600">'+it.qty+'</td>'
+      +'<td style="text-align:center;font-weight:700;font-size:15px;color:'+(done?'var(--green-d)':partial?'var(--orange)':'var(--tx4)')+'">'+got+'</td>'
+      +'<td style="text-align:center">'+(done?'<span style="color:var(--green);font-size:18px">✓</span>':partial?'<span style="color:var(--orange);font-weight:700">'+(it.qty-got)+'</span>':'<span style="color:var(--tx4)">—</span>')+'</td>'
+      +'</tr>';
+  }).join('');
+  
+  // Зайві артикули
+  var strangerHtml='';
+  if(verifyState.strangers.length){
+    strangerHtml='<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚠️ Артикули НЕ з цього замовлення:</div>'
+      +'<table class="dt" style="font-size:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px"><thead><tr>'
+        +'<th style="width:28px">#</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th>'
+      +'</tr></thead><tbody>'
+      +verifyState.strangers.map(function(s,i){
+        return '<tr><td style="text-align:center">'+(i+1)+'</td><td style="font-family:monospace;font-weight:600">'+esc(s.art)+'</td><td>'+esc(s.name||'—')+'</td><td style="text-align:center;font-weight:700">'+s.qty+'</td></tr>';
+      }).join('')
+      +'</tbody></table></div>';
+  }
+  
+  G('vmStats').innerHTML='<strong>'+totalScanned+'</strong> / <strong>'+totalNeed+'</strong> шт'
+    +(verifyState.strangers.length?' · <span style="color:var(--orange)">⚠️ зайвих: '+verifyState.strangers.length+'</span>':'');
+  G('vmBody').innerHTML='<table class="dt" style="font-size:13px;width:100%">'
+    +'<thead><tr style="font-size:10px;background:var(--gray6)">'
+      +'<th style="text-align:center">#</th>'
+      +'<th>Артикул</th>'
+      +'<th>Назва</th>'
+      +'<th style="text-align:center">Треба</th>'
+      +'<th style="text-align:center">Скановано</th>'
+      +'<th style="text-align:center">Лишилось</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +strangerHtml;
+  
+  // Активуємо/деактивуємо кнопку
+  var btn=G('vmFinish');
+  if(allDone&&its.length){
+    btn.disabled=false;
+    btn.style.opacity='1';
+    btn.style.cursor='pointer';
+    btn.textContent='✓ Підтвердити перевірку → «Перевірено»';
+    btn.onclick=confirmVerification;
+  } else {
+    btn.disabled=true;
+    btn.style.opacity='.5';
+    btn.style.cursor='not-allowed';
+    btn.textContent='✓ Підтвердити перевірку';
+    btn.onclick=null;
+  }
+}
+
+async function verifyScanArt(){
+  var input=G('vmInput');
+  var art=input.value.trim();
+  var qty=parseInt(G('vmQty').value)||1;
+  if(!art){input.focus();return;}
+  
+  // Перевіряємо чи артикул у замовленні
+  var itemMatch=verifyState.items.find(function(it){return it.art===art;});
+  
+  if(itemMatch){
+    // Правильний скан
+    verifyState.scanned[art]=(verifyState.scanned[art]||0)+qty;
+    var needed=itemMatch.qty;
+    var got=verifyState.scanned[art];
+    if(got>needed){
+      toast('⚠️ Перевищено! Треба '+needed+', відскановано '+got,'wa',3000);
+    } else if(got===needed){
+      toast('✓ '+art+' — повністю!','ok',1500);
+    } else {
+      toast('✓ '+art+' ('+got+'/'+needed+')','ok',1500);
+    }
+  } else {
+    // Зайвий
+    var existing=verifyState.strangers.find(function(s){return s.art===art;});
+    var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art];
+    var name=furyInfo?furyInfo.name:'';
+    if(existing){existing.qty+=qty;}
+    else{verifyState.strangers.push({art:art,qty:qty,name:name});}
+    toast('⚠️ Артикул '+art+' НЕ з цього замовлення','wa',3500);
+  }
+  
+  // Записуємо у Apps Script
+  if(SCRIPT_URL){
+    try{
+      await callScript('verifyScan',{
+        orderNum:verifyState.order.num,
+        orderName:verifyState.order.name,
+        art:art,
+        name:itemMatch?itemMatch.name:'',
+        qty:qty,
+        operator:'Адмін'
+      });
+    }catch(e){}
+  }
+  
+  input.value='';
+  G('vmQty').value='1';
+  input.focus();
+  renderVerifyTable();
+}
+
+async function confirmVerification(){
+  var o=verifyState.order;
+  toast('Підтверджуємо перевірку...','in',2000);
+  if(SCRIPT_URL){
+    try{
+      var res=await callScript('verifyComplete',{
+        orderNum:o.num,
+        orderName:o.name,
+        markAsVerified:'true'
+      });
+      if(res&&res.ok&&res.allDone){
+        toast('🔍 Перевірено! Можна відправляти','ok',3000);
+        // Локально оновити статус
+        var ord=orders.find(function(x){return String(x.num).trim()===String(o.num).trim();});
+        if(ord){ord.status='Перевірено';renderAll();}
+        closeVerifyModal();
+        setTimeout(function(){loadAll(true);},1500);
+        return;
+      }
+    }catch(e){}
+  }
+  toast('Помилка перевірки','er',3000);
+}
 
 // Сортування зведеного списку по категорії + назві
 function sortCombinedByCategory(){
@@ -1596,8 +1846,57 @@ function selectPicker(id){
     var nextMap2={new:'В роботі',work:'Фасується',pack:'Готове'};
     var ns2=nextMap2[k2];
     G('pkNext').style.display=ns2&&SCRIPT_URL?'':'none';
-    if(ns2)G('pkNext').onclick=function(){changeStatus(o.num,o.name,ns2);};
+    if(ns2){
+      // Перевірка: для переходу в "Готове" — потрібен повний скан в прихід
+      if(ns2==='Готове'){
+        var collected=checkOrderCollected(o.num,its);
+        if(!collected.allDone){
+          G('pkNext').classList.add('disabled');
+          G('pkNext').style.opacity='.5';
+          G('pkNext').style.cursor='not-allowed';
+          G('pkNext').title='Відскануйте всі позиції в прихід ('+collected.scannedQty+' з '+collected.neededQty+' шт)';
+          G('pkNext').onclick=function(){
+            toast('⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт ('+collected.missing.length+' не вистачає)','wa',5000);
+          };
+        } else {
+          G('pkNext').classList.remove('disabled');
+          G('pkNext').style.opacity='';
+          G('pkNext').style.cursor='';
+          G('pkNext').title='';
+          G('pkNext').onclick=function(){changeStatus(o.num,o.name,ns2);};
+        }
+      } else {
+        G('pkNext').classList.remove('disabled');
+        G('pkNext').style.opacity='';
+        G('pkNext').style.cursor='';
+        G('pkNext').title='';
+        G('pkNext').onclick=function(){changeStatus(o.num,o.name,ns2);};
+      }
+    }
   }
+}
+
+// Перевірка чи замовлення повністю зібране (по аркушу "прихід")
+function checkOrderCollected(orderNum,its){
+  if(!its||!its.length)return {allDone:false,scannedQty:0,neededQty:0,missing:[]};
+  var scanned={};
+  income.forEach(function(r){
+    if(String(r.orderNum||'').trim()===String(orderNum).trim()){
+      var a=String(r.art||'').trim();
+      if(a)scanned[a]=(scanned[a]||0)+(parseInt(r.qty)||0);
+    }
+  });
+  var neededQty=0,scannedQty=0,missing=[];
+  its.forEach(function(it){
+    var need=parseInt(it.qty)||0;
+    var got=scanned[it.art]||0;
+    neededQty+=need;
+    scannedQty+=Math.min(got,need);
+    if(got<need){
+      missing.push({art:it.art,name:it.name,need:need,got:got});
+    }
+  });
+  return {allDone:missing.length===0&&neededQty>0,scannedQty:scannedQty,neededQty:neededQty,missing:missing};
 }
 function doPrint(o,its){
   var tq=its.reduce(function(s,i){return s+i.qty;},0);
