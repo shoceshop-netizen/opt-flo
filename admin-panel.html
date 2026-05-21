@@ -126,6 +126,32 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 @keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
 @keyframes alertShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}25%{transform:translateX(8px)}40%{transform:translateX(-6px)}55%{transform:translateX(6px)}70%{transform:translateX(-3px)}85%{transform:translateX(3px)}}
 
+/* VOICES PAGE */
+.digits-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.dig-card{background:var(--bo2);border:2px solid var(--bo);border-radius:12px;padding:14px 10px;text-align:center;transition:all .15s;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.dig-card.done{background:#f0f9f0;border-color:#9fd09f}
+.dig-card.recording{background:#fdf0f0;border-color:#ff3b30;animation:pulse 1s ease infinite}
+.dig-num{font-size:32px;font-weight:800;color:var(--tx);letter-spacing:-1px;line-height:1}
+.dig-word{font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.dig-actions{display:flex;gap:6px;width:100%;justify-content:center}
+.dig-btn{padding:5px 10px;font-size:11px;border-radius:6px;border:1px solid var(--bo);background:#fff;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.dig-btn:hover{background:var(--bo2)}
+.dig-btn.rec{background:var(--red);color:#fff;border-color:var(--red)}
+.dig-btn.rec:hover{background:#c62828}
+.dig-btn.play{background:var(--blue);color:#fff;border-color:var(--blue)}
+.dig-btn.play:hover{background:#0060c0}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.4)}50%{box-shadow:0 0 0 8px rgba(255,59,48,0)}}
+
+.cl-voice-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bo);transition:background .12s}
+.cl-voice-row:hover{background:var(--bo2)}
+.cl-voice-row:last-child{border-bottom:none}
+.cl-name{flex:1;font-weight:500;font-size:13px}
+.cl-orders{font-size:11px;color:var(--mu);padding:2px 8px;background:var(--bo2);border-radius:10px;font-weight:600}
+.cl-status{font-size:11px;font-weight:600}
+.cl-status.has{color:var(--green)}
+.cl-status.no{color:var(--mu)}
+.cl-actions{display:flex;gap:6px}
+
 /* WELCOME SCREEN — оптимізовано */
 @keyframes wfadeIn{from{opacity:0}to{opacity:1}}
 @keyframes wlogoIn{
@@ -504,6 +530,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
     <div class="ni" id="nav-scan"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
     <div class="nav-sec">Довідники</div>
     <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span>Товари</div>
+    <div class="ni" id="nav-voices"><span class="ni-ic">🎙</span>Голоси</div>
   </div>
   <div class="sb-foot" id="sbt"></div>
   <div style="padding:10px 18px;border-top:1px solid var(--bo)">
@@ -609,8 +636,8 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
           <label class="vc-rate-wrap"><span class="vc-rate-lbl">Швидкість</span><input id="voiceRate" type="range" min="0.7" max="1.6" step="0.05" value="1.0"><span id="voiceRateVal" class="vc-rate-val">1.00×</span></label>
           <button class="btn sm" onclick="testVoice()">▶ Тест</button>
         </div>
-        <div style="font-size:11px;color:var(--tx4);margin-bottom:10px;padding:6px 10px;background:#e8f0fe;border-radius:6px;line-height:1.5">
-          💡 Український голос завантажується з інтернету (1-3 сек на перший раз). Кожне імʼя + номер кешується в браузері — наступного разу одразу. Якщо сервер недоступний — переключається на системний голос автоматично.
+        <div style="font-size:11px;color:var(--tx4);margin-bottom:10px;padding:6px 10px;background:var(--gray6);border-radius:6px;line-height:1.5">
+          💡 Рекомендуємо <strong>Microsoft Irina (ru-RU)</strong> — стабільно працює. Українські імена адаптуються автоматично. Український онлайн TTS у списку — експериментальний (потребує робочого Hugging Face серверу).
         </div>
         <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
         <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
@@ -652,6 +679,48 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
         </tr></thead>
         <tbody id="stkBody"></tbody>
       </table>
+    </div>
+  <!-- VOICES PAGE -->
+  <div class="page" id="page-voices">
+    <div style="padding:24px;max-width:1200px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">🎙 Голоси клієнтів</h2>
+          <div style="font-size:13px;color:var(--mu);margin-top:4px">Запиши імена клієнтів та цифри своїм голосом — буде звучати при скануванні</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" onclick="exportVoicesZip()">📥 Експорт</button>
+          <input type="file" id="voicesImportFile" accept=".json" style="display:none" onchange="importVoicesZip(event)">
+          <button class="btn sm" onclick="document.getElementById('voicesImportFile').click()">📤 Імпорт</button>
+        </div>
+      </div>
+
+      <!-- Цифри -->
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:20px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:16px;font-weight:700">🔢 Цифри 0-9</div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">Промов кожну цифру українською (нуль, один, два...)</div>
+          </div>
+          <div style="font-size:12px;color:var(--mu)"><span id="digitsProgress">0</span> / 10 записано</div>
+        </div>
+        <div class="digits-grid" id="digitsGrid"></div>
+      </div>
+
+      <!-- Клієнти -->
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:16px;font-weight:700">👥 Імена клієнтів</div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">Список з активних замовлень. Якщо немає запису — програється системний голос</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="voicesSearch" placeholder="Пошук імені..." oninput="renderClientVoices()">
+            <span style="font-size:12px;color:var(--mu)"><span id="namesProgress">0</span> / <span id="namesTotal">0</span></span>
+          </div>
+        </div>
+        <div id="clientVoicesList"></div>
+      </div>
     </div>
   </div>
 
@@ -1107,25 +1176,12 @@ async function fetchUkrainianTTS(text){
 async function speakOrder(clientName,orderNum){
   if(!clientName&&!orderNum)return;
   var lastFour=String(orderNum||'').slice(-4);
-  var pref=getVoicePrefs();
-  if(pref.disableUkrainian){
-    return speakWithBrowser(clientName,lastFour);
-  }
-  var cacheKey='ua:'+(pref.uaVoice||UA_TTS_VOICE)+':'+clientName+':'+lastFour;
+  // СПОЧАТКУ — пробуємо записаний користувачем голос
   try{
-    var cached=await cacheGet(cacheKey);
-    if(cached){playBlob(cached);return;}
+    var played=await speakOrderWithRecordings(clientName,orderNum);
+    if(played)return;
   }catch(e){}
-  var digitsWords=lastFour.split('').map(function(d){
-    return ({'0':'нуль','1':'один','2':'два','3':'три','4':'чотири','5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'})[d]||d;
-  }).join(' ');
-  var ttsText=(clientName||'')+'. Замовлення '+digitsWords+'.';
-  var blob=await fetchUkrainianTTS(ttsText);
-  if(blob){
-    cacheSet(cacheKey,blob);
-    playBlob(blob);
-    return;
-  }
+  // Інакше — системний голос
   speakWithBrowser(clientName,lastFour);
 }
 
@@ -1210,13 +1266,9 @@ function fillVoiceSelector(){
   if(!sel)return;
   var vs=getVoices();
   var pref=getVoicePrefs();
-  var html='<optgroup label="🇺🇦 Український онлайн TTS">'
-    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (чоловік)</option>'
-    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (жінка)</option>'
-    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (чоловік)</option>'
-    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (чоловік)</option>'
-    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (жінка)</option>'
-    +'</optgroup>';
+  // За замовчуванням — системний голос (не український онлайн)
+  var defaultIsSystem=!pref.uaVoice||pref.disableUkrainian;
+  var html='<optgroup label="🖥 Системні голоси (працюють стабільно)">';
   if(vs.length){
     var langOrder=function(lang){
       if(/uk/i.test(lang))return 0;
@@ -1230,7 +1282,7 @@ function fillVoiceSelector(){
       if(d!==0)return d;
       return a.name.localeCompare(b.name);
     });
-    html+='<optgroup label="🖥 Системні (офлайн)">';
+    var selectedSysName=defaultIsSystem?(pref.voiceName||(pickVoice()&&pickVoice().name)):null;
     html+=sorted.map(function(v){
       var flag='';
       if(/uk/i.test(v.lang))flag='🇺🇦 ';
@@ -1238,11 +1290,20 @@ function fillVoiceSelector(){
       else if(/en/i.test(v.lang))flag='🇬🇧 ';
       else if(/pl/i.test(v.lang))flag='🇵🇱 ';
       else if(/de/i.test(v.lang))flag='🇩🇪 ';
-      var selFlag=(pref.disableUkrainian&&v.name===pref.voiceName)?' selected':'';
+      var selFlag=v.name===selectedSysName?' selected':'';
       return '<option value="sys:'+v.name.replace(/"/g,'&quot;')+'"'+selFlag+'>'+flag+v.name+' ('+v.lang+')</option>';
     }).join('');
-    html+='</optgroup>';
+  } else {
+    html+='<option>Голоси завантажуються...</option>';
   }
+  html+='</optgroup>';
+  html+='<optgroup label="🇺🇦 Український онлайн (експериментально, може не працювати)">'
+    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (онлайн)</option>'
+    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (онлайн)</option>'
+    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (онлайн)</option>'
+    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (онлайн)</option>'
+    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (онлайн)</option>'
+    +'</optgroup>';
   sel.innerHTML=html;
   sel.onchange=function(){
     var val=sel.value;
@@ -1253,6 +1314,7 @@ function fillVoiceSelector(){
     } else if(val.indexOf('sys:')===0){
       p.voiceName=val.substring(4);
       p.disableUkrainian=true;
+      p.uaVoice=null;
     }
     saveVoicePrefs(p);
     testVoice();
@@ -1282,6 +1344,341 @@ if(window.speechSynthesis){
     fillVoiceSelector();
   };
 }
+
+// При завантаженні — якщо в localStorage лишився флаг українського онлайн, скидаємо його на системний
+(function resetUaPrefIfStuck(){
+  try{
+    var p=JSON.parse(localStorage.getItem(VOICE_KEY)||'{}');
+    if(p.uaVoice&&!p.disableUkrainian){
+      // Перевіримо чи був успіх — якщо ні, відключаємо
+      // Простіше — скидаємо завжди, бо API недоступний
+      p.uaVoice=null;
+      p.disableUkrainian=true;
+      localStorage.setItem(VOICE_KEY,JSON.stringify(p));
+    }
+  }catch(e){}
+})();
+
+// ============================================================
+//  ЗАПИС ВЛАСНИХ ГОЛОСІВ — цифри + клієнти
+// ============================================================
+var DIGIT_WORDS={
+  '0':'нуль','1':'один','2':'два','3':'три','4':'чотири',
+  '5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'
+};
+var _mediaRecorder=null;
+var _recChunks=[];
+var _currentRecTarget=null;
+
+// Універсальна функція збереження/отримання голосових записів
+async function voiceSave(key,blob){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').put({key:'rec:'+key,blob:blob,ts:Date.now()});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+async function voiceLoad(key){
+  var db=await openVoiceCache();if(!db)return null;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').get('rec:'+key);
+      req.onsuccess=function(){resolve(req.result?req.result.blob:null);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function voiceDelete(key){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').delete('rec:'+key);
+      tx.oncomplete=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+async function voiceListAll(){
+  var db=await openVoiceCache();if(!db)return [];
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').getAll();
+      req.onsuccess=function(){
+        var all=(req.result||[]).filter(function(r){return r.key&&r.key.indexOf('rec:')===0;});
+        resolve(all);
+      };
+      req.onerror=function(){resolve([]);};
+    }catch(e){resolve([]);}
+  });
+}
+
+// Запис аудіо
+async function startRecording(key,targetEl){
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){
+    stopRecording();
+    return;
+  }
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    _recChunks=[];
+    _currentRecTarget={key:key,el:targetEl};
+    var mime='audio/webm';
+    if(!MediaRecorder.isTypeSupported(mime))mime='audio/ogg';
+    _mediaRecorder=new MediaRecorder(stream,{mimeType:mime});
+    _mediaRecorder.ondataavailable=function(e){if(e.data.size)_recChunks.push(e.data);};
+    _mediaRecorder.onstop=async function(){
+      var blob=new Blob(_recChunks,{type:mime});
+      stream.getTracks().forEach(function(t){t.stop();});
+      if(_currentRecTarget){
+        await voiceSave(_currentRecTarget.key,blob);
+        _currentRecTarget=null;
+      }
+      _mediaRecorder=null;
+      renderDigitsGrid();
+      renderClientVoices();
+    };
+    _mediaRecorder.start();
+    if(targetEl)targetEl.classList.add('recording');
+    // Автостоп через 5 сек на цифру, 10 сек на імʼя
+    var timeout=key.indexOf('digit:')===0?2500:5000;
+    setTimeout(function(){
+      if(_mediaRecorder&&_mediaRecorder.state==='recording')stopRecording();
+    },timeout);
+  }catch(e){
+    alert('Помилка доступу до мікрофона: '+e.message+'\nДозволь мікрофон у налаштуваннях браузера.');
+  }
+}
+
+function stopRecording(){
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){
+    _mediaRecorder.stop();
+    if(_currentRecTarget&&_currentRecTarget.el){
+      _currentRecTarget.el.classList.remove('recording');
+    }
+  }
+}
+
+async function playRecording(key){
+  var blob=await voiceLoad(key);
+  if(!blob)return;
+  var url=URL.createObjectURL(blob);
+  var audio=new Audio(url);
+  audio.onended=function(){URL.revokeObjectURL(url);};
+  audio.play();
+}
+
+async function deleteRecording(key,refresh){
+  if(!confirm('Видалити цей запис?'))return;
+  await voiceDelete(key);
+  if(refresh==='digits')renderDigitsGrid();
+  else if(refresh==='clients')renderClientVoices();
+}
+
+// Рендер цифр
+async function renderDigitsGrid(){
+  var grid=document.getElementById('digitsGrid');
+  if(!grid)return;
+  var progress=0;
+  var html='';
+  for(var d=0;d<=9;d++){
+    var key='digit:'+d;
+    var has=await voiceLoad(key);
+    if(has)progress++;
+    var ds=String(d);
+    html+='<div class="dig-card'+(has?' done':'')+'" data-key="'+key+'">'
+      +'<div class="dig-num">'+ds+'</div>'
+      +'<div class="dig-word">'+DIGIT_WORDS[ds]+'</div>'
+      +'<div class="dig-actions">'
+        +(has
+          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
+            +'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.closest(\'.dig-card\'))">⏺ Перез.</button>'
+            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'digits\')">✕</button>'
+          :'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.closest(\'.dig-card\'))">⏺ Записати</button>')
+      +'</div>'
+    +'</div>';
+  }
+  grid.innerHTML=html;
+  var p=document.getElementById('digitsProgress');
+  if(p)p.textContent=progress;
+}
+
+// Рендер списку клієнтів
+async function renderClientVoices(){
+  var box=document.getElementById('clientVoicesList');
+  if(!box)return;
+  // Збираємо унікальні імена з замовлень
+  var nameSet={};
+  orders.forEach(function(o){
+    if(o.name){
+      var n=String(o.name).trim();
+      if(n){
+        if(!nameSet[n])nameSet[n]={count:0};
+        nameSet[n].count++;
+      }
+    }
+  });
+  var names=Object.keys(nameSet).map(function(n){return {name:n,count:nameSet[n].count};});
+  names.sort(function(a,b){return b.count-a.count;});
+  // Фільтр пошуку
+  var q=(document.getElementById('voicesSearch')||{}).value||'';
+  q=q.trim().toLowerCase();
+  var filtered=q?names.filter(function(x){return x.name.toLowerCase().indexOf(q)>=0;}):names;
+  // Підраховуємо хто має запис
+  var progress=0;
+  var rows='';
+  for(var i=0;i<filtered.length;i++){
+    var n=filtered[i];
+    var key='name:'+n.name;
+    var has=await voiceLoad(key);
+    if(has)progress++;
+    rows+='<div class="cl-voice-row">'
+      +'<div class="cl-name">'+esc(n.name)+'</div>'
+      +'<span class="cl-orders">'+n.count+' замовл.</span>'
+      +'<span class="cl-status '+(has?'has':'no')+'">'+(has?'✓ записано':'— немає')+'</span>'
+      +'<div class="cl-actions">'
+        +(has
+          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
+            +'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.parentNode.parentNode)">⏺ Перез.</button>'
+            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'clients\')">✕</button>'
+          :'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.parentNode.parentNode)">⏺ Записати</button>')
+      +'</div>'
+    +'</div>';
+  }
+  box.innerHTML=rows||'<div style="padding:30px;text-align:center;color:var(--mu);font-size:13px">Немає клієнтів</div>';
+  var np=document.getElementById('namesProgress');if(np)np.textContent=progress;
+  var nt=document.getElementById('namesTotal');if(nt)nt.textContent=names.length;
+}
+
+// Експорт усіх записів у JSON
+async function exportVoicesZip(){
+  var all=await voiceListAll();
+  if(!all.length){alert('Немає записів для експорту');return;}
+  toast('Готую експорт...','in',2000);
+  var data={version:1,exported:new Date().toISOString(),records:[]};
+  for(var i=0;i<all.length;i++){
+    var r=all[i];
+    var b64=await blobToBase64(r.blob);
+    data.records.push({key:r.key,blob:b64,type:r.blob.type});
+  }
+  var json=JSON.stringify(data);
+  var b=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(b);
+  var a=document.createElement('a');
+  a.href=url;a.download='florium-voices-'+(new Date().toISOString().substring(0,10))+'.json';
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},5000);
+  toast('Експорт завершено: '+all.length+' записів','ok',3000);
+}
+
+function blobToBase64(blob){
+  return new Promise(function(resolve){
+    var r=new FileReader();
+    r.onloadend=function(){resolve(r.result);};
+    r.readAsDataURL(blob);
+  });
+}
+
+function base64ToBlob(b64,type){
+  var parts=b64.split(',');
+  var raw=atob(parts[1]||parts[0]);
+  var arr=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return new Blob([arr],{type:type||'audio/webm'});
+}
+
+async function importVoicesZip(e){
+  var f=e.target.files[0];
+  if(!f)return;
+  try{
+    var text=await f.text();
+    var data=JSON.parse(text);
+    if(!data.records||!Array.isArray(data.records)){
+      alert('Некоректний файл');return;
+    }
+    if(!confirm('Імпортувати '+data.records.length+' записів? Існуючі з тими ж ключами будуть замінені.'))return;
+    var imported=0;
+    for(var i=0;i<data.records.length;i++){
+      var r=data.records[i];
+      var blob=base64ToBlob(r.blob,r.type);
+      var key=r.key.replace(/^rec:/,'');
+      await voiceSave(key,blob);
+      imported++;
+    }
+    toast('Імпортовано: '+imported+' записів','ok',3000);
+    renderDigitsGrid();
+    renderClientVoices();
+  }catch(err){
+    alert('Помилка імпорту: '+err.message);
+  }
+  e.target.value='';
+}
+
+// Гібридне озвучування — з власних записів якщо є
+async function speakOrderWithRecordings(clientName,orderNum){
+  var lastFour=String(orderNum||'').slice(-4);
+  // 1) Імʼя клієнта — спочатку записане, потім TTS
+  var nameBlob=clientName?await voiceLoad('name:'+clientName):null;
+  // 2) Цифри — спочатку записані, потім TTS
+  var digitBlobs=[];
+  var allDigitsRecorded=true;
+  for(var i=0;i<lastFour.length;i++){
+    var b=await voiceLoad('digit:'+lastFour[i]);
+    if(b)digitBlobs.push(b);
+    else{allDigitsRecorded=false;break;}
+  }
+  // Якщо є все — програємо послідовність
+  if(nameBlob&&allDigitsRecorded&&digitBlobs.length===lastFour.length){
+    await playSequence([nameBlob].concat(digitBlobs));
+    return true;
+  }
+  // Якщо є тільки імʼя — програємо його, потім TTS для цифр
+  if(nameBlob){
+    await playSequence([nameBlob]);
+    setTimeout(function(){speakWithBrowser('',lastFour);},nameBlob.size/2000+300);
+    return true;
+  }
+  // Якщо є тільки цифри — TTS імʼя, потім записані цифри
+  if(allDigitsRecorded&&digitBlobs.length){
+    speakWithBrowser(clientName,'');
+    setTimeout(function(){playSequence(digitBlobs);},1200);
+    return true;
+  }
+  return false;
+}
+
+// Послідовне програвання Blob'ів
+function playSequence(blobs){
+  return new Promise(function(resolve){
+    var i=0;
+    function next(){
+      if(i>=blobs.length){resolve();return;}
+      var url=URL.createObjectURL(blobs[i]);
+      var audio=new Audio(url);
+      var pref=getVoicePrefs();
+      audio.playbackRate=parseFloat(pref.rate)||1.0;
+      audio.onended=function(){URL.revokeObjectURL(url);i++;next();};
+      audio.onerror=function(){URL.revokeObjectURL(url);i++;next();};
+      audio.play().catch(function(){i++;next();});
+    }
+    next();
+  });
+}
+
+// Ініціалізація сторінки голосів
+function initVoicesPage(){
+  renderDigitsGrid();
+  renderClientVoices();
+}
+
 
 
 function beep(type){
@@ -1367,7 +1764,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів'};
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -1375,6 +1772,7 @@ function nav(p){
   G('pgTitle').textContent=TITLES[p]||'';
   sbClose();
   if(p==='scan'){setTimeout(()=>{initScanPage();G('scInp')?.focus();},100);}
+  if(p==='voices'){setTimeout(initVoicesPage,100);}
 }
 function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
