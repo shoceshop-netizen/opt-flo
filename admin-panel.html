@@ -974,9 +974,16 @@ function speakOrder(clientName,orderNum){
   try{
     window.speechSynthesis.cancel();
     var lastFour=String(orderNum||'').slice(-4);
-    var text=(clientName||'')+', '+lastFour.split('').join(' ');
-    var u=new SpeechSynthesisUtterance(text);
     var v=pickVoice();
+    var name=clientName||'';
+    var digits=lastFour.split('').join(' ');
+    // Якщо голос не український — застосовуємо обхід для кращої вимови
+    if(v&&!/uk/i.test(v.lang)){
+      name=adaptNameForVoice(name,v.lang);
+      digits=adaptDigitsForVoice(lastFour,v.lang);
+    }
+    var text=name+', '+digits;
+    var u=new SpeechSynthesisUtterance(text);
     if(v){u.voice=v;u.lang=v.lang;}
     var pref=getVoicePrefs();
     u.rate=parseFloat(pref.rate)||1.15;
@@ -984,6 +991,39 @@ function speakOrder(clientName,orderNum){
     u.volume=1.0;
     window.speechSynthesis.speak(u);
   }catch(e){}
+}
+
+// Адаптуємо українські імена під вимову російського/польського голосу
+function adaptNameForVoice(name,lang){
+  if(!name)return '';
+  // Для російського голосу замінюємо українські букви на російські еквіваленти
+  if(/ru/i.test(lang)){
+    return name
+      .replace(/і/g,'и').replace(/І/g,'И')
+      .replace(/ї/g,'йи').replace(/Ї/g,'Йи')
+      .replace(/є/g,'е').replace(/Є/g,'Е')
+      .replace(/ґ/g,'г').replace(/Ґ/g,'Г')
+      .replace(/'/g,'');
+  }
+  // Для англійського голосу — транслітерація
+  if(/en/i.test(lang)){
+    var map={'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};
+    return name.toLowerCase().split('').map(function(c){return map[c]!==undefined?map[c]:c;}).join('');
+  }
+  return name;
+}
+
+// Цифри для російського голосу — словами замість окремих звуків
+function adaptDigitsForVoice(digitsStr,lang){
+  if(/ru/i.test(lang)){
+    var ruDigits={'0':'ноль','1':'один','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
+    return digitsStr.split('').map(function(d){return ruDigits[d]||d;}).join(' ');
+  }
+  if(/en/i.test(lang)){
+    var enDigits={'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine'};
+    return digitsStr.split('').map(function(d){return enDigits[d]||d;}).join(' ');
+  }
+  return digitsStr.split('').join(' ');
 }
 
 function speak(text){
@@ -1006,6 +1046,7 @@ function fillVoiceSelector(){
   var vs=getVoices();
   if(!vs.length){sel.innerHTML='<option>Голоси завантажуються...</option>';return;}
   var pref=getVoicePrefs();
+  var hasUk=vs.some(function(v){return /uk/i.test(v.lang);});
   var selected=pref.voiceName||(pickVoice()&&pickVoice().name);
   // Сортуємо: uk → ru → інші слов'янські → решта
   var langOrder=function(lang){
@@ -1030,13 +1071,24 @@ function fillVoiceSelector(){
     var sel_attr=v.name===selected?' selected':'';
     return '<option value="'+v.name.replace(/"/g,'&quot;')+'"'+sel_attr+'>'+flag+v.name+' ('+v.lang+')</option>';
   }).join('');
+  // Підказка якщо немає українського
+  var hint=document.getElementById('voiceHint');
+  if(hint)hint.remove();
+  if(!hasUk){
+    var h=document.createElement('div');
+    h.id='voiceHint';
+    h.style.cssText='font-size:11px;color:var(--orange);margin-top:6px;padding:6px 10px;background:#fff4e5;border-radius:6px;cursor:pointer';
+    h.innerHTML='⚠️ Українського голосу немає. <strong>Як встановити →</strong>';
+    h.onclick=showVoiceInstallHelp;
+    var bar=document.getElementById('voiceBar');
+    if(bar)bar.parentNode.insertBefore(h,bar.nextSibling);
+  }
   sel.onchange=function(){
     var p=getVoicePrefs();
     p.voiceName=sel.value;
     saveVoicePrefs(p);
-    testVoice(); // одразу демо
+    testVoice();
   };
-  // Швидкість
   var rateInput=document.getElementById('voiceRate');
   var rateVal=document.getElementById('voiceRateVal');
   if(rateInput){
@@ -1048,8 +1100,39 @@ function fillVoiceSelector(){
       saveVoicePrefs(p);
       if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
     };
-    rateInput.onchange=function(){testVoice();}; // тест коли користувач відпустив
+    rateInput.onchange=function(){testVoice();};
   }
+}
+
+function showVoiceInstallHelp(){
+  var html='<div class="modal-box" style="width:480px">'
+    +'<div class="modal-t">🇺🇦 Як встановити український голос</div>'
+    +'<div style="font-size:13px;line-height:1.7;color:var(--tx2)">'
+      +'<p style="margin-bottom:10px"><strong>Windows 10:</strong></p>'
+      +'<ol style="padding-left:22px;margin-bottom:14px">'
+        +'<li>Натисни <kbd>Win + I</kbd> (Налаштування)</li>'
+        +'<li>Час і мова → Мова</li>'
+        +'<li>Додати мову → Українська</li>'
+        +'<li>Опції → Завантажити "Мовлення"</li>'
+        +'<li>Перезавантажити браузер</li>'
+      +'</ol>'
+      +'<p style="margin-bottom:10px"><strong>Windows 11:</strong></p>'
+      +'<ol style="padding-left:22px;margin-bottom:14px">'
+        +'<li><kbd>Win + I</kbd> → Час та мова → Мова та регіон</li>'
+        +'<li>Додати мову → Українська</li>'
+        +'<li>В пункті "Українська" → Параметри → завантажити "Мовлення"</li>'
+        +'<li>Перезавантажити браузер</li>'
+      +'</ol>'
+      +'<p style="background:#fff4e5;padding:10px;border-radius:6px;font-size:12px"><strong>Поки немає українського</strong> — російський голос буде озвучувати, але я адаптував текст для кращого звучання.</p>'
+    +'</div>'
+    +'<div style="margin-top:14px;text-align:right"><button class="btn pr" onclick="this.closest(\'.modal-ov\').remove()">Зрозуміло</button></div>'
+  +'</div>';
+  var d=document.createElement('div');
+  d.className='modal-ov';
+  d.style.cssText='display:flex;z-index:9999';
+  d.innerHTML=html;
+  d.onclick=function(e){if(e.target===d)d.remove();};
+  document.body.appendChild(d);
 }
 
 function testVoice(){
