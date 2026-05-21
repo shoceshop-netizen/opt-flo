@@ -1034,17 +1034,47 @@ async function fetchUkrainianTTS(text){
     var pref=getVoicePrefs();
     var voiceKey=pref.uaVoice||UA_TTS_VOICE;
     var voiceLabel=UA_VOICE_LABELS[voiceKey]||UA_VOICE_LABELS.dmytro;
-    // POST на /call/predict — отримуємо event_id
+    var payload={data:[text,voiceLabel]};
+    
+    // СПОЧАТКУ ПРОБУЄМО СТАРИЙ FORMAT /run/predict — він повертає одразу результат
+    try{
+      var oldRes=await fetch(UA_TTS_URL+'/run/predict',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(oldRes.ok){
+        var rj=await oldRes.json();
+        // Формат відповіді: {data: [audioUrl, accentedText], ...}
+        if(rj.data&&rj.data[0]){
+          var audioPath=rj.data[0];
+          var audioUrl=typeof audioPath==='string'?audioPath:(audioPath.url||audioPath.path||audioPath.name);
+          if(audioUrl){
+            if(!audioUrl.startsWith('http')){
+              audioUrl=UA_TTS_URL+'/file='+audioUrl.replace(/^\//,'');
+            }
+            var audioRes=await fetch(audioUrl);
+            if(audioRes.ok)return await audioRes.blob();
+          }
+        }
+        throw new Error('No audio in /run/predict response: '+JSON.stringify(rj).substring(0,200));
+      }
+      // Якщо /run/predict не дав ok — fallthrough до /call/predict
+      console.log('UA TTS: /run/predict returned',oldRes.status,'- trying /call/predict');
+    }catch(e1){
+      console.log('UA TTS /run/predict failed:',e1.message,'- trying /call/predict');
+    }
+    
+    // FALLBACK НА НОВИЙ /call/predict (POST → GET)
     var post=await fetch(UA_TTS_URL+'/call/predict',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:[text,voiceLabel]})
+      body:JSON.stringify(payload)
     });
     if(!post.ok)throw new Error('POST '+post.status);
     var pj=await post.json();
     var eventId=pj.event_id;
     if(!eventId)throw new Error('No event_id');
-    // GET — стримуємо результат SSE
     var getRes=await fetch(UA_TTS_URL+'/call/predict/'+eventId);
     if(!getRes.ok)throw new Error('GET failed');
     var textStream=await getRes.text();
@@ -1058,19 +1088,18 @@ async function fetchUkrainianTTS(text){
     }
     if(!dataLine)throw new Error('No complete event');
     var parsed=JSON.parse(dataLine);
-    // Перший елемент — аудіо (path/url), другий — текст з наголосами
     var audioInfo=parsed[0];
     if(!audioInfo)throw new Error('No audio info');
-    var audioUrl=audioInfo.url||audioInfo.path;
-    if(!audioUrl)throw new Error('No audio URL');
-    if(!audioUrl.startsWith('http')){
-      audioUrl=UA_TTS_URL+'/file='+audioUrl.replace(/^\//,'');
+    var audioUrl2=audioInfo.url||audioInfo.path||audioInfo;
+    if(typeof audioUrl2!=='string')throw new Error('Bad audio URL type');
+    if(!audioUrl2.startsWith('http')){
+      audioUrl2=UA_TTS_URL+'/file='+audioUrl2.replace(/^\//,'');
     }
-    var audioRes=await fetch(audioUrl);
-    if(!audioRes.ok)throw new Error('Audio fetch '+audioRes.status);
-    return await audioRes.blob();
+    var audioRes2=await fetch(audioUrl2);
+    if(!audioRes2.ok)throw new Error('Audio fetch '+audioRes2.status);
+    return await audioRes2.blob();
   }catch(e){
-    console.warn('UA TTS error:',e.message);
+    console.warn('UA TTS final error:',e.message);
     return null;
   }
 }
