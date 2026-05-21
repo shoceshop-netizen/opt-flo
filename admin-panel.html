@@ -124,6 +124,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .toast.wa{background:rgba(255,149,0,.95);}
 .toast.in{background:rgba(0,113,227,.95);}
 @keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes alertShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}25%{transform:translateX(8px)}40%{transform:translateX(-6px)}55%{transform:translateX(6px)}70%{transform:translateX(-3px)}85%{transform:translateX(3px)}}
 
 /* PAGES */
 .page{display:none;flex:1;flex-direction:column;overflow:hidden;}
@@ -1468,21 +1469,7 @@ function renderVerifyTable(){
       +'</tr>';
   }).join('');
   
-  // Зайві артикули
-  var strangerHtml='';
-  if(verifyState.strangers.length){
-    strangerHtml='<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚠️ Артикули НЕ з цього замовлення:</div>'
-      +'<table class="dt" style="font-size:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px"><thead><tr>'
-        +'<th style="width:28px">#</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th>'
-      +'</tr></thead><tbody>'
-      +verifyState.strangers.map(function(s,i){
-        return '<tr><td style="text-align:center">'+(i+1)+'</td><td style="font-family:monospace;font-weight:600">'+esc(s.art)+'</td><td>'+esc(s.name||'—')+'</td><td style="text-align:center;font-weight:700">'+s.qty+'</td></tr>';
-      }).join('')
-      +'</tbody></table></div>';
-  }
-  
-  G('vmStats').innerHTML='<strong>'+totalScanned+'</strong> / <strong>'+totalNeed+'</strong> шт'
-    +(verifyState.strangers.length?' · <span style="color:var(--orange)">⚠️ зайвих: '+verifyState.strangers.length+'</span>':'');
+  G('vmStats').innerHTML='<strong>'+totalScanned+'</strong> / <strong>'+totalNeed+'</strong> шт';
   G('vmBody').innerHTML='<table class="dt" style="font-size:13px;width:100%">'
     +'<thead><tr style="font-size:10px;background:var(--gray6)">'
       +'<th style="text-align:center">#</th>'
@@ -1491,8 +1478,7 @@ function renderVerifyTable(){
       +'<th style="text-align:center">Треба</th>'
       +'<th style="text-align:center">Скановано</th>'
       +'<th style="text-align:center">Лишилось</th>'
-    +'</tr></thead><tbody>'+rows+'</tbody></table>'
-    +strangerHtml;
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
   
   // Активуємо/деактивуємо кнопку
   var btn=G('vmFinish');
@@ -1521,25 +1507,50 @@ async function verifyScanArt(){
   var itemMatch=verifyState.items.find(function(it){return it.art===art;});
   
   if(itemMatch){
-    // Правильний скан
-    verifyState.scanned[art]=(verifyState.scanned[art]||0)+qty;
     var needed=itemMatch.qty;
-    var got=verifyState.scanned[art];
-    if(got>needed){
-      toast('⚠️ Перевищено! Треба '+needed+', відскановано '+got,'wa',3000);
-    } else if(got===needed){
+    var got=verifyState.scanned[art]||0;
+    
+    // ЗАХИСТ: якщо вже зібрано повну к-сть — не додаємо, тривога
+    if(got>=needed){
+      showVerifyAlert('⛔ ВЖЕ ЗАПАКОВАНО','Артикул '+art+' ('+itemMatch.name+') уже зібрано: '+got+'/'+needed+'. НЕ кидати в пакет!');
+      beepAlert();
+      input.value='';input.focus();
+      return;
+    }
+    
+    // Перевищення (якщо qty більше потрібного)
+    if(got+qty>needed){
+      var canAdd=needed-got;
+      showVerifyAlert('⛔ ПЕРЕВИЩЕНО','Можна додати тільки '+canAdd+' шт (треба '+needed+', вже '+got+')');
+      beepAlert();
+      input.value='';input.focus();
+      return;
+    }
+    
+    // Правильний скан
+    verifyState.scanned[art]=got+qty;
+    var newGot=verifyState.scanned[art];
+    if(newGot===needed){
       toast('✓ '+art+' — повністю!','ok',1500);
     } else {
-      toast('✓ '+art+' ('+got+'/'+needed+')','ok',1500);
+      toast('✓ '+art+' ('+newGot+'/'+needed+')','ok',1500);
     }
   } else {
-    // Зайвий
-    var existing=verifyState.strangers.find(function(s){return s.art===art;});
+    // Артикул не належить замовленню — перевіримо чи він взагалі існує в системі
+    var existsInSystem=fury[art]||fury['b_'+art]||fury['f_'+art]||stock.find(function(s){return s.art===art;});
+    if(!existsInSystem){
+      showVerifyAlert('⛔ НЕВІДОМИЙ АРТИКУЛ','Артикул "'+art+'" не існує в системі. Перевірте скан!');
+      beepAlert();
+      input.value='';input.focus();
+      return;
+    }
+    // Артикул існує, але НЕ з цього замовлення — велике попередження
     var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art];
-    var name=furyInfo?furyInfo.name:'';
-    if(existing){existing.qty+=qty;}
-    else{verifyState.strangers.push({art:art,qty:qty,name:name});}
-    toast('⚠️ Артикул '+art+' НЕ з цього замовлення','wa',3500);
+    var itemName=furyInfo?furyInfo.name:(existsInSystem.name||'');
+    showVerifyAlert('⛔ ЧУЖИЙ АРТИКУЛ','"'+art+'" ('+itemName+') НЕ належить замовленню #'+verifyState.order.num+'. Перевірте чи правильний пакет!');
+    beepAlert();
+    input.value='';input.focus();
+    return;
   }
   
   // Записуємо у Apps Script
@@ -1573,6 +1584,53 @@ async function verifyScanArt(){
       }
     });
   },10);
+}
+
+// Велике червоне попередження зверху модалки
+function showVerifyAlert(title,msg){
+  var existing=document.getElementById('vmAlert');
+  if(existing)existing.remove();
+  var div=document.createElement('div');
+  div.id='vmAlert';
+  div.style.cssText='position:absolute;top:0;left:0;right:0;background:linear-gradient(135deg,#ff3b30,#c62828);color:#fff;padding:24px 28px;display:flex;align-items:center;gap:18px;z-index:100;animation:alertShake .5s ease;box-shadow:0 6px 24px rgba(255,59,48,.4);border-radius:14px 14px 0 0;';
+  div.innerHTML='<div style="font-size:42px;flex-shrink:0">⚠️</div>'
+    +'<div style="flex:1"><div style="font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px">'+esc(title)+'</div>'
+    +'<div style="font-size:15px;opacity:.95;font-weight:500">'+esc(msg)+'</div></div>'
+    +'<button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">OK</button>';
+  var box=G('verifyModal').querySelector('.cm-box');
+  box.style.position='relative';
+  box.insertBefore(div,box.firstChild);
+  // Автозникнення за 5 секунд
+  setTimeout(function(){
+    if(div.parentNode){
+      div.style.transition='opacity .4s, transform .4s';
+      div.style.opacity='0';
+      div.style.transform='translateY(-20px)';
+      setTimeout(function(){div.remove();},400);
+    }
+  },5000);
+}
+
+// Звук тривоги
+function beepAlert(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    // Три "пі-пі-пі"
+    [0,150,300].forEach(function(delay){
+      setTimeout(function(){
+        var osc=ctx.createOscillator();
+        var gain=ctx.createGain();
+        osc.type='square';
+        osc.frequency.value=880;
+        gain.gain.value=.15;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
+        osc.stop(ctx.currentTime+.13);
+      },delay);
+    });
+  }catch(e){}
 }
 
 async function confirmVerification(){
