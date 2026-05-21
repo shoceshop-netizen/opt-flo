@@ -682,7 +682,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
     </div>
   <!-- VOICES PAGE -->
   <div class="page" id="page-voices">
-    <div style="padding:24px;max-width:1200px;margin:0 auto">
+    <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
         <div>
           <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">🎙 Голоси клієнтів</h2>
@@ -1759,7 +1759,7 @@ var combinedAllItems=[]; // незмінений повний список дл�
 // ===== INIT =====
 function init(){
   loadAll();
-  setInterval(loadAll,60000);
+  setInterval(loadAll,5*60*1000); // 5 хвилин (було 1 хв — забагато)
   setInterval(()=>G('sbt').textContent=new Date().toLocaleTimeString('uk-UA'),1000);
   initKb();
 }
@@ -3379,8 +3379,6 @@ function renderStock(){
     +'</tr>';
   }).join('');
 }
-
-setInterval(loadAll,60000);
 
 // Wait for DOM before init
 if(document.readyState==='loading'){
