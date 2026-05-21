@@ -1746,13 +1746,13 @@ async function importVoicesZip(e){
 
 // Гібридне озвучування — тільки з записаних/згенерованих файлів
 async function speakOrderWithRecordings(clientName,orderNum){
-  var lastFour=String(orderNum||'').slice(-4);
+  var lastDigits=String(orderNum||'').slice(-2);
   // 1) Імʼя клієнта (ключ як у ElevenLabs автогенераторі — 'name-X')
   var nameBlob=clientName?await voiceLoad('name-'+clientName):null;
-  // 2) Цифри (ключ як у ElevenLabs автогенераторі — 'digit-N')
+  // 2) Останні 2 цифри (ключ як у ElevenLabs автогенераторі — 'digit-N')
   var digitBlobs=[];
-  for(var i=0;i<lastFour.length;i++){
-    var b=await voiceLoad('digit-'+lastFour[i]);
+  for(var i=0;i<lastDigits.length;i++){
+    var b=await voiceLoad('digit-'+lastDigits[i]);
     if(b)digitBlobs.push(b);
   }
   // Програємо все що є
@@ -1782,6 +1782,48 @@ function playSequence(blobs){
     }
     next();
   });
+}
+
+// Програвання однієї фрази з IndexedDB (системні фрази типу "Помилка сканування")
+async function speakPhrase(phraseKey){
+  try{
+    var blob=await voiceLoad(phraseKey);
+    if(!blob)return false;
+    await playSequence([blob]);
+    return true;
+  }catch(e){
+    console.warn('speakPhrase:',e);
+    return false;
+  }
+}
+
+// Програвання фрази + імені клієнта + цифр замовлення
+// Використовується при помилках сканування у конкретному замовленні
+async function speakPhraseWithOrder(phraseKey,clientName,orderNum){
+  try{
+    var blobs=[];
+    // 1) Фраза (типу "Цей артикул вже запакований")
+    var phraseBlob=await voiceLoad(phraseKey);
+    if(phraseBlob)blobs.push(phraseBlob);
+    // 2) Імʼя клієнта (якщо є запис)
+    if(clientName){
+      var nameBlob=await voiceLoad('name-'+clientName);
+      if(nameBlob)blobs.push(nameBlob);
+    }
+    // 3) Останні 2 цифри
+    if(orderNum){
+      var lastDigits=String(orderNum).slice(-2);
+      for(var i=0;i<lastDigits.length;i++){
+        var d=await voiceLoad('digit-'+lastDigits[i]);
+        if(d)blobs.push(d);
+      }
+    }
+    if(blobs.length){
+      await playSequence(blobs);
+      return true;
+    }
+  }catch(e){console.warn('speakPhraseWithOrder:',e);}
+  return false;
 }
 
 // Ручна синхронізація — викликається кнопкою
@@ -2009,19 +2051,30 @@ async function ttsGenerateAll(category){
         if(n)nameSet[n]=(nameSet[n]||0)+1;
       }
     });
-    // Топ-50 за частотою
+    // ВСІ імена (без обмеження)
     var names=Object.keys(nameSet).map(function(n){return {name:n,count:nameSet[n]};});
     names.sort(function(a,b){return b.count-a.count;});
-    names.slice(0,50).forEach(function(x){todo['name-'+x.name]=x.name;});
+    names.forEach(function(x){todo['name-'+x.name]=x.name;});
   }
   
   var keys=Object.keys(todo);
   if(!keys.length){ttsSetProgress('Нема чого генерувати');return;}
   
-  var skipExisting=confirm('Знайдено '+keys.length+' елементів для генерації.\n\nПропускати ті що вже є локально?\n\nOK = пропускати (швидше, економіть кредити)\nCancel = перегенерувати все');
+  // Підраховуємо приблизну вартість в символах
+  var totalChars=0;
+  keys.forEach(function(k){totalChars+=String(todo[k]||'').length;});
+  
+  var skipExisting=confirm(
+    'Знайдено '+keys.length+' елементів для генерації.\n'+
+    'Орієнтовно: '+totalChars+' символів ('+Math.round(totalChars/100)/100+' тис.).\n'+
+    'Безкоштовний ліміт ElevenLabs: 10 000 символів/міс.\n\n'+
+    'Пропускати ті що вже є локально?\n\n'+
+    'OK = пропускати (швидше, економніше)\n'+
+    'Cancel = перегенерувати ВСЕ (витратить більше кредитів)'
+  );
   
   var done=0,skipped=0,failed=0;
-  ttsLog('▶ Починаю генерацію '+keys.length+' файлів...');
+  ttsLog('▶ Починаю генерацію '+keys.length+' файлів ('+totalChars+' символів)...');
   
   for(var i=0;i<keys.length;i++){
     var k=keys[i];
@@ -2982,6 +3035,7 @@ async function verifyScanArt(){
     if(got>=needed){
       showVerifyAlert('⛔ ВЖЕ ЗАПАКОВАНО','Артикул '+art+' ('+itemMatch.name+') уже зібрано: '+got+'/'+needed+'. НЕ кидати в пакет!');
       beepAlert();
+      speakPhrase('phrase-already-packed');
       input.value='';input.focus();
       return;
     }
@@ -2991,6 +3045,7 @@ async function verifyScanArt(){
       var canAdd=needed-got;
       showVerifyAlert('⛔ ПЕРЕВИЩЕНО','Можна додати тільки '+canAdd+' шт (треба '+needed+', вже '+got+')');
       beepAlert();
+      speakPhrase('phrase-exceeded');
       input.value='';input.focus();
       return;
     }
@@ -3000,8 +3055,10 @@ async function verifyScanArt(){
     var newGot=verifyState.scanned[art];
     if(newGot===needed){
       toast('✓ '+art+' — повністю!','ok',1500);
+      speakPhrase('phrase-scan-ok');
     } else {
       toast('✓ '+art+' ('+newGot+'/'+needed+')','ok',1500);
+      speakPhrase('phrase-scan-ok');
     }
   } else {
     // Артикул не належить замовленню — перевіримо чи він взагалі існує в системі
@@ -3009,6 +3066,7 @@ async function verifyScanArt(){
     if(!existsInSystem){
       showVerifyAlert('⛔ НЕВІДОМИЙ АРТИКУЛ','Артикул "'+art+'" не існує в системі. Перевірте скан!');
       beepAlert();
+      speakPhrase('phrase-unknown');
       input.value='';input.focus();
       return;
     }
@@ -3017,6 +3075,7 @@ async function verifyScanArt(){
     var itemName=furyInfo?furyInfo.name:(existsInSystem.name||'');
     showVerifyAlert('⛔ ЧУЖИЙ АРТИКУЛ','"'+art+'" ('+itemName+') НЕ належить замовленню #'+verifyState.order.num+'. Перевірте чи правильний пакет!');
     beepAlert();
+    speakPhrase('phrase-wrong-package');
     input.value='';input.focus();
     return;
   }
@@ -3113,6 +3172,7 @@ async function confirmVerification(){
       });
       if(res&&res.ok&&res.allDone){
         toast('🔍 Перевірено! Можна відправляти','ok',3000);
+        speakPhrase('phrase-order-verified');
         // Локально оновити статус
         var ord=orders.find(function(x){return String(x.num).trim()===String(o.num).trim();});
         if(ord){ord.status='Перевірено';renderAll();}
@@ -3656,10 +3716,12 @@ async function processIncomingScan(){
     if(allDone.length){
       fb.className='s-fb sf-wa';
       fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ');
+      speakPhrase('phrase-already-packed');
     } else {
       fb.className='s-fb sf-er';
       fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в жодному активному замовленні';
       toast('Артикул '+art+' не знайдено — записано в прихід як «загальний»','wa',3000);
+      speakPhrase('phrase-not-in-order');
     }
     addScanLog(art,'','er');
     // Записуємо в прихід навіть якщо не знайдено в замовленнях (тип "загальний")
@@ -3714,7 +3776,11 @@ async function processIncomingScan(){
 
   if(SCRIPT_URL){
     var res=await callScript('scan',{art:art,name:item.name,qty:1,orderNum:o.num,orderName:o.name});
-    if(res&&res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);loadAll();}
+    if(res&&res.complete){
+      toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);
+      speakPhrase('phrase-order-complete');
+      loadAll();
+    }
   }
   if(isDone){toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);}
 }
