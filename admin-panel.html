@@ -126,6 +126,54 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 @keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
 @keyframes alertShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}25%{transform:translateX(8px)}40%{transform:translateX(-6px)}55%{transform:translateX(6px)}70%{transform:translateX(-3px)}85%{transform:translateX(3px)}}
 
+/* WELCOME SCREEN */
+@keyframes wfadeIn{from{opacity:0}to{opacity:1}}
+@keyframes wlogoIn{
+  0%{opacity:0;transform:translateY(-30px) scale(.7);letter-spacing:-20px;filter:blur(20px);}
+  60%{opacity:1;filter:blur(0);}
+  100%{opacity:1;transform:translateY(0) scale(1);letter-spacing:-2px;filter:blur(0);}
+}
+@keyframes wcardIn{
+  from{opacity:0;transform:translateY(40px) scale(.9);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes worbFloat{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(60px,-40px) scale(1.1);}
+  66%{transform:translate(-40px,30px) scale(.9);}
+}
+@keyframes wbreath{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.08);}
+}
+
+#welcomeScreen{animation:wfadeIn .4s ease;}
+.wbg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.4;animation:worbFloat 15s ease-in-out infinite;}
+.wbg-orb-1{width:400px;height:400px;background:#0071e3;top:-100px;left:-100px;}
+.wbg-orb-2{width:500px;height:500px;background:#34c759;bottom:-150px;right:-100px;animation-delay:-5s;}
+.wbg-orb-3{width:350px;height:350px;background:#af52de;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-10s;opacity:.25;}
+
+.wlogo-wrap{text-align:center;margin-bottom:50px;position:relative;z-index:2;}
+.wlogo-icon{font-size:60px;margin-bottom:14px;animation:wbreath 3s ease-in-out infinite;}
+.wtitle{font-size:96px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:10px;animation:wlogoIn 1s cubic-bezier(.2,.7,.3,1) backwards;background:linear-gradient(135deg,#fff 0%,#a8d8ff 50%,#fff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.wsubtitle{font-size:15px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:2px;text-transform:uppercase;animation:wfadeIn 1s .4s backwards;}
+
+.wcards{display:grid;grid-template-columns:repeat(4,200px);gap:18px;position:relative;z-index:2;}
+.wcard{background:rgba(255,255,255,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px 20px;cursor:pointer;transition:all .25s cubic-bezier(.2,.7,.3,1);text-align:center;animation:wcardIn .6s cubic-bezier(.2,.7,.3,1) backwards;}
+.wcard:hover{transform:translateY(-6px) scale(1.03);background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);box-shadow:0 16px 40px rgba(0,0,0,.3);}
+.wcard:active{transform:translateY(-3px) scale(1.01);}
+.wcard-ic{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.wcard-t{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:4px;}
+.wcard-s{font-size:12px;color:rgba(255,255,255,.55);font-weight:500;}
+
+.wskip{position:absolute;bottom:32px;right:32px;color:rgba(255,255,255,.45);font-size:13px;font-weight:500;cursor:pointer;transition:color .15s;animation:wfadeIn 1s 1.2s backwards;}
+.wskip:hover{color:rgba(255,255,255,.85);}
+
+@media (max-width:900px){
+  .wcards{grid-template-columns:repeat(2,180px);}
+  .wtitle{font-size:72px;}
+}
+
 /* PAGES */
 .page{display:none;flex:1;flex-direction:column;overflow:hidden;}
 .page.on{display:flex;}
@@ -743,6 +791,10 @@ function getDeviceName(){
 }
 
 function showApp(){
+  // Закриваємо всі модалки що могли залишитись з минулої сесії
+  ['combinedModal','verifyModal','statusModal','dupWarnModal'].forEach(function(id){
+    var m=G(id);if(m)m.style.display='none';
+  });
   // Показуємо UI
   document.querySelectorAll('body > *').forEach(function(el){
     if(el.tagName!=='SCRIPT'&&el.tagName!=='STYLE'&&el.id!=='loginScreen'){
@@ -755,11 +807,79 @@ function showApp(){
     el.addEventListener('click',function(){
       var id=el.id.replace('nav-','');
       nav(id);
+      hideWelcome();
     });
   });
   init();
+  // Показуємо welcome екран з вибором дії
+  showWelcomeScreen();
   // Перевіряємо expiry кожні 5 хв
   setInterval(checkSessionExpiry,5*60*1000);
+}
+
+// ===== WELCOME SCREEN =====
+function showWelcomeScreen(){
+  if(G('welcomeScreen'))return;
+  var ws=document.createElement('div');
+  ws.id='welcomeScreen';
+  ws.style.cssText='position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929 0%,#1a3a52 50%,#0a1929 100%);z-index:9998;font-family:var(--font);overflow:hidden;';
+  ws.innerHTML=''
+    +'<div class="wbg-orb wbg-orb-1"></div>'
+    +'<div class="wbg-orb wbg-orb-2"></div>'
+    +'<div class="wbg-orb wbg-orb-3"></div>'
+    +'<div class="wlogo-wrap">'
+      +'<div class="wlogo-icon">🌱</div>'
+      +'<div class="wtitle">ОПТ</div>'
+      +'<div class="wsubtitle">Florium · Склад</div>'
+    +'</div>'
+    +'<div class="wcards">'
+      +'<div class="wcard" onclick="welcomeGo(\'orders\')" style="animation-delay:.4s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#34c759,#248a3d)">📋</div>'
+        +'<div class="wcard-t">Замовлення</div>'
+        +'<div class="wcard-s">Перегляд і управління</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'picker\')" style="animation-delay:.55s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#ff9500,#e8830a)">📦</div>'
+        +'<div class="wcard-t">Фасування</div>'
+        +'<div class="wcard-s">Зведений список</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'scan\')" style="animation-delay:.7s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#0071e3,#0060c0)">📲</div>'
+        +'<div class="wcard-t">Прийом товару</div>'
+        +'<div class="wcard-s">Сканування</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'verify\')" style="animation-delay:.85s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#af52de,#8e3fb8)">🔍</div>'
+        +'<div class="wcard-t">Перевірка</div>'
+        +'<div class="wcard-s">Перед відправкою</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="wskip" onclick="hideWelcome()">Пропустити →</div>';
+  document.body.appendChild(ws);
+}
+
+function welcomeGo(page){
+  hideWelcome();
+  if(page==='verify'){
+    // Перейти до Замовлення і показати фільтр Готові
+    nav('orders');
+    setTimeout(function(){
+      filterKey='ready';
+      renderOrders();
+      toast('Виберіть замовлення зі статусом «Готове» → натисніть «🔍 Перевірити»','in',5000);
+    },300);
+  } else {
+    nav(page);
+  }
+}
+
+function hideWelcome(){
+  var ws=G('welcomeScreen');
+  if(!ws)return;
+  ws.style.transition='opacity .4s,transform .4s';
+  ws.style.opacity='0';
+  ws.style.transform='scale(.95)';
+  setTimeout(function(){ws.remove();},400);
 }
 
 function checkSessionExpiry(){
