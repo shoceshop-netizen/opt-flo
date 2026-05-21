@@ -680,8 +680,10 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
         <div>
           <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">🎙 Голоси клієнтів</h2>
           <div style="font-size:13px;color:var(--mu);margin-top:4px">Запиши імена клієнтів та цифри своїм голосом — буде звучати при скануванні</div>
+          <div id="voicesSyncStatus" style="font-size:12px;color:var(--blue);margin-top:6px;font-weight:500"></div>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn sm" onclick="manualSyncVoices()">🔄 Синхр. з Drive</button>
           <button class="btn sm" onclick="exportVoicesZip()">📥 Експорт</button>
           <input type="file" id="voicesImportFile" accept=".json" style="display:none" onchange="importVoicesZip(event)">
           <button class="btn sm" onclick="document.getElementById('voicesImportFile').click()">📤 Імпорт</button>
@@ -713,6 +715,35 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
           </div>
         </div>
         <div id="clientVoicesList"></div>
+      </div>
+
+      <!-- АВТОМАТИЗАТОР ElevenLabs -->
+      <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:14px;padding:20px;margin-top:18px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#5b21b6">🤖 Автогенерація через ElevenLabs</div>
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:14px;line-height:1.5">
+          Введи свій API ключ ElevenLabs — система згенерує всі цифри, фрази і імена клієнтів автоматично, збереже на Google Drive і в браузері.<br>
+          <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" style="color:var(--blue);text-decoration:underline">Отримати ключ →</a> (безкоштовно)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">API ключ</label>
+            <input id="elevenApiKey" type="password" placeholder="sk_..." class="si" style="width:100%;padding:8px 12px;font-size:12px;font-family:monospace" autocomplete="off">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">Voice ID (з URL Voice Library)</label>
+            <input id="elevenVoiceId" type="text" placeholder="Yevhen або 21m00Tcm4TlvDq8ikWAM" class="si" style="width:100%;padding:8px 12px;font-size:12px;font-family:monospace" autocomplete="off">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn sm" onclick="ttsTestConnection()" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🔍 Перевірити ключ</button>
+          <button class="btn sm" onclick="ttsGenerateAll('digits')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🔢 Згенерувати цифри (10)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('phrases')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">💬 Згенерувати фрази (16)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('words')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">📝 Згенерувати слова (10)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('names')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">👥 Згенерувати імена клієнтів</button>
+          <button class="btn sm" onclick="ttsGenerateAll('all')" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;font-weight:700">🚀 ЗГЕНЕРУВАТИ ВСЕ</button>
+        </div>
+        <div id="ttsProgress" style="font-size:12px;color:var(--tx2);min-height:18px;font-weight:500"></div>
+        <div id="ttsLog" style="font-size:11px;color:var(--tx3);max-height:200px;overflow-y:auto;margin-top:8px;font-family:monospace;background:#fff;padding:8px;border-radius:6px;display:none"></div>
       </div>
     </div>
   </div>
@@ -1363,17 +1394,24 @@ var _mediaRecorder=null;
 var _recChunks=[];
 var _currentRecTarget=null;
 
-// Універсальна функція збереження/отримання голосових записів
-async function voiceSave(key,blob){
+// Локальне (швидке) збереження в IndexedDB + асинхронна синхронізація з Google Drive
+async function voiceSave(key,blob,skipDriveSync){
   var db=await openVoiceCache();if(!db)return;
-  return new Promise(function(resolve){
+  // 1) Зберігаємо локально (миттєво)
+  await new Promise(function(resolve){
     try{
       var tx=db.transaction('audio','readwrite');
-      tx.objectStore('audio').put({key:'rec:'+key,blob:blob,ts:Date.now()});
+      tx.objectStore('audio').put({key:'rec:'+key,blob:blob,ts:Date.now(),synced:false});
       tx.oncomplete=function(){resolve();};
       tx.onerror=function(){resolve();};
     }catch(e){resolve();}
   });
+  // 2) Паралельно вивантажуємо в Drive (не блокуємо)
+  if(!skipDriveSync){
+    uploadVoiceToDrive(key,blob).catch(function(e){
+      console.warn('Drive upload failed:',e.message);
+    });
+  }
 }
 
 async function voiceLoad(key){
@@ -1390,13 +1428,103 @@ async function voiceLoad(key){
 
 async function voiceDelete(key){
   var db=await openVoiceCache();if(!db)return;
-  return new Promise(function(resolve){
+  // 1) Локально
+  await new Promise(function(resolve){
     try{
       var tx=db.transaction('audio','readwrite');
       tx.objectStore('audio').delete('rec:'+key);
       tx.oncomplete=function(){resolve();};
     }catch(e){resolve();}
   });
+  // 2) Drive
+  deleteVoiceFromDrive(key).catch(function(e){
+    console.warn('Drive delete failed:',e.message);
+  });
+}
+
+// ============================================================
+//  СИНХРОНІЗАЦІЯ З GOOGLE DRIVE (через Apps Script)
+// ============================================================
+async function uploadVoiceToDrive(key,blob){
+  if(!SCRIPT_URL)return;
+  var base64=await blobToBase64(blob);
+  var pure=base64.indexOf(',')>=0?base64.split(',')[1]:base64;
+  var res=await callScript('voiceUpload',{
+    key:key,
+    audio:pure,
+    mimeType:blob.type||'audio/webm'
+  });
+  if(res&&res.ok){
+    // Позначаємо локальний запис як синхронізований
+    markAsSynced(key);
+  }
+  return res;
+}
+
+async function deleteVoiceFromDrive(key){
+  if(!SCRIPT_URL)return;
+  return await callScript('voiceDelete',{key:key});
+}
+
+async function listVoicesFromDrive(){
+  if(!SCRIPT_URL)return [];
+  try{
+    var res=await callScript('voiceList',{});
+    if(res&&res.ok&&res.files)return res.files;
+  }catch(e){console.warn('voiceList err:',e);}
+  return [];
+}
+
+async function downloadVoiceFromDrive(key){
+  if(!SCRIPT_URL)return null;
+  try{
+    var res=await callScript('voiceGet',{key:key});
+    if(res&&res.ok&&res.audio){
+      var blob=base64ToBlob('data:'+res.mimeType+';base64,'+res.audio,res.mimeType);
+      return blob;
+    }
+  }catch(e){console.warn('voiceGet err:',e);}
+  return null;
+}
+
+async function markAsSynced(key){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      var os=tx.objectStore('audio');
+      var req=os.get('rec:'+key);
+      req.onsuccess=function(){
+        if(req.result){
+          req.result.synced=true;
+          os.put(req.result);
+        }
+        resolve();
+      };
+      req.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+// Синхронізація: довантажує з Drive все чого немає локально
+async function syncVoicesFromDrive(progressCb){
+  if(!SCRIPT_URL)return {downloaded:0,total:0};
+  var driveFiles=await listVoicesFromDrive();
+  if(!driveFiles.length)return {downloaded:0,total:0};
+  var downloaded=0;
+  for(var i=0;i<driveFiles.length;i++){
+    var df=driveFiles[i];
+    if(progressCb)progressCb(i+1,driveFiles.length,df.key);
+    var local=await voiceLoad(df.key);
+    if(local)continue;
+    var blob=await downloadVoiceFromDrive(df.key);
+    if(blob){
+      await voiceSave(df.key,blob,true);
+      await markAsSynced(df.key);
+      downloaded++;
+    }
+  }
+  return {downloaded:downloaded,total:driveFiles.length};
 }
 
 async function voiceListAll(){
@@ -1673,12 +1801,295 @@ function playSequence(blobs){
   });
 }
 
+// Ручна синхронізація — викликається кнопкою
+async function manualSyncVoices(){
+  var statusEl=document.getElementById('voicesSyncStatus');
+  if(statusEl)statusEl.innerHTML='☁️ Синхронізую з Google Drive...';
+  // 1) Спочатку довантажуємо те що є тільки на Drive
+  var result=await syncVoicesFromDrive(function(cur,total,key){
+    if(statusEl)statusEl.innerHTML='☁️ Завантажую '+cur+'/'+total+' з Drive...';
+  });
+  // 2) Тепер вивантажуємо те що є тільки локально (несинхронізоване)
+  var localAll=await voiceListAll();
+  var uploaded=0;
+  for(var i=0;i<localAll.length;i++){
+    var r=localAll[i];
+    if(r.synced)continue;
+    var key=r.key.replace(/^rec:/,'');
+    if(statusEl)statusEl.innerHTML='☁️ Вивантажую '+(i+1)+'/'+localAll.length+' на Drive...';
+    try{
+      await uploadVoiceToDrive(key,r.blob);
+      uploaded++;
+    }catch(e){console.warn('upload err:',e);}
+  }
+  if(statusEl){
+    statusEl.innerHTML='✅ Синхр.: ⬇️ '+result.downloaded+' завантажено, ⬆️ '+uploaded+' вивантажено';
+  }
+  toast('Синхронізація завершена: ⬇️ '+result.downloaded+' / ⬆️ '+uploaded,'ok',3000);
+  renderDigitsGrid();
+  renderClientVoices();
+}
+
 // Ініціалізація сторінки голосів
-function initVoicesPage(){
-  // Цифри завжди рендеримо першими — вони не залежать від замовлень
+// ============================================================
+//  АВТОГЕНЕРАЦІЯ ГОЛОСУ ЧЕРЕЗ ElevenLabs API
+// ============================================================
+var ELEVEN_KEY_STORAGE='florium_eleven_key';
+var ELEVEN_VOICE_STORAGE='florium_eleven_voice';
+var ELEVEN_MODEL='eleven_multilingual_v2';
+var ELEVEN_DEFAULT_VOICE_ID='21m00Tcm4TlvDq8ikWAM'; // Rachel - запасний
+
+// Список усього що треба згенерувати — key → text
+var TTS_DIGITS={
+  'digit-0':'нуль','digit-1':'один','digit-2':'два','digit-3':'три','digit-4':'чотири',
+  'digit-5':"пʼять",'digit-6':'шість','digit-7':'сім','digit-8':'вісім','digit-9':"девʼять"
+};
+var TTS_PHRASES={
+  'phrase-order-ready':'Замовлення готове',
+  'phrase-order-complete':'Замовлення повністю зібрано',
+  'phrase-order-verified':'Замовлення перевірено перед відправкою',
+  'phrase-not-in-order':'Цього артикула немає в замовленні',
+  'phrase-already-packed':'Цей артикул вже запакований',
+  'phrase-unknown':'Невідомий артикул',
+  'phrase-scan-ok':'Скан правильний',
+  'phrase-scan-error':'Помилка сканування',
+  'phrase-exceeded':'Перевищено кількість',
+  'phrase-not-found':'Артикул не знайдено в системі',
+  'phrase-sent':'Замовлення відправлено',
+  'phrase-ready-to-send':'Готово до відправки',
+  'phrase-needs-verify':'Потрібна перевірка перед відправкою',
+  'phrase-extra-item':'Зайвий товар',
+  'phrase-wrong-package':'Чужий пакет',
+  'phrase-warning':'Увага помилка'
+};
+var TTS_WORDS={
+  'word-order':'Замовлення','word-client':'Клієнт','word-article':'Артикул',
+  'word-location':'Розміщення','word-quantity':'Кількість','word-pallet':'Палета',
+  'word-box':'Ящик','word-yes':'Так','word-no':'Ні','word-done':'Готово'
+};
+
+// Завантажуємо збережені значення при відкритті
+function loadElevenSettings(){
+  var keyEl=document.getElementById('elevenApiKey');
+  var voiceEl=document.getElementById('elevenVoiceId');
+  if(keyEl)keyEl.value=localStorage.getItem(ELEVEN_KEY_STORAGE)||'';
+  if(voiceEl)voiceEl.value=localStorage.getItem(ELEVEN_VOICE_STORAGE)||'';
+  // Зберігаємо при зміні
+  if(keyEl)keyEl.onchange=function(){localStorage.setItem(ELEVEN_KEY_STORAGE,keyEl.value.trim());};
+  if(voiceEl)voiceEl.onchange=function(){localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceEl.value.trim());};
+}
+
+function ttsLog(msg,type){
+  var box=document.getElementById('ttsLog');
+  if(!box)return;
+  box.style.display='block';
+  var color=type==='err'?'#c62828':(type==='ok'?'#1b5e20':'#444');
+  var time=new Date().toLocaleTimeString('uk-UA');
+  box.innerHTML+='<div style="color:'+color+'"><span style="color:#999">'+time+'</span> '+esc(msg)+'</div>';
+  box.scrollTop=box.scrollHeight;
+}
+
+function ttsSetProgress(text){
+  var el=document.getElementById('ttsProgress');
+  if(el)el.textContent=text;
+}
+
+// Перевірка ключа і голосу
+async function ttsTestConnection(){
+  var key=(document.getElementById('elevenApiKey')||{}).value||'';
+  key=key.trim();
+  if(!key){alert('Введи API ключ');return;}
+  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  ttsLog('Перевіряю API ключ...');
+  ttsSetProgress('🔍 Перевіряю підключення...');
+  try{
+    var r=await fetch('https://api.elevenlabs.io/v1/user',{
+      headers:{'xi-api-key':key}
+    });
+    if(r.ok){
+      var u=await r.json();
+      var quota=u.subscription?u.subscription.character_count+'/'+u.subscription.character_limit:'?';
+      ttsLog('✓ Ключ працює. Квота: '+quota,'ok');
+      ttsSetProgress('✅ Підключення ОК. Залишок символів: '+quota);
+      // Перевіряємо voice
+      var voice=(document.getElementById('elevenVoiceId')||{}).value.trim();
+      if(voice){
+        var vid=await ttsResolveVoiceId(voice,key);
+        if(vid){
+          ttsLog('✓ Голос знайдено: '+vid,'ok');
+          localStorage.setItem(ELEVEN_VOICE_STORAGE,voice);
+        } else {
+          ttsLog('⚠️ Голос "'+voice+'" не знайдено. Перевір name або ID.','err');
+        }
+      }
+    } else {
+      var txt=await r.text();
+      ttsLog('✗ Помилка: '+r.status+' '+txt.substring(0,200),'err');
+      ttsSetProgress('❌ Невірний API ключ');
+    }
+  }catch(e){
+    ttsLog('✗ Помилка: '+e.message,'err');
+    ttsSetProgress('❌ Помилка зʼєднання');
+  }
+}
+
+// Resolve voice — приймає або ID або name (як "Yevhen")
+async function ttsResolveVoiceId(input,key){
+  if(!input)return ELEVEN_DEFAULT_VOICE_ID;
+  // Якщо схоже на ID (20+ символів alphanumeric) — використовуємо як є
+  if(/^[a-zA-Z0-9]{18,}$/.test(input))return input;
+  // Інакше шукаємо за іменем
+  try{
+    var r=await fetch('https://api.elevenlabs.io/v1/voices',{headers:{'xi-api-key':key}});
+    if(!r.ok)return null;
+    var d=await r.json();
+    var found=(d.voices||[]).find(function(v){
+      return v.name.toLowerCase()===input.toLowerCase();
+    });
+    return found?found.voice_id:null;
+  }catch(e){return null;}
+}
+
+// Генеруємо ОДИН файл
+async function ttsGenerateOne(key,voiceId,text){
+  var url='https://api.elevenlabs.io/v1/text-to-speech/'+voiceId+'?output_format=mp3_44100_128';
+  var body={
+    text:text,
+    model_id:ELEVEN_MODEL,
+    language_code:'uk',
+    voice_settings:{stability:0.6,similarity_boost:0.75,style:0,use_speaker_boost:true}
+  };
+  var r=await fetch(url,{
+    method:'POST',
+    headers:{
+      'xi-api-key':key,
+      'Content-Type':'application/json',
+      'Accept':'audio/mpeg'
+    },
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){
+    var t=await r.text();
+    throw new Error('API '+r.status+': '+t.substring(0,150));
+  }
+  return await r.blob();
+}
+
+// Головна функція — генерує по категорії
+async function ttsGenerateAll(category){
+  var key=(document.getElementById('elevenApiKey')||{}).value.trim();
+  var voiceInput=(document.getElementById('elevenVoiceId')||{}).value.trim();
+  if(!key){alert('Спочатку введи API ключ');return;}
+  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceInput);
+  
+  ttsSetProgress('🔍 Шукаю голос...');
+  var voiceId=await ttsResolveVoiceId(voiceInput,key);
+  if(!voiceId){
+    ttsLog('⚠️ Голос не знайдено, використовую Rachel за замовчуванням','err');
+    voiceId=ELEVEN_DEFAULT_VOICE_ID;
+  } else {
+    ttsLog('Голос: '+voiceInput+' ('+voiceId+')');
+  }
+  
+  // Збираємо список того що треба згенерувати
+  var todo={};
+  if(category==='digits'||category==='all')Object.assign(todo,TTS_DIGITS);
+  if(category==='phrases'||category==='all')Object.assign(todo,TTS_PHRASES);
+  if(category==='words'||category==='all')Object.assign(todo,TTS_WORDS);
+  if(category==='names'||category==='all'){
+    // Унікальні імена клієнтів з замовлень
+    var nameSet={};
+    (window.orders||[]).forEach(function(o){
+      if(o&&o.name){
+        var n=String(o.name).trim();
+        if(n)nameSet[n]=(nameSet[n]||0)+1;
+      }
+    });
+    // Топ-50 за частотою
+    var names=Object.keys(nameSet).map(function(n){return {name:n,count:nameSet[n]};});
+    names.sort(function(a,b){return b.count-a.count;});
+    names.slice(0,50).forEach(function(x){todo['name-'+x.name]=x.name;});
+  }
+  
+  var keys=Object.keys(todo);
+  if(!keys.length){ttsSetProgress('Нема чого генерувати');return;}
+  
+  var skipExisting=confirm('Знайдено '+keys.length+' елементів для генерації.\n\nПропускати ті що вже є локально?\n\nOK = пропускати (швидше, економіть кредити)\nCancel = перегенерувати все');
+  
+  var done=0,skipped=0,failed=0;
+  ttsLog('▶ Починаю генерацію '+keys.length+' файлів...');
+  
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i];
+    var text=todo[k];
+    ttsSetProgress('⏳ '+(i+1)+'/'+keys.length+': "'+text+'" ('+done+' ✓ '+skipped+' ⏭ '+failed+' ✗)');
+    
+    // Перевіряємо чи є локально
+    if(skipExisting){
+      var exists=await voiceLoad(k);
+      if(exists){
+        skipped++;
+        ttsLog('⏭ '+k+' — вже є, пропускаю');
+        continue;
+      }
+    }
+    
+    try{
+      var blob=await ttsGenerateOne(key,voiceId,text);
+      // 1) Зберігаємо локально + автоматично на Drive
+      await voiceSave(k,blob);
+      done++;
+      ttsLog('✓ '+k+' — "'+text+'" ('+Math.round(blob.size/1024)+' КБ)','ok');
+      // Невелика пауза між запитами щоб не зловити rate limit
+      await new Promise(function(r){setTimeout(r,300);});
+    }catch(e){
+      failed++;
+      ttsLog('✗ '+k+' — '+e.message,'err');
+      // Якщо rate limit — більша пауза
+      if(/429|rate/i.test(e.message)){
+        ttsLog('  Чекаю 5 сек через rate limit...');
+        await new Promise(function(r){setTimeout(r,5000);});
+      }
+    }
+  }
+  
+  ttsSetProgress('✅ Готово! ✓'+done+' ⏭'+skipped+' ✗'+failed+' (всього '+keys.length+')');
+  ttsLog('▶ Завершено: '+done+' нових, '+skipped+' пропущено, '+failed+' помилок','ok');
+  toast('Згенеровано: '+done+' нових файлів','ok',5000);
+  // Оновити UI
+  renderDigitsGrid();
+  renderClientVoices();
+}
+
+async function initVoicesPage(){
+  // Цифри і клієнти — миттєво (з локального IndexedDB)
   renderDigitsGrid().catch(function(e){console.warn('digits error:',e);});
-  // Клієнти — окремо, не блокує цифри
   renderClientVoices().catch(function(e){console.warn('clients error:',e);});
+  // Завантажуємо збережені налаштування ElevenLabs
+  loadElevenSettings();
+  // Синхронізація з Google Drive у фоні
+  var statusEl=document.getElementById('voicesSyncStatus');
+  if(statusEl)statusEl.innerHTML='☁️ Синхронізую з Google Drive...';
+  try{
+    var result=await syncVoicesFromDrive(function(cur,total,key){
+      if(statusEl)statusEl.innerHTML='☁️ Завантажую '+cur+'/'+total+' з Drive...';
+    });
+    if(statusEl){
+      if(result.downloaded>0){
+        statusEl.innerHTML='✅ Синхронізовано: завантажено '+result.downloaded+' нових записів';
+        renderDigitsGrid();
+        renderClientVoices();
+      } else if(result.total>0){
+        statusEl.innerHTML='✅ Усі записи синхронізовані ('+result.total+' на Drive)';
+      } else {
+        statusEl.innerHTML='💡 На Drive поки немає записів';
+      }
+    }
+  }catch(e){
+    if(statusEl)statusEl.innerHTML='⚠️ Помилка синхронізації з Drive';
+    console.warn('sync error:',e);
+  }
 }
 
 
@@ -1948,6 +2359,40 @@ function findStockForItem(art){
   if(!st)st=stock.find(function(s){return s.art===art;});
   if(!st&&fu&&fu.artBox)st=stock.find(function(s){return s.art===fu.artBox;});
   return st;
+}
+
+// Знаходить ВСІ палети де є товар + кількість, формат: "301Б (50), 305А (38)"
+// Виключає ящики з нульовим залишком
+function findAllStockLocations(art){
+  var fu=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+  var artFlorium=fu&&fu.artFlorium?fu.artFlorium:null;
+  // Збираємо всі stock записи що підходять (за артФлоріум або за самим art)
+  var matches=stock.filter(function(s){
+    if(!s)return false;
+    var match=false;
+    if(artFlorium&&s.art===artFlorium)match=true;
+    else if(s.art===art)match=true;
+    else if(fu&&fu.artBox&&s.art===fu.artBox)match=true;
+    if(!match)return false;
+    // Виключаємо порожні ящики
+    var q=parseInt(s.qty)||0;
+    if(q<=0)return false;
+    if(!s.location||!String(s.location).trim())return false;
+    return true;
+  });
+  if(!matches.length)return '';
+  // Групуємо по локації (на випадок якщо одна палета має кілька ящиків — додаємо к-сть)
+  var byLoc={};
+  matches.forEach(function(s){
+    var loc=String(s.location).trim();
+    var q=parseInt(s.qty)||0;
+    if(!byLoc[loc])byLoc[loc]=0;
+    byLoc[loc]+=q;
+  });
+  // Сортуємо за зменшенням кількості
+  var arr=Object.keys(byLoc).map(function(loc){return {loc:loc,qty:byLoc[loc]};});
+  arr.sort(function(a,b){return b.qty-a.qty;});
+  return arr.map(function(x){return x.loc+' ('+x.qty+')';}).join(', ');
 }
 
 function getCounts(){
@@ -2327,7 +2772,9 @@ function openCombinedList(){
     var st=findStockForItem(ci.art);
     ci.artFlorium=fu?fu.artFlorium:'';
     ci.packQty=fu?fu.packQty:'';
-    ci.location=st&&st.location?st.location:'';
+    // Усі палети з кількостями: "301Б (50), 305А (38)"
+    var allLocs=findAllStockLocations(ci.art);
+    ci.location=allLocs||(st&&st.location?st.location:'');
     ci.category=st&&st.category?st.category:'';
     if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
   });
@@ -2379,7 +2826,7 @@ function renderCombinedModal(){
         +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="packQty" value="'+esc(ci.packQty||'')+'"></td>'
         +'<td style="text-align:center;color:var(--gd);font-weight:700">'+(totalPcs||'—')+'</td>'
         +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="artFlorium" value="'+esc(ci.artFlorium||'')+'" style="font-family:monospace;color:#7b1fa2"></td>'
-        +'<td><input class="cm-inp" data-i="'+i+'" data-f="location" value="'+esc(ci.location||'')+'" placeholder="вкажіть..."></td>'
+        +'<td><input class="cm-inp" data-i="'+i+'" data-f="location" value="'+esc(ci.location||'')+'" placeholder="вкажіть..." style="width:100%;min-width:240px;font-family:monospace;font-size:12px"></td>'
       +'</tr>';
   }).join('');
   G('cmBody').innerHTML=chipsHtml+'<table class="dt" style="font-size:13px">'
