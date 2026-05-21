@@ -1199,14 +1199,10 @@ async function fetchUkrainianTTS(text){
 
 async function speakOrder(clientName,orderNum){
   if(!clientName&&!orderNum)return;
-  var lastFour=String(orderNum||'').slice(-4);
-  // СПОЧАТКУ — пробуємо записаний користувачем голос
+  // ТІЛЬКИ записаний/згенерований голос. Системний голос (Ірина і т.д.) ВИМКНЕНО.
   try{
-    var played=await speakOrderWithRecordings(clientName,orderNum);
-    if(played)return;
-  }catch(e){}
-  // Інакше — системний голос
-  speakWithBrowser(clientName,lastFour);
+    await speakOrderWithRecordings(clientName,orderNum);
+  }catch(e){console.warn('speakOrder:',e);}
 }
 
 function playBlob(blob){
@@ -1611,7 +1607,7 @@ async function renderDigitsGrid(){
   var progress=0;
   var html='';
   for(var d=0;d<=9;d++){
-    var key='digit:'+d;
+    var key='digit-'+d;
     var has=await voiceLoad(key);
     if(has)progress++;
     var ds=String(d);
@@ -1620,10 +1616,9 @@ async function renderDigitsGrid(){
       +'<div class="dig-word">'+DIGIT_WORDS[ds]+'</div>'
       +'<div class="dig-actions">'
         +(has
-          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
-            +'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.closest(\'.dig-card\'))">⏺ Перез.</button>'
+          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶ Прослухати</button>'
             +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'digits\')">✕</button>'
-          :'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.closest(\'.dig-card\'))">⏺ Записати</button>')
+          :'<span style="font-size:11px;color:var(--mu)">— немає</span>')
       +'</div>'
     +'</div>';
   }
@@ -1665,7 +1660,7 @@ async function renderClientVoices(){
   var rows='';
   for(var i=0;i<filtered.length;i++){
     var n=filtered[i];
-    var key='name:'+n.name;
+    var key='name-'+n.name;
     var has=await voiceLoad(key);
     if(has)progress++;
     rows+='<div class="cl-voice-row">'
@@ -1675,9 +1670,8 @@ async function renderClientVoices(){
       +'<div class="cl-actions">'
         +(has
           ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
-            +'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.parentNode.parentNode)">⏺ Перез.</button>'
             +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'clients\')">✕</button>'
-          :'<button class="dig-btn rec" onclick="startRecording(\''+key+'\',this.parentNode.parentNode)">⏺ Записати</button>')
+          :'')
       +'</div>'
     +'</div>';
   }
@@ -1750,34 +1744,23 @@ async function importVoicesZip(e){
   e.target.value='';
 }
 
-// Гібридне озвучування — з власних записів якщо є
+// Гібридне озвучування — тільки з записаних/згенерованих файлів
 async function speakOrderWithRecordings(clientName,orderNum){
   var lastFour=String(orderNum||'').slice(-4);
-  // 1) Імʼя клієнта — спочатку записане, потім TTS
-  var nameBlob=clientName?await voiceLoad('name:'+clientName):null;
-  // 2) Цифри — спочатку записані, потім TTS
+  // 1) Імʼя клієнта (ключ як у ElevenLabs автогенераторі — 'name-X')
+  var nameBlob=clientName?await voiceLoad('name-'+clientName):null;
+  // 2) Цифри (ключ як у ElevenLabs автогенераторі — 'digit-N')
   var digitBlobs=[];
-  var allDigitsRecorded=true;
   for(var i=0;i<lastFour.length;i++){
-    var b=await voiceLoad('digit:'+lastFour[i]);
+    var b=await voiceLoad('digit-'+lastFour[i]);
     if(b)digitBlobs.push(b);
-    else{allDigitsRecorded=false;break;}
   }
-  // Якщо є все — програємо послідовність
-  if(nameBlob&&allDigitsRecorded&&digitBlobs.length===lastFour.length){
-    await playSequence([nameBlob].concat(digitBlobs));
-    return true;
-  }
-  // Якщо є тільки імʼя — програємо його, потім TTS для цифр
-  if(nameBlob){
-    await playSequence([nameBlob]);
-    setTimeout(function(){speakWithBrowser('',lastFour);},nameBlob.size/2000+300);
-    return true;
-  }
-  // Якщо є тільки цифри — TTS імʼя, потім записані цифри
-  if(allDigitsRecorded&&digitBlobs.length){
-    speakWithBrowser(clientName,'');
-    setTimeout(function(){playSequence(digitBlobs);},1200);
+  // Програємо все що є
+  var sequence=[];
+  if(nameBlob)sequence.push(nameBlob);
+  if(digitBlobs.length)sequence=sequence.concat(digitBlobs);
+  if(sequence.length){
+    await playSequence(sequence);
     return true;
   }
   return false;
@@ -1902,34 +1885,54 @@ async function ttsTestConnection(){
   localStorage.setItem(ELEVEN_KEY_STORAGE,key);
   ttsLog('Перевіряю API ключ...');
   ttsSetProgress('🔍 Перевіряю підключення...');
+  // Спробуємо спочатку /user (для квоти)
+  var userOk=false;
   try{
-    var r=await fetch('https://api.elevenlabs.io/v1/user',{
-      headers:{'xi-api-key':key}
-    });
+    var r=await fetch('https://api.elevenlabs.io/v1/user',{headers:{'xi-api-key':key}});
     if(r.ok){
       var u=await r.json();
       var quota=u.subscription?u.subscription.character_count+'/'+u.subscription.character_limit:'?';
       ttsLog('✓ Ключ працює. Квота: '+quota,'ok');
       ttsSetProgress('✅ Підключення ОК. Залишок символів: '+quota);
-      // Перевіряємо voice
-      var voice=(document.getElementById('elevenVoiceId')||{}).value.trim();
-      if(voice){
-        var vid=await ttsResolveVoiceId(voice,key);
-        if(vid){
-          ttsLog('✓ Голос знайдено: '+vid,'ok');
-          localStorage.setItem(ELEVEN_VOICE_STORAGE,voice);
-        } else {
-          ttsLog('⚠️ Голос "'+voice+'" не знайдено. Перевір name або ID.','err');
-        }
-      }
+      userOk=true;
     } else {
-      var txt=await r.text();
-      ttsLog('✗ Помилка: '+r.status+' '+txt.substring(0,200),'err');
-      ttsSetProgress('❌ Невірний API ключ');
+      ttsLog('⚠️ /user endpoint недоступний (можливо обмежені permissions). Пробую /voices...');
     }
   }catch(e){
-    ttsLog('✗ Помилка: '+e.message,'err');
-    ttsSetProgress('❌ Помилка зʼєднання');
+    ttsLog('⚠️ /user недоступний: '+e.message);
+  }
+  // Якщо /user не пройшов — пробуємо /voices (це достатньо щоб переконатися що ключ робочий)
+  if(!userOk){
+    try{
+      var r2=await fetch('https://api.elevenlabs.io/v1/voices',{headers:{'xi-api-key':key}});
+      if(r2.ok){
+        var v=await r2.json();
+        var voiceCount=(v.voices||[]).length;
+        ttsLog('✓ Ключ робочий (доступно '+voiceCount+' голосів). Квоту не видно через обмежені permissions.','ok');
+        ttsSetProgress('✅ Ключ ОК (без квоти). Можна генерувати!');
+        userOk=true;
+      } else {
+        var t=await r2.text();
+        ttsLog('✗ Помилка: '+r2.status+' '+t.substring(0,200),'err');
+        ttsSetProgress('❌ Невірний API ключ');
+        return;
+      }
+    }catch(e2){
+      ttsLog('✗ Помилка: '+e2.message,'err');
+      ttsSetProgress('❌ Помилка зʼєднання');
+      return;
+    }
+  }
+  // Перевіряємо voice
+  var voice=(document.getElementById('elevenVoiceId')||{}).value.trim();
+  if(voice){
+    var vid=await ttsResolveVoiceId(voice,key);
+    if(vid){
+      ttsLog('✓ Голос знайдено: '+vid,'ok');
+      localStorage.setItem(ELEVEN_VOICE_STORAGE,voice);
+    } else {
+      ttsLog('⚠️ Голос "'+voice+'" не знайдено. Перевір name або ID.','err');
+    }
   }
 }
 
