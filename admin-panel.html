@@ -1310,7 +1310,7 @@ function adaptNameForVoice(name,lang){
 
 function adaptDigitsForVoice(digitsStr,lang){
   if(/ru/i.test(lang)){
-    var ruDigits={'0':'ноль','1':'один','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
+    var ruDigits={'0':'ноль','1':'ооодин','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
     return digitsStr.split('').map(function(d){return ruDigits[d]||d;}).join(' ');
   }
   if(/en/i.test(lang)){
