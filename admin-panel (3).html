@@ -1,0 +1,4162 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Florium Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  /* Florium green palette + FUSE style */
+  --blue:#7cb342;--blue-l:#f1f8e9;--blue-d:#558b2f;
+  --green:#8bc34a;--green-l:#f1f8e9;--green-d:#689f38;
+  --orange:#ff9800;--orange-l:#fff3e0;
+  --red:#f44336;--red-l:#ffebee;
+  --purple:#9c27b0;--purple-l:#f3e5f5;
+  --teal:#26a69a;--teal-l:#e0f2f1;
+  --yellow:#fbc02d;--yellow-l:#fffde7;
+  --gray:#9e9e9e;--gray2:#bdbdbd;--gray3:#e0e0e0;--gray4:#eeeeee;--gray5:#f5f5f5;--gray6:#fafafa;
+
+  /* Legacy aliases — мапінг старих змінних на FUSE-Florium палітру */
+  --g:#8bc34a;--gl:#f1f8e9;--gd:#558b2f;--gm:#7cb342;
+  --y:#ff9800;--yl:#fff3e0;
+  --b:#7cb342;--bl:#f1f8e9;
+  --r:#f44336;--rl:#ffebee;
+  --o:#ff9800;--ol:#fff3e0;
+  --p:#9c27b0;--pl:#f3e5f5;
+  --t:#26a69a;--tl:#e0f2f1;
+
+  --tx:#212121;--tx2:#424242;--tx3:#616161;--tx4:#9e9e9e;--mu:#9e9e9e;
+  --bo:rgba(0,0,0,.08);--bo2:rgba(0,0,0,.04);
+  --bg:#f5f5f5;--card:#ffffff;
+
+  /* Sidebar - світлий */
+  --sb-bg:#ffffff;
+  --sb-tx:#424242;
+  --sb-tx-mu:#9e9e9e;
+  --sb-hover:#f1f8e9;
+  --sb-active:#8bc34a;
+  --sb-active-tx:#ffffff;
+  --sb-border:rgba(0,0,0,.06);
+
+  --sh:0 1px 3px rgba(0,0,0,.05);
+  --sh2:0 2px 6px rgba(0,0,0,.08);
+  --sh3:0 10px 30px rgba(0,0,0,.1);
+
+  --rad:6px;--rad2:4px;
+  --font:'Roboto','Helvetica Neue',Arial,sans-serif;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg);display:flex;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--gray4);border-radius:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* PRINT — Варіант 1: Мінімалізм */
+@page{size:A4 landscape;margin:8mm;}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,Arial,sans-serif!important;font-weight:400!important;}
+  html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;margin:0;padding:0;color:#1a1a1a;}
+  body>*{display:none!important;}
+  .modal-ov{display:none!important;}
+  .tc{display:none!important;}
+  #pz{display:block!important;position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
+  /* шапка */
+  .ph{display:flex;justify-content:space-between;align-items:baseline;padding:0 0 14px;margin-bottom:18px;border-bottom:0.5px solid #d2d2d7;page-break-after:avoid;}
+  .ph-l{font-size:22px;font-weight:500!important;letter-spacing:-.4px;color:#1a1a1a;}
+  .ph-r{font-size:13px;color:#86868b;letter-spacing:.1px;}
+  /* таблиця — без рамок, просто лінії знизу рядків */
+  table.pt{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto!important;break-inside:auto!important;}
+  table.pt thead{display:table-header-group;}
+  table.pt tbody{display:table-row-group;}
+  table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;}
+  /* єдиний стиль клітинок */
+  table.pt th,table.pt td{border:none;border-bottom:0.5px solid #e5e5e7;padding:11px 10px;font-size:13px;line-height:1.4;text-align:left;vertical-align:middle;color:#1a1a1a;}
+  /* заголовки колонок — дрібні, lowercase, сірі */
+  table.pt th{font-size:10px;font-weight:500!important;text-transform:uppercase;letter-spacing:.6px;color:#86868b;padding:6px 10px 10px;border-bottom:1px solid #1a1a1a;}
+  table.pt td.c{text-align:center;}
+  table.pt td.m,table.pt td.big{font-weight:400!important;text-align:center;}
+  /* без зебри — просто лінії */
+  table.pt tbody tr:nth-child(even){background:transparent;}
+  /* чекбокс — тонкий і малий */
+  table.pt .chk{display:inline-block;width:16px;height:16px;border:0.8px solid #1a1a1a;border-radius:3px;}
+}
+#pz{display:none;}
+
+/* SIDEBAR */
+.sb{width:220px;height:100vh;background:var(--sb-bg);border-right:1px solid var(--sb-border);display:flex;flex-direction:column;flex-shrink:0;z-index:100;box-shadow:1px 0 0 rgba(0,0,0,.02);}
+.sb-logo{padding:20px 18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--sb-border);}
+.sb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green-d));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 6px rgba(139,195,74,.35);color:#fff;}
+.sb-name{font-size:15px;font-weight:500;color:var(--sb-tx);letter-spacing:0;}
+.sb-sub{font-size:11px;color:var(--sb-tx-mu);margin-top:2px;font-weight:400;}
+.sb-nav{flex:1;padding:8px 10px;overflow-y:auto;}
+.nav-sec{font-size:11px;font-weight:500;color:var(--sb-tx-mu);letter-spacing:.5px;text-transform:uppercase;padding:14px 12px 6px;}
+.ni{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:4px;cursor:pointer;color:var(--sb-tx);font-size:13px;font-weight:400;transition:all .15s;margin-bottom:1px;user-select:none;}
+.ni:hover{background:var(--sb-hover);color:var(--sb-tx);}
+.ni.on{background:var(--sb-active);color:var(--sb-active-tx);font-weight:500;}
+.ni.on .ni-ic{color:#fff;}
+.ni-ic{font-size:16px;width:22px;text-align:center;flex-shrink:0;color:var(--sb-tx-mu);}
+.nb{margin-left:auto;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;flex-shrink:0;}
+.nb-g{background:var(--green);color:#fff;}
+.nb-y{background:var(--orange);color:#fff;}
+.nb-b{background:var(--blue);color:#fff;}
+.ni.on .nb{background:#fff;color:var(--sb-active);}
+.sb-foot{padding:12px 18px;border-top:1px solid var(--sb-border);font-size:11px;color:var(--sb-tx-mu);display:flex;align-items:center;gap:7px;justify-content:center;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.tb{height:64px;background:#ffffff;border-bottom:1px solid var(--bo);padding:0 24px;display:flex;align-items:center;gap:16px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.tb-title{font-size:18px;font-weight:500;color:var(--tx);letter-spacing:0;}
+.tb-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.upd{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx4);}
+.udot{width:7px;height:7px;border-radius:50%;background:var(--gray3);flex-shrink:0;}
+.udot.ok{background:var(--green);}
+.udot.err{background:var(--red);}
+.udot.pend{background:var(--orange);animation:blink 1.2s ease infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* BUTTONS - FUSE/Material style */
+.btn{padding:8px 16px;border-radius:4px;border:1px solid var(--gray3);background:var(--card);color:var(--tx);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .2s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;}
+.btn:hover{background:var(--gray5);box-shadow:var(--sh);}
+.btn:active{transform:translateY(1px);}
+.btn.sm{padding:6px 12px;font-size:11px;}
+.btn.pr{background:var(--green);color:#fff;border-color:var(--green);font-weight:500;}
+.btn.pr:hover{background:var(--green-d);box-shadow:0 2px 6px rgba(139,195,74,.4);}
+.btn.wa{background:var(--orange);color:#fff;border-color:var(--orange);font-weight:500;}
+.btn.su{background:var(--green);color:#fff;border-color:var(--green);font-weight:500;}
+.btn.next{background:var(--green);color:#fff;border-color:var(--green);padding:10px 22px;font-size:13px;font-weight:500;border-radius:4px;box-shadow:0 2px 6px rgba(139,195,74,.4);text-transform:uppercase;letter-spacing:.5px;}
+.btn.next:hover{background:var(--green-d);}
+
+/* TOAST */
+.tc{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:var(--sh3);animation:tin .2s ease;max-width:320px;pointer-events:all;backdrop-filter:blur(8px);}
+.toast.ok{background:rgba(52,199,89,.95);}
+.toast.er{background:rgba(255,59,48,.95);}
+.toast.wa{background:rgba(255,149,0,.95);}
+.toast.in{background:rgba(0,113,227,.95);}
+@keyframes tin{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes alertShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-8px)}25%{transform:translateX(8px)}40%{transform:translateX(-6px)}55%{transform:translateX(6px)}70%{transform:translateX(-3px)}85%{transform:translateX(3px)}}
+
+/* VOICES PAGE */
+.digits-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.dig-card{background:var(--bo2);border:2px solid var(--bo);border-radius:12px;padding:14px 10px;text-align:center;transition:all .15s;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.dig-card.done{background:#f0f9f0;border-color:#9fd09f}
+.dig-card.recording{background:#fdf0f0;border-color:#ff3b30;animation:pulse 1s ease infinite}
+.dig-num{font-size:32px;font-weight:800;color:var(--tx);letter-spacing:-1px;line-height:1}
+.dig-word{font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.dig-actions{display:flex;gap:6px;width:100%;justify-content:center}
+.dig-btn{padding:5px 10px;font-size:11px;border-radius:6px;border:1px solid var(--bo);background:#fff;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.dig-btn:hover{background:var(--bo2)}
+.dig-btn.rec{background:var(--red);color:#fff;border-color:var(--red)}
+.dig-btn.rec:hover{background:#c62828}
+.dig-btn.play{background:var(--blue);color:#fff;border-color:var(--blue)}
+.dig-btn.play:hover{background:#0060c0}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.4)}50%{box-shadow:0 0 0 8px rgba(255,59,48,0)}}
+
+.cl-voice-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bo);transition:background .12s}
+.cl-voice-row:hover{background:var(--bo2)}
+.cl-voice-row:last-child{border-bottom:none}
+.cl-name{flex:1;font-weight:500;font-size:13px}
+.cl-orders{font-size:11px;color:var(--mu);padding:2px 8px;background:var(--bo2);border-radius:10px;font-weight:600}
+.cl-status{font-size:11px;font-weight:600}
+.cl-status.has{color:var(--green)}
+.cl-status.no{color:var(--mu)}
+.cl-actions{display:flex;gap:6px}
+
+/* WELCOME SCREEN — оптимізовано */
+@keyframes wfadeIn{from{opacity:0}to{opacity:1}}
+@keyframes wlogoIn{
+  0%{opacity:0;transform:translateY(-20px) scale(.9);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes wcardIn{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+#welcomeScreen{animation:wfadeIn .3s ease;will-change:opacity;}
+/* Один статичний градієнт замість трьох анімованих орбів */
+.wbg-orb{display:none;}
+#welcomeScreen::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 20% 30%,rgba(0,113,227,.3) 0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(52,199,89,.25) 0%,transparent 50%),radial-gradient(circle at 50% 100%,rgba(175,82,222,.2) 0%,transparent 50%);
+  pointer-events:none;
+}
+
+.wlogo-wrap{text-align:center;margin-bottom:50px;position:relative;z-index:2;}
+.wlogo-icon{font-size:60px;margin-bottom:14px;}
+.wtitle{font-size:96px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:10px;animation:wlogoIn .5s cubic-bezier(.2,.7,.3,1) backwards;background:linear-gradient(135deg,#fff 0%,#a8d8ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.wsubtitle{font-size:15px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:2px;text-transform:uppercase;animation:wfadeIn .5s .2s backwards;}
+
+.wcards{display:grid;grid-template-columns:repeat(4,200px);gap:18px;position:relative;z-index:2;}
+.wcard{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:22px 20px;cursor:pointer;transition:transform .2s ease,background .2s ease;text-align:center;animation:wcardIn .4s ease backwards;}
+.wcard:hover{transform:translateY(-4px);background:rgba(255,255,255,.16);}
+.wcard:active{transform:translateY(-2px);}
+.wcard-ic{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;}
+.wcard-t{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px;margin-bottom:4px;}
+.wcard-s{font-size:12px;color:rgba(255,255,255,.55);font-weight:500;}
+
+.wskip{position:absolute;bottom:32px;right:32px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;transition:color .15s;animation:wfadeIn .5s .6s backwards;z-index:3;}
+.wskip:hover{color:rgba(255,255,255,.9);}
+
+@media (max-width:900px){
+  .wcards{grid-template-columns:repeat(2,180px);}
+  .wtitle{font-size:72px;}
+}
+
+/* PAGES */
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.on{display:flex;}
+
+/* STATS */
+.stats-row{padding:16px 20px;background:var(--card);border-bottom:1px solid var(--bo);display:flex;gap:0;flex-shrink:0;}
+.stat-item{cursor:pointer;padding:0 24px;border-right:1px solid var(--bo);transition:opacity .15s;}
+.stat-item:first-child{padding-left:0;}
+.stat-item:last-child{border-right:none;}
+.stat-item:hover{opacity:.65;}
+.stat-num{font-size:34px;font-weight:700;letter-spacing:-1.5px;line-height:1;margin-bottom:3px;font-feature-settings:'tnum';}
+.stat-lbl{font-size:12px;color:var(--tx4);margin-top:0;font-weight:500;}
+.c-new{color:var(--blue);}.c-work{color:var(--orange);}.c-ready{color:var(--green);}.c-prob{color:var(--red);}.c-all{color:var(--tx3);}
+
+/* LAYOUT */
+.orders-layout{flex:1;display:flex;overflow:hidden;}
+.order-list-col{width:300px;border-right:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;background:#fff;}
+.picker-layout{flex:1;display:flex;overflow:hidden;}
+.picker-list{width:300px;border-right:1px solid var(--bo);display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+.picker-detail{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+/* LIST HEADER */
+.olc-head{padding:12px 16px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;}
+.olc-title{font-size:13px;font-weight:700;color:var(--tx2);}
+.olc-cnt{font-size:12px;color:var(--mu);background:var(--bo2);padding:2px 9px;border-radius:12px;font-weight:600;}
+.olc-search{padding:10px 12px;border-bottom:1px solid var(--bo2);}
+.si{width:100%;border:1px solid var(--bo);border-radius:7px;padding:9px 13px;font-size:14px;font-family:var(--font);outline:none;background:var(--bg);color:var(--tx);}
+.si:focus{border-color:var(--g);background:#fff;box-shadow:0 0 0 3px rgba(61,139,67,.1);}
+.olc-filters{padding:8px 12px;border-bottom:1px solid var(--bo2);display:flex;gap:5px;flex-wrap:wrap;}
+.chip{padding:5px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bo);background:#fff;color:var(--mu);transition:all .12s;white-space:nowrap;}
+.chip.on{background:var(--gl);color:var(--gd);border-color:var(--gm);}
+.order-list{flex:1;overflow-y:auto;}
+
+/* ORDER ITEM */
+.oi{padding:14px 16px;border-bottom:1px solid var(--bo2);cursor:pointer;border-left:3px solid transparent;transition:all .1s;}
+.oi:hover{background:#f8fdf8;}
+.oi.on{background:var(--gl);border-left-color:var(--g);}
+.oi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.oi-num{font-size:13px;font-weight:700;color:var(--gd);}
+.oi-date{font-size:11px;color:var(--mu);}
+.oi-name{font-size:16px;font-weight:600;color:var(--tx);margin-bottom:5px;}
+.oi-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.li-badge{background:var(--bo2);border:1px solid var(--bo);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;color:var(--tx2);}
+
+/* PICKER CARDS */
+.pk-card{background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 14px;margin:8px 10px;cursor:pointer;transition:all .15s;display:flex;gap:10px;align-items:flex-start;}
+.pk-card:hover{border-color:var(--blue);background:#fafbff;box-shadow:0 2px 12px rgba(0,113,227,.08);}
+.pk-card.on{border-color:var(--blue);background:var(--blue-l);box-shadow:0 2px 12px rgba(0,113,227,.15);}
+.pk-card.sel{border-color:var(--green);background:var(--green-l);box-shadow:0 2px 8px rgba(52,199,89,.12);}
+.pk-card-cb{width:22px;height:22px;border:1.5px solid var(--gray4);border-radius:6px;flex-shrink:0;margin-top:2px;display:none;align-items:center;justify-content:center;background:#fff;font-size:14px;color:#fff;transition:all .12s;}
+.pk-card.sel .pk-card-cb{background:var(--green);border-color:var(--green);}
+.multi-mode .pk-card-cb{display:inline-flex;}
+.pk-card-body{flex:1;min-width:0;}
+.pk-card-r1{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;}
+.pk-card-num{font-size:13px;font-weight:600;color:var(--tx3);font-family:'SF Mono','Menlo',monospace;}
+.pk-card-name{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px;line-height:1.25;letter-spacing:-.2px;}
+.pk-card-meta{font-size:12px;color:var(--tx4);}
+
+/* MULTI BAR */
+.pk-head{padding:10px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.6);}
+.pk-head-title{font-size:13px;font-weight:600;color:var(--tx2);display:flex;align-items:center;gap:8px;}
+.pk-multi-btn{padding:6px 12px;font-size:12px;font-weight:500;border:1px solid var(--gray4);background:#fff;color:var(--tx2);border-radius:8px;cursor:pointer;transition:all .15s;}
+.pk-multi-btn:hover{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+.pk-multi-btn.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.multi-bar{display:none;padding:10px 12px;background:var(--green-l);border-bottom:1px solid var(--green);align-items:center;gap:8px;flex-wrap:wrap;}
+.multi-mode .multi-bar{display:flex;}
+.multi-count{font-size:13px;font-weight:600;color:var(--green-d);}
+.multi-bar .btn{padding:7px 14px;font-size:12px;}
+
+/* PILLS */
+.pill{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;white-space:nowrap;}
+.p-new{background:var(--blue-l);color:var(--blue);}
+.p-work{background:var(--orange-l);color:var(--orange);border:none;}
+.p-pack{background:#fdf2e8;color:#a04000;}
+.p-ready{background:#f0f9f0;color:#1b5e20;}
+.p-verified{background:#f5ebff;color:#6b21a8;}
+.p-defer{background:#edf7f6;color:#004d40;}
+.p-sent{background:#f5f0fb;color:#4a148c;}
+.p-partial{background:#f0edf7;color:#311b92;}
+.p-cancel{background:#fdf0f0;color:#b71c1c;}
+
+/* DETAIL */
+.detail-col{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.de-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--mu);}
+.de-ico{font-size:56px;opacity:.2;}
+.de-txt{font-size:16px;font-weight:600;color:var(--tx2);}
+.dh{background:var(--card);padding:18px 24px;border-bottom:1px solid var(--bo);flex-shrink:0;}
+.dh-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:4px;}
+.dh-num{font-size:26px;font-weight:800;color:var(--gd);letter-spacing:-1px;}
+.dh-name{font-size:17px;font-weight:700;margin-top:3px;color:var(--tx);}
+.dh-sub{font-size:13px;color:var(--mu);margin-top:2px;}
+.dh-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+
+/* STAGES */
+.stages{background:var(--card);padding:10px 24px;border-bottom:1px solid var(--bo);display:flex;align-items:center;overflow-x:auto;flex-shrink:0;}
+.st{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.sd{width:22px;height:22px;border-radius:50%;border:2px solid var(--bo);background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;color:#ccc;transition:all .2s;}
+.st.done .sd{background:var(--g);border-color:var(--g);color:#fff;}
+.st.curr .sd{background:var(--y);border-color:var(--y);color:#fff;box-shadow:0 0 0 3px rgba(232,160,0,.2);}
+.st.canc .sd{background:var(--r);border-color:var(--r);color:#fff;}
+.sn{font-size:10px;color:#bbb;white-space:nowrap;}
+.st.done .sn{color:var(--g);}.st.curr .sn{color:var(--y);font-weight:700;}.st.canc .sn{color:var(--r);}
+.sl{flex:1;height:1px;background:var(--bo);margin:0 4px;min-width:12px;}
+.sl.done{background:var(--g);}
+
+/* DETAIL BODY */
+.db{flex:1;overflow-y:auto;padding:18px 24px;}
+.sec-t{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px;display:flex;align-items:center;gap:8px;}
+.sec-t::after{content:'';flex:1;height:1px;background:var(--bo2);}
+.sec-t:first-child{margin-top:0;}
+
+/* SUMMARY TAGS */
+.sum-tag{display:inline-flex;align-items:center;gap:8px;background:var(--gray6);padding:8px 14px;border-radius:10px;}
+.sum-l{font-size:11px;color:var(--tx4);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.sum-v{font-size:18px;font-weight:700;color:var(--tx);font-feature-settings:'tnum';letter-spacing:-.5px;}
+
+/* STOCK BADGES */
+.stk-b{display:inline-block;min-width:32px;padding:3px 8px;border-radius:8px;font-size:12px;font-weight:600;font-feature-settings:'tnum';}
+.stk-ok{background:var(--green-l);color:var(--green-d);}
+.stk-no{background:var(--red-l);color:var(--red);}
+.stk-unk{background:var(--gray6);color:var(--tx4);}
+
+/* ORDER ITEMS */
+.od-item{background:var(--card);border:1px solid var(--bo);border-radius:var(--rad);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;}
+.od-item.no-stock{background:#fff8f8;border-color:#f5c0c0;}
+.od-item.has-stock{background:#f9fdf9;}
+.od-art{font-family:monospace;font-size:12px;font-weight:700;color:var(--mu);min-width:72px;}
+.od-name{flex:1;font-size:15px;font-weight:500;}
+.od-loc{font-size:11px;color:var(--mu);background:var(--bo2);padding:3px 8px;border-radius:5px;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;}
+.od-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;min-width:90px;text-align:right;}
+.od-status{font-size:12px;font-weight:700;}
+.od-status.no{color:var(--r);}.od-status.yes{color:var(--g);}
+.od-nums{font-size:11px;color:var(--mu);}
+.tbl-total{padding:8px 14px;background:var(--gl);border-radius:7px;font-size:13px;font-weight:700;color:var(--gd);text-align:right;margin-top:8px;}
+
+/* INFO CARDS */
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ic{background:var(--card);border:1px solid var(--bo);border-radius:8px;padding:11px 14px;}
+.ic.sp{grid-column:1/-1;}
+.ic-l{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.ic-v{font-size:14px;font-weight:500;word-break:break-word;line-height:1.5;}
+.ic-v.mo{font-family:monospace;font-size:13px;}
+.ttn-r{display:flex;align-items:center;gap:9px;}
+.cpbtn{padding:4px 10px;border-radius:5px;border:1px solid var(--bo);background:#fff;cursor:pointer;color:var(--mu);font-size:12px;font-family:var(--font);}
+.cpbtn:hover{background:var(--gl);color:var(--gd);}
+.note-c{background:var(--yl);border:1px solid #f0d080;border-radius:8px;padding:11px 16px;font-size:13px;color:#6b4f00;display:flex;gap:9px;line-height:1.6;}
+.canc-c{background:var(--rl);border:1px solid #f0a0a0;border-radius:8px;padding:11px 16px;font-size:13px;color:var(--r);font-weight:700;display:flex;gap:9px;align-items:center;margin-bottom:12px;}
+
+/* DETAIL FOOTER */
+.df{background:var(--card);padding:12px 18px;border-top:1px solid var(--bo);display:flex;gap:10px;flex-shrink:0;align-items:center;}
+
+/* PICKER ITEMS */
+.pk-chk{width:22px;height:22px;border:2px solid var(--bo);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;font-size:13px;flex-shrink:0;}
+.pk-chk.on{background:var(--g);border-color:var(--g);color:#fff;}
+
+/* SCAN */
+.scan-top{background:var(--card);padding:18px 24px;border-bottom:1px solid var(--bo);flex-shrink:0;}
+.scan-lbl{font-size:14px;font-weight:700;color:var(--gd);margin-bottom:10px;}
+.scan-wrap{max-width:580px;}
+.vc-bar{display:flex;align-items:center;gap:10px;background:var(--gray6);border-radius:10px;padding:8px 12px;margin-bottom:10px;flex-wrap:wrap;}
+.vc-ic{font-size:16px;}
+.vc-sel{flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--bo);border-radius:7px;background:#fff;font-size:12px;font-family:inherit;color:var(--tx);cursor:pointer;outline:none;}
+.vc-sel:focus{border-color:var(--blue);}
+.vc-rate-wrap{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx3);font-weight:500;}
+.vc-rate-lbl{white-space:nowrap;}
+.vc-rate-val{font-feature-settings:'tnum';color:var(--blue);font-weight:600;min-width:34px;text-align:right;}
+#voiceRate{width:90px;cursor:pointer;}
+.s-inp{width:100%;border:2.5px solid var(--g);border-radius:9px;padding:15px 20px;font-size:24px;font-family:monospace;outline:none;text-align:center;letter-spacing:5px;background:#fff;transition:box-shadow .2s;}
+.s-inp:focus{box-shadow:0 0 0 4px rgba(61,139,67,.15);}
+.s-inp.shake{animation:shk .3s ease;}
+@keyframes shk{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.s-fb{margin-top:10px;padding:11px 16px;border-radius:8px;font-size:14px;font-weight:500;min-height:42px;display:flex;align-items:flex-start;gap:9px;line-height:1.6;}
+.sf-ok{background:#f0f9f0;color:#1b5e20;border:1.5px solid #9fd09f;}
+.sf-er{background:#fdf0f0;color:#c62828;border:1.5px solid #f0a0a0;}
+.sf-wa{background:#fdf4ec;color:#a04000;border:1.5px solid #f0c090;}
+.sf-em{background:var(--bo2);color:var(--mu);border:1.5px solid var(--bo);}
+.scan-body{flex:1;overflow-y:auto;padding:18px 24px;}
+.scan-order-block{background:var(--card);border:1.5px solid var(--bo);border-radius:var(--rad);margin-bottom:10px;overflow:hidden;}
+.scan-order-block.complete{border-color:var(--gm);}
+.sob-head{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .1s;}
+.sob-head:hover,.scan-order-block.complete .sob-head{background:#f8fdf8;}
+.sob-num{font-size:13px;font-weight:700;color:var(--gd);}
+.sob-name{font-size:15px;font-weight:600;margin-left:10px;}
+.sob-right{display:flex;align-items:center;gap:10px;}
+.pb-w{width:80px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
+.pb-f{height:100%;border-radius:3px;background:var(--g);transition:width .3s;}
+.sob-body{display:none;border-top:1px solid var(--bo);}
+.sob-row{padding:9px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bo2);font-size:13px;}
+.sob-row:last-child{border-bottom:none;}
+.sob-row.ok{background:#f8fdf8;}.sob-row.part{background:#fdf9e8;}
+.sob-art{font-family:monospace;font-size:12px;font-weight:700;color:var(--gd);min-width:76px;}
+.sob-loc{font-size:11px;color:var(--mu);background:var(--bo2);padding:2px 6px;border-radius:4px;}
+.sob-st{margin-left:auto;font-size:13px;font-weight:700;min-width:44px;text-align:right;}
+.scan-complete-bar{background:#f0f9f0;border-top:1px solid #9fd09f;padding:10px 16px;display:flex;align-items:center;gap:10px;}
+.slog{background:var(--card);border:1.5px solid var(--bo);border-radius:var(--rad);overflow:hidden;margin-top:16px;}
+.slog-head{padding:9px 16px;background:var(--bo2);font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;border-bottom:1px solid var(--bo);}
+.slog-r{padding:8px 16px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;gap:9px;font-size:13px;}
+.slog-r:last-child{border-bottom:none;}
+
+/* STOCK */
+.stk-tb{padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bo);display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.stk-wrap{flex:1;overflow:auto;}
+.dt{width:100%;border-collapse:collapse;font-size:13px;}
+.dt th{background:#f5f5f5;border-bottom:2px solid var(--bo);padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;position:sticky;top:0;}
+.dt td{padding:9px 12px;border-bottom:1px solid var(--bo2);vertical-align:middle;}
+.dt tbody tr:hover td{background:#f8fdf8;}
+.art{font-family:monospace;color:var(--gd);font-size:12px;font-weight:700;}
+.qb{display:inline-block;padding:3px 9px;border-radius:9px;font-size:12px;font-weight:700;}
+.qb-g{background:var(--gl);color:var(--gd);}
+.qb-y{background:var(--yl);color:#7a5000;}
+.qb-r{background:var(--rl);color:var(--r);}
+
+/* EMPTY */
+.es{padding:36px 20px;text-align:center;color:var(--mu);}
+.es-ic{font-size:36px;opacity:.35;margin-bottom:10px;}
+.es-t{font-size:15px;font-weight:600;color:var(--tx2);}
+.es-s{font-size:13px;margin-top:4px;}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:5000;display:flex;align-items:center;justify-content:center;}
+.modal-box{background:#fff;border-radius:16px;padding:24px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.modal-t{font-size:15px;font-weight:700;margin-bottom:16px;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+
+/* COMBINED MODAL */
+.cm-box{background:#fff;border-radius:14px;width:96vw;max-width:1300px;height:92vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden;}
+.cm-top{padding:14px 20px;border-bottom:1.5px solid var(--bo);display:flex;align-items:center;justify-content:space-between;background:var(--gl);}
+.cm-title{font-size:17px;font-weight:700;color:var(--gd);}
+.cm-close{font-size:22px;color:var(--mu);cursor:pointer;padding:0 8px;line-height:1;}
+.cm-close:hover{color:var(--tx);}
+.cm-sub{padding:10px 20px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.cm-stats{font-size:14px;color:var(--tx2);}
+.cm-stats strong{color:var(--gd);font-size:16px;}
+.cm-hint{padding:8px 20px;background:#fff8e1;border-bottom:1px solid #ffe082;font-size:12px;color:#856404;}
+.cm-body{flex:1;overflow:auto;padding:10px 14px;}
+.cm-foot{padding:12px 20px;border-top:1.5px solid var(--bo);display:flex;align-items:center;gap:10px;background:#fafafa;}
+.cm-inp{padding:5px 8px;border:1px solid var(--bo);border-radius:5px;font-size:13px;font-family:inherit;background:#fff;outline:none;width:100%;}
+.cm-inp:focus{border-color:var(--g);box-shadow:0 0 0 2px rgba(61,139,67,.12);}
+.cm-inp.cm-num{text-align:center;}
+.cm-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 4px 12px;border-bottom:1px dashed var(--bo);margin-bottom:8px;}
+.cm-chips-lbl{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;}
+.cm-chip{padding:5px 10px;font-size:12px;font-weight:600;border:1.5px solid var(--bo);background:#fff;color:var(--tx2);border-radius:14px;cursor:pointer;transition:all .12s;user-select:none;white-space:nowrap;}
+.cm-chip:hover{border-color:var(--gm);background:var(--gl);color:var(--gd);}
+.cm-chip.on{background:var(--g);color:#fff;border-color:var(--g);}
+.cm-group-row td{background:#e8f5e9!important;font-weight:800!important;color:var(--gd)!important;font-size:12px!important;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px!important;border-top:2px solid var(--g)!important;}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sb{position:fixed;left:-230px;width:230px;z-index:200;transition:left .2s;}
+  .sb.open{left:0;box-shadow:var(--sh2);}
+  .mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:199;}
+  .mob-ov.show{display:block;}
+  .mb{display:inline-flex!important;}
+  .orders-layout,.picker-layout{flex-direction:column;}
+  .order-list-col,.picker-list{width:100%;height:220px;border-right:none;border-bottom:1px solid var(--bo);}
+  .ig{grid-template-columns:1fr;}.ic.sp{grid-column:1;}
+  .stats-row{gap:0;overflow-x:auto;}
+  .stat-item{padding:0 16px;}
+}
+.mb{display:none;width:34px;height:34px;padding:0;justify-content:center;font-size:20px;border:none;background:none;cursor:pointer;border-radius:7px;}
+.mb:hover{background:var(--bo2);}
+</style>
+</head>
+<body>
+
+<div id="pz"></div>
+<div class="mob-ov" id="mobOv" onclick="sbClose()"></div>
+<div class="tc" id="tc"></div>
+
+<!-- STATUS MODAL -->
+<div class="modal-ov" id="statusModal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-t">Змінити статус</div>
+    <div class="modal-btns" id="modalBtns"></div>
+    <button class="btn" style="width:100%" onclick="closeModal()">Скасувати</button>
+  </div>
+</div>
+
+<!-- COMBINED LIST MODAL -->
+<div class="modal-ov" id="combinedModal" style="display:none" onclick="if(event.target===this)closeCombinedModal()">
+  <div class="cm-box">
+    <div class="cm-top">
+      <div class="cm-title">📋 Зведений список для друку</div>
+      <div class="cm-close" onclick="closeCombinedModal()">✕</div>
+    </div>
+    <div class="cm-sub">
+      <div id="cmHead"></div>
+      <div id="cmStats" class="cm-stats"></div>
+    </div>
+    <div class="cm-hint">💡 Жовтим виділено рядки без розміщення/Арт.Флоріум — заповніть їх вручну перед друком</div>
+    <div id="cmBody" class="cm-body"></div>
+    <div class="cm-foot">
+      <button class="btn" onclick="closeCombinedModal()">Закрити</button>
+      <button class="btn pr" style="margin-left:auto" onclick="printCombinedList()">🖨️ Друк + Зберегти + Статус</button>
+    </div>
+  </div>
+</div>
+
+<!-- VERIFY MODAL -->
+<div class="modal-ov" id="verifyModal" style="display:none" onclick="if(event.target===this)closeVerifyModal()">
+  <div class="cm-box" style="max-width:900px">
+    <div class="cm-top" style="background:#f5ebff;border-bottom-color:#d8b4fe">
+      <div class="cm-title" style="color:#6b21a8">🔍 Перевірка перед відправкою</div>
+      <div class="cm-close" onclick="closeVerifyModal()">✕</div>
+    </div>
+    <div class="cm-sub">
+      <div id="vmHead"></div>
+      <div id="vmStats" class="cm-stats"></div>
+    </div>
+    <div style="padding:14px 20px;background:#fafafa;border-bottom:1px solid var(--bo);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input id="vmInput" type="text" placeholder="Скануй або введи артикул і натисни Enter..." style="flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--purple);border-radius:8px;font-size:15px;font-family:inherit;outline:none" autofocus>
+      <input id="vmQty" type="number" min="1" value="1" style="width:80px;padding:12px 10px;border:1px solid var(--bo);border-radius:8px;font-size:15px;text-align:center;font-family:inherit;outline:none">
+      <button class="btn pr" onclick="verifyScanArt()" style="padding:12px 18px">+ Додати</button>
+    </div>
+    <div id="vmBody" class="cm-body"></div>
+    <div class="cm-foot">
+      <button class="btn" onclick="closeVerifyModal()">Закрити</button>
+      <button class="btn" id="vmFinish" style="margin-left:auto;background:var(--purple);color:#fff;border-color:var(--purple)" disabled>✓ Підтвердити перевірку</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sb" id="sb">
+  <div class="sb-logo">
+    <div class="sb-icon">🌱</div>
+    <div><div class="sb-name">Florium</div><div class="sb-sub">Склад · Адмінка</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-sec">Робота</div>
+    <div class="ni on" id="nav-orders"><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
+    <div class="ni" id="nav-picker"><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
+    <div class="ni" id="nav-scan"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
+    <div class="nav-sec">Довідники</div>
+    <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span>Товари</div>
+    <div class="ni" id="nav-reserve"><span class="ni-ic">📦</span>Запас<span class="nb nb-g" id="bReserve">0</span></div>
+    <div class="ni" id="nav-voices"><span class="ni-ic">🎙</span>Голоси</div>
+  </div>
+  <div class="sb-foot" id="sbt"></div>
+  <div style="padding:10px 18px;border-top:1px solid var(--bo)">
+    <button onclick="logout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid var(--bo);color:var(--tx3);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='var(--red-l)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--tx3)';this.style.borderColor='var(--bo)'">🔒 Вийти</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="tb">
+    <button class="mb" onclick="sbToggle()">☰</button>
+    <span class="tb-title" id="pgTitle">Замовлення</span>
+    <div class="tb-right">
+      <div class="upd"><span class="udot pend" id="updDot"></span><span id="updTxt">Завантаження...</span></div>
+      <button class="btn sm" onclick="loadAll()">🔄 Оновити</button>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="page on" id="page-orders">
+    <div class="stats-row">
+      <div class="stat-item" onclick="setFilter('new')"><div class="stat-num c-new" id="sNew">—</div><div class="stat-lbl">Нових</div></div>
+      <div class="stat-item" onclick="setFilter('work')"><div class="stat-num c-work" id="sWork">—</div><div class="stat-lbl">В роботі</div></div>
+      <div class="stat-item" onclick="setFilter('ready')"><div class="stat-num c-ready" id="sReady">—</div><div class="stat-lbl">Готово</div></div>
+      <div class="stat-item" onclick="setFilter('all')"><div class="stat-num c-prob" id="sProb">—</div><div class="stat-lbl">Проблем</div></div>
+      <div class="stat-item" onclick="setFilter('all')"><div class="stat-num c-all" id="sTotal">—</div><div class="stat-lbl">Всього</div></div>
+    </div>
+    <div class="orders-layout">
+      <div class="order-list-col">
+        <div class="olc-head"><span class="olc-title">Замовлення</span><span class="olc-cnt" id="orCnt">0</span></div>
+        <div class="olc-search"><input class="si" id="orSearch" placeholder="Пошук по номеру або клієнту..." oninput="renderOrders()"></div>
+        <div class="olc-filters" id="orFilters"></div>
+        <div class="order-list" id="orList"></div>
+      </div>
+      <div class="detail-col">
+        <div class="de-empty" id="orEmpty"><div class="de-ico">📋</div><div class="de-txt">Оберіть замовлення</div></div>
+        <div id="orDetail" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+          <div class="dh">
+            <div class="dh-row">
+              <div><div class="dh-num" id="odN"></div><div class="dh-name" id="odC"></div><div class="dh-sub" id="odS"></div></div>
+              <div class="dh-right"><div id="odP"></div><div id="odDate" style="font-size:12px;color:var(--mu)"></div></div>
+            </div>
+          </div>
+          <div class="stages" id="odSt"></div>
+          <div class="db" id="odB"></div>
+          <div class="df">
+            <button class="btn sm" id="odTTN" style="display:none">📋 ТТН</button>
+            <button class="btn wa sm" id="odPicker" style="display:none">🚛 Вантажник</button>
+            <button class="btn sm" id="odStatus" style="display:none">✏️ Статус</button>
+            <button class="btn sm" onclick="window.open('https://docs.google.com/spreadsheets/d/'+SHEET_ID,'_blank')">↗ Таблиця</button>
+            <button class="btn next" id="odVerify" style="display:none;margin-left:auto;background:var(--purple);border-color:var(--purple)">🔍 Перевірити перед відправкою</button>
+            <button class="btn next" id="odNext" style="display:none;margin-left:auto">▶ Перевести на наступний етап</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PICKER -->
+  <div class="page" id="page-picker">
+    <div class="picker-layout">
+      <div class="picker-list" id="pkListWrap">
+        <div class="pk-head">
+          <div class="pk-head-title">Активні замовлення <span class="olc-cnt" id="pkCnt">0</span></div>
+          <button class="pk-multi-btn" id="multiBtn" onclick="toggleMultiMode()">☑ Вибрати кілька</button>
+        </div>
+        <div class="multi-bar">
+          <span class="multi-count" id="multiCount">Вибрано: 0</span>
+          <button class="btn sm" onclick="selectAllPicker()">Усі</button>
+          <button class="btn sm" onclick="clearMultiSelection()">Очистити</button>
+          <button class="btn pr sm" style="margin-left:auto" onclick="openCombinedList()">▶ Створити список</button>
+        </div>
+        <div class="order-list" id="pkList"></div>
+      </div>
+      <div class="picker-detail">
+        <div class="de-empty" id="pkEmpty"><div class="de-ico">🚛</div><div class="de-txt">Оберіть замовлення</div></div>
+        <div id="pkDetail" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+          <div class="dh">
+            <div class="dh-row">
+              <div><div class="dh-num" id="pdN"></div><div class="dh-name" id="pdC"></div></div>
+              <div id="pdP"></div>
+            </div>
+          </div>
+          <div class="db" id="pdB" style="overflow:auto;"></div>
+          <div class="df">
+            <button class="btn sm" onclick="window.open('https://docs.google.com/spreadsheets/d/'+SHEET_ID,'_blank')">↗ Таблиця</button>
+            <button class="btn pr" id="printBtn" style="margin-left:auto">🖨️ Роздруківка для вантажника</button>
+            <button class="btn next" id="pkNext">▶ Наступний етап</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="page" id="page-scan">
+    <div class="scan-top">
+      <div class="scan-wrap">
+        <div class="scan-lbl">📱 Сканування приходу — система знайде замовлення автоматично</div>
+        <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
+        <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
+      </div>
+    </div>
+    <div class="scan-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:700;">Замовлення в роботі</div>
+        <span class="olc-cnt" id="scCnt">0</span>
+      </div>
+      <div id="scOrdersList"></div>
+      <div class="slog" id="slogWrap" style="display:none">
+        <div class="slog-head">Останні сканування</div>
+        <div id="slogBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOCK -->
+  <div class="page" id="page-stock">
+    <div class="stk-tb">
+      <input class="si" style="max-width:280px" id="stkSearch" placeholder="Пошук артикул / назва..." oninput="renderStock()">
+      <span id="stkCnt" style="font-size:12px;color:var(--mu)"></span>
+      <button class="btn sm" onclick="loadAll()">🔄</button>
+    </div>
+    <div class="stk-wrap">
+      <table class="dt">
+        <thead><tr>
+          <th>Арт.Флоріум</th>
+          <th>ID ящика</th>
+          <th>Назва</th>
+          <th>Розмір</th>
+          <th style="text-align:right">К-сть в ящику</th>
+          <th style="text-align:right">Залишок</th>
+          <th>Розміщення</th>
+          <th>Постачальник</th>
+          <th>Статус ящика</th>
+          <th>Категорія</th>
+        </tr></thead>
+        <tbody id="stkBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RESERVE PAGE -->
+  <div class="page" id="page-reserve">
+    <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">📦 Запас</h2>
+          <div style="font-size:13px;color:var(--mu);margin-top:4px">Зайві товари які залишились при пакуванні — підрахунок автоматичний</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="reserveSearch" placeholder="Пошук..." oninput="renderReserve()">
+          <button class="btn sm" onclick="loadReserve()">🔄 Оновити</button>
+          <button class="btn sm" onclick="exportReserve()">📥 Експорт</button>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:0;overflow:hidden">
+        <div style="padding:14px 18px;background:#fafafa;border-bottom:1px solid var(--bo);display:flex;justify-content:space-between;align-items:center;font-size:13px">
+          <span style="color:var(--mu)">Усього позицій: <strong id="reserveTotal" style="color:var(--tx)">0</strong></span>
+          <span style="color:var(--mu)">Всього шт: <strong id="reserveTotalQty" style="color:var(--green)">0</strong></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="dt">
+            <thead><tr>
+              <th style="width:140px">Дата</th>
+              <th style="width:120px">Артикул</th>
+              <th>Назва</th>
+              <th style="text-align:right;width:80px">К-сть</th>
+              <th style="width:180px">Звідки</th>
+              <th style="width:120px">Оператор</th>
+              <th style="width:120px;text-align:center">Дії</th>
+            </tr></thead>
+            <tbody id="reserveBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOICES PAGE -->
+  <div class="page" id="page-voices">
+    <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">🎙 Голоси клієнтів</h2>
+          <div style="font-size:13px;color:var(--mu);margin-top:4px">Запиши імена клієнтів та цифри своїм голосом — буде звучати при скануванні</div>
+          <div id="voicesSyncStatus" style="font-size:12px;color:var(--blue);margin-top:6px;font-weight:500"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" onclick="manualSyncVoices()">🔄 Синхр. з Drive</button>
+          <button class="btn sm" onclick="exportVoicesZip()">📥 Експорт</button>
+          <input type="file" id="voicesImportFile" accept=".json" style="display:none" onchange="importVoicesZip(event)">
+          <button class="btn sm" onclick="document.getElementById('voicesImportFile').click()">📤 Імпорт</button>
+        </div>
+      </div>
+
+      <!-- Цифри -->
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:20px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:16px;font-weight:700">🔢 Цифри 0-9</div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">Промов кожну цифру українською (нуль, один, два...)</div>
+          </div>
+          <div style="font-size:12px;color:var(--mu)"><span id="digitsProgress">0</span> / 10 записано</div>
+        </div>
+        <div class="digits-grid" id="digitsGrid"></div>
+      </div>
+
+      <!-- Клієнти -->
+      <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:16px;font-weight:700">👥 Імена клієнтів</div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">Список з активних замовлень. Якщо немає запису — програється системний голос</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="voicesSearch" placeholder="Пошук імені..." oninput="renderClientVoices()">
+            <span style="font-size:12px;color:var(--mu)"><span id="namesProgress">0</span> / <span id="namesTotal">0</span></span>
+          </div>
+        </div>
+        <div id="clientVoicesList"></div>
+      </div>
+
+      <!-- АВТОМАТИЗАТОР ElevenLabs -->
+      <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:14px;padding:20px;margin-top:18px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#5b21b6">🤖 Автогенерація через ElevenLabs</div>
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:14px;line-height:1.5">
+          Введи свій API ключ ElevenLabs — система згенерує всі цифри, фрази і імена клієнтів автоматично, збереже на Google Drive і в браузері.<br>
+          <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" style="color:var(--blue);text-decoration:underline">Отримати ключ →</a> (безкоштовно)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">API ключ</label>
+            <input id="elevenApiKey" type="password" placeholder="sk_..." class="si" style="width:100%;padding:8px 12px;font-size:12px;font-family:monospace" autocomplete="off">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">Voice ID (з URL Voice Library)</label>
+            <input id="elevenVoiceId" type="text" placeholder="Yevhen або 21m00Tcm4TlvDq8ikWAM" class="si" style="width:100%;padding:8px 12px;font-size:12px;font-family:monospace" autocomplete="off">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn sm" onclick="ttsTestConnection()" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🔍 Перевірити ключ</button>
+          <button class="btn sm" onclick="ttsGenerateAll('digits')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🔢 Згенерувати цифри (10)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('phrases')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">💬 Згенерувати фрази (16)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('words')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">📝 Згенерувати слова (10)</button>
+          <button class="btn sm" onclick="ttsGenerateAll('names')" style="background:#7c3aed;color:#fff;border-color:#7c3aed">👥 Згенерувати імена клієнтів</button>
+          <button class="btn sm" onclick="ttsGenerateAll('all')" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;font-weight:700">🚀 ЗГЕНЕРУВАТИ ВСЕ</button>
+        </div>
+        <div id="ttsProgress" style="font-size:12px;color:var(--tx2);min-height:18px;font-weight:500"></div>
+        <div id="ttsLog" style="font-size:11px;color:var(--tx3);max-height:200px;overflow-y:auto;margin-top:8px;font-family:monospace;background:#fff;padding:8px;border-radius:6px;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<script>
+// ===== CONFIG =====
+// Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
+var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
+var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
+var CACHE_KEY='fl_cache';
+
+// ===== AUTH — відключено =====
+// ===== AUTH =====
+var AUTH_KEY='florium_session_v1';
+
+function checkAuth(){
+  // Перевіряємо токен у localStorage
+  var sess=null;
+  try{sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}
+  
+  if(sess&&sess.token&&sess.expiresAt&&Date.now()<sess.expiresAt){
+    // Токен валідний — заходимо
+    showApp();
+    return;
+  }
+  
+  // Токен невалідний/відсутній — показуємо логін
+  showLogin();
+}
+
+function showLogin(){
+  // Ховаємо весь UI — крім loginScreen, scripts, styles
+  document.querySelectorAll('body > *').forEach(function(el){
+    if(el.id==='loginScreen')return;
+    if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
+    el.style.display='none';
+  });
+  // Створюємо/показуємо екран логіну
+  var ls=G('loginScreen');
+  if(!ls){
+    ls=document.createElement('div');
+    ls.id='loginScreen';
+    ls.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929,#1a3a52);z-index:99999;font-family:var(--font);';
+    ls.innerHTML='<div style="background:#fff;border-radius:20px;padding:36px 32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3);">'
+      +'<div style="text-align:center;margin-bottom:24px">'
+        +'<div style="width:64px;height:64px;background:linear-gradient(135deg,#34c759,#248a3d);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px;box-shadow:0 6px 20px rgba(52,199,89,.3)">🌱</div>'
+        +'<div style="font-size:22px;font-weight:700;color:#1d1d1f;letter-spacing:-.5px">Florium Admin</div>'
+        +'<div style="font-size:13px;color:#86868b;margin-top:4px">Введіть пароль для входу</div>'
+      +'</div>'
+      +'<div style="margin-bottom:14px">'
+        +'<input id="loginPwd" type="password" placeholder="Пароль" autocomplete="current-password" style="width:100%;padding:13px 16px;border:1.5px solid #d2d2d7;border-radius:10px;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor=\'#0071e3\'" onblur="this.style.borderColor=\'#d2d2d7\'">'
+      +'</div>'
+      +'<div id="loginErr" style="font-size:13px;color:#ff3b30;margin-bottom:14px;min-height:18px;text-align:center;font-weight:500"></div>'
+      +'<button onclick="doLogin()" id="loginBtn" style="width:100%;padding:14px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background=\'#0060c0\'" onmouseout="this.style.background=\'#0071e3\'">Увійти</button>'
+      +'<div style="text-align:center;margin-top:18px;font-size:11px;color:#86868b">Сесія діє 24 години</div>'
+    +'</div>';
+    document.body.appendChild(ls);
+  } else {
+    ls.style.display='flex';
+  }
+  setTimeout(function(){G('loginPwd')&&G('loginPwd').focus();},100);
+  // Enter — submit
+  G('loginPwd').onkeydown=function(e){if(e.key==='Enter')doLogin();};
+}
+
+async function doLogin(){
+  var pwdInp=G('loginPwd');
+  var errEl=G('loginErr');
+  var btn=G('loginBtn');
+  var pwd=pwdInp.value;
+  if(!pwd){errEl.textContent='Введіть пароль';return;}
+  
+  btn.disabled=true;
+  btn.textContent='Вхід...';
+  btn.style.opacity='.7';
+  errEl.textContent='';
+  
+  try{
+    if(!SCRIPT_URL){
+      errEl.textContent='SCRIPT_URL не налаштовано';
+      btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+      return;
+    }
+    var device=getDeviceName();
+    var ua=navigator.userAgent;
+    var res=await callScript('login',{password:pwd,device:device,userAgent:ua});
+    
+    if(res&&res.ok&&res.token){
+      // Зберігаємо сесію
+      localStorage.setItem(AUTH_KEY,JSON.stringify({
+        token:res.token,
+        expiresAt:res.expiresAt,
+        loggedAt:Date.now()
+      }));
+      // Показуємо додаток
+      var ls=G('loginScreen');if(ls)ls.remove();
+      showApp();
+    } else {
+      errEl.textContent=(res&&res.error)?res.error:'Невірний пароль';
+      pwdInp.value='';
+      pwdInp.focus();
+      btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+      // shake
+      pwdInp.style.animation='alertShake .4s';
+      setTimeout(function(){pwdInp.style.animation='';},400);
+    }
+  }catch(e){
+    errEl.textContent='Помилка з\'єднання: '+e.message;
+    btn.disabled=false;btn.textContent='Увійти';btn.style.opacity='1';
+  }
+}
+
+function logout(){
+  if(!confirm('Вийти з адмін-панелі?'))return;
+  // Відкликаємо токен на сервері (не блокуємо вихід)
+  try{callScript('logout',{});}catch(e){}
+  localStorage.removeItem(AUTH_KEY);
+  setTimeout(function(){location.reload();},200);
+}
+
+function getDeviceName(){
+  var ua=navigator.userAgent;
+  var os='Unknown';
+  if(/Windows/.test(ua))os='Windows';
+  else if(/Mac/.test(ua))os='Mac';
+  else if(/Android/.test(ua))os='Android';
+  else if(/iPhone|iPad/.test(ua))os='iOS';
+  else if(/Linux/.test(ua))os='Linux';
+  var browser='Browser';
+  if(/Chrome/.test(ua)&&!/Edg/.test(ua))browser='Chrome';
+  else if(/Firefox/.test(ua))browser='Firefox';
+  else if(/Safari/.test(ua))browser='Safari';
+  else if(/Edg/.test(ua))browser='Edge';
+  return os+' · '+browser;
+}
+
+function showApp(){
+  // Показуємо UI — але НЕ чіпаємо модалки (їх display керується inline-style)
+  document.querySelectorAll('body > *').forEach(function(el){
+    if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
+    if(el.id==='loginScreen')return;
+    if(el.classList&&el.classList.contains('modal-ov'))return; // ← модалки пропускаємо
+    el.style.display='';
+  });
+  // Усі модалки явно закриваємо
+  document.querySelectorAll('.modal-ov').forEach(function(m){m.style.display='none';});
+  var ls=G('loginScreen');if(ls)ls.remove();
+  // Event delegation for nav items
+  document.querySelectorAll('.ni[id^="nav-"]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var id=el.id.replace('nav-','');
+      nav(id);
+      hideWelcome();
+    });
+  });
+  init();
+  // Показуємо welcome екран з вибором дії
+  showWelcomeScreen();
+  // Перевіряємо expiry кожні 5 хв
+  setInterval(checkSessionExpiry,5*60*1000);
+}
+
+// ===== WELCOME SCREEN =====
+function showWelcomeScreen(){
+  if(G('welcomeScreen'))return;
+  var ws=document.createElement('div');
+  ws.id='welcomeScreen';
+  ws.style.cssText='position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929 0%,#1a3a52 50%,#0a1929 100%);z-index:9998;font-family:var(--font);overflow:hidden;';
+  ws.innerHTML=''
+    +'<div class="wlogo-wrap">'
+      +'<div class="wlogo-icon">🌱</div>'
+      +'<div class="wtitle">ОПТ</div>'
+      +'<div class="wsubtitle">Florium · Склад</div>'
+    +'</div>'
+    +'<div class="wcards">'
+      +'<div class="wcard" onclick="welcomeGo(\'orders\')" style="animation-delay:.4s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#34c759,#248a3d)">📋</div>'
+        +'<div class="wcard-t">Замовлення</div>'
+        +'<div class="wcard-s">Перегляд і управління</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'picker\')" style="animation-delay:.55s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#ff9500,#e8830a)">📦</div>'
+        +'<div class="wcard-t">Фасування</div>'
+        +'<div class="wcard-s">Зведений список</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'scan\')" style="animation-delay:.7s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#0071e3,#0060c0)">📲</div>'
+        +'<div class="wcard-t">Прийом товару</div>'
+        +'<div class="wcard-s">Сканування</div>'
+      +'</div>'
+      +'<div class="wcard" onclick="welcomeGo(\'verify\')" style="animation-delay:.85s">'
+        +'<div class="wcard-ic" style="background:linear-gradient(135deg,#af52de,#8e3fb8)">🔍</div>'
+        +'<div class="wcard-t">Перевірка</div>'
+        +'<div class="wcard-s">Перед відправкою</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="wskip" onclick="hideWelcome()">Пропустити →</div>';
+  document.body.appendChild(ws);
+}
+
+function welcomeGo(page){
+  hideWelcome();
+  if(page==='verify'){
+    // Перейти до Замовлення і показати фільтр Готові
+    nav('orders');
+    setTimeout(function(){
+      filterKey='ready';
+      renderOrders();
+      toast('Виберіть замовлення зі статусом «Готове» → натисніть «🔍 Перевірити»','in',5000);
+    },300);
+  } else {
+    nav(page);
+  }
+}
+
+function hideWelcome(){
+  var ws=G('welcomeScreen');
+  if(!ws)return;
+  ws.style.transition='opacity .4s,transform .4s';
+  ws.style.opacity='0';
+  ws.style.transform='scale(.95)';
+  setTimeout(function(){ws.remove();},400);
+}
+
+function checkSessionExpiry(){
+  try{
+    var sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
+    if(!sess||Date.now()>=sess.expiresAt){
+      toast('Сесія завершилась — потрібно увійти знову','wa',5000);
+      setTimeout(function(){location.reload();},3000);
+    }
+  }catch(e){}
+}
+
+// ===== HELPERS =====
+function G(id){return document.getElementById(id);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function fetchSheet(name,range){
+  // Читання через Apps Script (захищено токеном), без прямого доступу до Sheets API
+  var res=await callScript('getData',{sheet:name,range:range||''});
+  if(res&&res.ok&&res.values)return res.values;
+  return [];
+}
+
+// ===== СЕСІЯ / ТОКЕН =====
+function getSessionToken(){
+  try{var x=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');return (x&&x.token)?x.token:'';}catch(e){return '';}
+}
+function handleSessionExpired(){
+  try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  try{toast('Сесія завершилась — увійдіть знову','wa',4000);}catch(e){}
+  setTimeout(function(){location.reload();},1200);
+}
+
+// Call Apps Script — авторизація через токен сесії (без SECRET/API_KEY у коді)
+async function callScript(action,data){
+  if(!SCRIPT_URL){console.warn('SCRIPT_URL не налаштовано');return{ok:false,msg:'Script URL не налаштовано'};}
+  try{
+    // Apps Script CORS: використовуємо GET з параметрами
+    var params=new URLSearchParams({action:action});
+    if(action!=='login')params.set('token',getSessionToken());
+    if(data){Object.keys(data).forEach(function(k){params.set(k,String(data[k]||''));});}
+    var r=await fetch(SCRIPT_URL+'?'+params.toString());
+    var text=await r.text();
+    var res;
+    try{res=JSON.parse(text);}catch(e){return{ok:false,msg:'Invalid JSON: '+text.substring(0,100)};}
+    if(res&&res.needLogin&&action!=='login'){handleSessionExpired();return{ok:false,needLogin:true};}
+    return res;
+  }catch(e){return{ok:false,msg:e.message};}
+}
+
+// POST-варіант для великих даних (аудіо голосів).
+// Content-Type text/plain — щоб уникнути CORS preflight в Apps Script.
+async function callScriptPost(action,data){
+  if(!SCRIPT_URL)return{ok:false,msg:'Script URL не налаштовано'};
+  try{
+    var body=Object.assign({action:action},data||{});
+    if(action!=='login')body.token=getSessionToken();
+    var r=await fetch(SCRIPT_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(body)
+    });
+    var text=await r.text();
+    var res;
+    try{res=JSON.parse(text);}catch(e){return{ok:false,msg:'Invalid JSON: '+text.substring(0,100)};}
+    if(res&&res.needLogin&&action!=='login'){handleSessionExpired();return{ok:false,needLogin:true};}
+    return res;
+  }catch(e){return{ok:false,msg:e.message};}
+}
+
+// Toast
+function toast(msg,type,dur){
+  var t=document.createElement('div');t.className='toast '+(type||'in');
+  var i={ok:'✅',er:'❌',wa:'⚠️',in:'ℹ️'}[type]||'ℹ️';
+  t.innerHTML=i+' '+esc(msg);
+  G('tc').appendChild(t);
+  setTimeout(()=>{t.style.animation='tout .25s ease forwards';setTimeout(()=>t.parentNode?.removeChild(t),250);},dur||3000);
+}
+
+// Sound
+// ============================================================
+//  ГІБРИДНИЙ ГОЛОСОВИЙ АСИСТЕНТ
+//  1) Український TTS (Hugging Face) → 2) Кеш в IndexedDB → 3) Браузерний голос як fallback
+// ============================================================
+var VOICE_KEY='florium_voice_v1';
+var _voiceCache=null;
+var UA_TTS_URL='https://robinhad-ukrainian-tts.hf.space';
+var UA_TTS_API_NAME='/predict'; // gr.Interface default endpoint
+var UA_TTS_VOICE='dmytro';
+// Mapping voice keys → labels with emoji (as expected by the Gradio Space)
+var UA_VOICE_LABELS={
+  tetiana: 'Тетяна (жіночий) 👩',
+  mykyta:  'Микита (чоловічий) 👨',
+  lada:    'Лада (жіночий) 👩',
+  dmytro:  'Дмитро (чоловічий) 👨',
+  oleksa:  'Олекса (чоловічий) 👨'
+};
+var _idb=null;
+
+function openVoiceCache(){
+  return new Promise(function(resolve){
+    if(_idb)return resolve(_idb);
+    try{
+      var req=indexedDB.open('florium_voice_v2',1);
+      req.onupgradeneeded=function(e){
+        var db=e.target.result;
+        if(!db.objectStoreNames.contains('audio'))db.createObjectStore('audio',{keyPath:'key'});
+      };
+      req.onsuccess=function(e){_idb=e.target.result;resolve(_idb);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function cacheGet(key){
+  var db=await openVoiceCache();if(!db)return null;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').get(key);
+      req.onsuccess=function(){resolve(req.result?req.result.blob:null);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function cacheSet(key,blob){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').put({key:key,blob:blob,ts:Date.now()});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+async function clearVoiceCache(){
+  var db=await openVoiceCache();if(!db)return;
+  var tx=db.transaction('audio','readwrite');
+  tx.objectStore('audio').clear();
+  tx.oncomplete=function(){console.log('Voice cache cleared');};
+}
+
+function getVoices(){
+  if(!window.speechSynthesis)return [];
+  if(_voiceCache)return _voiceCache;
+  _voiceCache=window.speechSynthesis.getVoices()||[];
+  return _voiceCache;
+}
+
+function getVoicePrefs(){
+  try{return JSON.parse(localStorage.getItem(VOICE_KEY)||'{}');}catch(e){return {};}
+}
+function saveVoicePrefs(p){try{localStorage.setItem(VOICE_KEY,JSON.stringify(p));}catch(e){}}
+
+function pickVoice(){
+  var vs=getVoices();
+  if(!vs.length)return null;
+  var pref=getVoicePrefs();
+  if(pref.voiceName){
+    var v=vs.find(function(x){return x.name===pref.voiceName;});
+    if(v)return v;
+  }
+  var v=vs.find(function(x){return /uk[-_]/i.test(x.lang);});
+  if(v)return v;
+  v=vs.find(function(x){return /ru[-_]/i.test(x.lang);});
+  if(v)return v;
+  return vs[0];
+}
+
+async function fetchUkrainianTTS(text){
+  try{
+    var pref=getVoicePrefs();
+    var voiceKey=pref.uaVoice||UA_TTS_VOICE;
+    var voiceLabel=UA_VOICE_LABELS[voiceKey]||UA_VOICE_LABELS.dmytro;
+    var payload={data:[text,voiceLabel]};
+    
+    // СПОЧАТКУ ПРОБУЄМО СТАРИЙ FORMAT /run/predict — він повертає одразу результат
+    try{
+      var oldRes=await fetch(UA_TTS_URL+'/run/predict',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(oldRes.ok){
+        var rj=await oldRes.json();
+        // Формат відповіді: {data: [audioUrl, accentedText], ...}
+        if(rj.data&&rj.data[0]){
+          var audioPath=rj.data[0];
+          var audioUrl=typeof audioPath==='string'?audioPath:(audioPath.url||audioPath.path||audioPath.name);
+          if(audioUrl){
+            if(!audioUrl.startsWith('http')){
+              audioUrl=UA_TTS_URL+'/file='+audioUrl.replace(/^\//,'');
+            }
+            var audioRes=await fetch(audioUrl);
+            if(audioRes.ok)return await audioRes.blob();
+          }
+        }
+        throw new Error('No audio in /run/predict response: '+JSON.stringify(rj).substring(0,200));
+      }
+      // Якщо /run/predict не дав ok — fallthrough до /call/predict
+      console.log('UA TTS: /run/predict returned',oldRes.status,'- trying /call/predict');
+    }catch(e1){
+      console.log('UA TTS /run/predict failed:',e1.message,'- trying /call/predict');
+    }
+    
+    // FALLBACK НА НОВИЙ /call/predict (POST → GET)
+    var post=await fetch(UA_TTS_URL+'/call/predict',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(!post.ok)throw new Error('POST '+post.status);
+    var pj=await post.json();
+    var eventId=pj.event_id;
+    if(!eventId)throw new Error('No event_id');
+    var getRes=await fetch(UA_TTS_URL+'/call/predict/'+eventId);
+    if(!getRes.ok)throw new Error('GET failed');
+    var textStream=await getRes.text();
+    var lines=textStream.split('\n');
+    var dataLine=null;
+    for(var i=0;i<lines.length;i++){
+      if(lines[i].indexOf('event: complete')===0&&lines[i+1]){
+        dataLine=lines[i+1].replace(/^data:\s*/,'');
+        break;
+      }
+    }
+    if(!dataLine)throw new Error('No complete event');
+    var parsed=JSON.parse(dataLine);
+    var audioInfo=parsed[0];
+    if(!audioInfo)throw new Error('No audio info');
+    var audioUrl2=audioInfo.url||audioInfo.path||audioInfo;
+    if(typeof audioUrl2!=='string')throw new Error('Bad audio URL type');
+    if(!audioUrl2.startsWith('http')){
+      audioUrl2=UA_TTS_URL+'/file='+audioUrl2.replace(/^\//,'');
+    }
+    var audioRes2=await fetch(audioUrl2);
+    if(!audioRes2.ok)throw new Error('Audio fetch '+audioRes2.status);
+    return await audioRes2.blob();
+  }catch(e){
+    console.warn('UA TTS final error:',e.message);
+    return null;
+  }
+}
+
+async function speakOrder(clientName,orderNum){
+  if(!clientName&&!orderNum)return;
+  // ТІЛЬКИ записаний/згенерований голос. Системний голос (Ірина і т.д.) ВИМКНЕНО.
+  try{
+    await speakOrderWithRecordings(clientName,orderNum);
+  }catch(e){console.warn('speakOrder:',e);}
+}
+
+function playBlob(blob){
+  try{
+    var url=URL.createObjectURL(blob);
+    var audio=new Audio(url);
+    var pref=getVoicePrefs();
+    audio.playbackRate=parseFloat(pref.rate)||1.0;
+    audio.volume=1.0;
+    audio.onended=function(){URL.revokeObjectURL(url);};
+    audio.play().catch(function(e){console.warn('Audio play:',e.message);});
+  }catch(e){console.warn('playBlob:',e);}
+}
+
+function speakWithBrowser(clientName,lastFour){
+  if(!window.speechSynthesis)return;
+  try{
+    window.speechSynthesis.cancel();
+    var v=pickVoice();
+    var name=clientName||'';
+    var digits=lastFour.split('').join(' ');
+    if(v&&!/uk/i.test(v.lang)){
+      name=adaptNameForVoice(name,v.lang);
+      digits=adaptDigitsForVoice(lastFour,v.lang);
+    }
+    var text=name+', '+digits;
+    var u=new SpeechSynthesisUtterance(text);
+    if(v){u.voice=v;u.lang=v.lang;}
+    var pref=getVoicePrefs();
+    u.rate=parseFloat(pref.rate)||1.15;
+    u.pitch=1.0;
+    u.volume=1.0;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function speak(text){
+  if(!window.speechSynthesis)return;
+  try{
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    var v=pickVoice();
+    if(v){u.voice=v;u.lang=v.lang;}
+    var pref=getVoicePrefs();
+    u.rate=parseFloat(pref.rate)||1.1;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function adaptNameForVoice(name,lang){
+  if(!name)return '';
+  if(/ru/i.test(lang)){
+    return name
+      .replace(/і/g,'и').replace(/І/g,'И')
+      .replace(/ї/g,'йи').replace(/Ї/g,'Йи')
+      .replace(/є/g,'е').replace(/Є/g,'Е')
+      .replace(/ґ/g,'г').replace(/Ґ/g,'Г')
+      .replace(/'/g,'');
+  }
+  if(/en/i.test(lang)){
+    var map={'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};
+    return name.toLowerCase().split('').map(function(c){return map[c]!==undefined?map[c]:c;}).join('');
+  }
+  return name;
+}
+
+function adaptDigitsForVoice(digitsStr,lang){
+  if(/ru/i.test(lang)){
+    var ruDigits={'0':'ноль','1':'один','2':'два','3':'три','4':'четыре','5':'пять','6':'шесть','7':'семь','8':'восемь','9':'девять'};
+    return digitsStr.split('').map(function(d){return ruDigits[d]||d;}).join(' ');
+  }
+  if(/en/i.test(lang)){
+    var enDigits={'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine'};
+    return digitsStr.split('').map(function(d){return enDigits[d]||d;}).join(' ');
+  }
+  return digitsStr.split('').join(' ');
+}
+
+function fillVoiceSelector(){
+  var sel=document.getElementById('voiceSel');
+  if(!sel)return;
+  var vs=getVoices();
+  var pref=getVoicePrefs();
+  // За замовчуванням — системний голос (не український онлайн)
+  var defaultIsSystem=!pref.uaVoice||pref.disableUkrainian;
+  var html='<optgroup label="🖥 Системні голоси (працюють стабільно)">';
+  if(vs.length){
+    var langOrder=function(lang){
+      if(/uk/i.test(lang))return 0;
+      if(/ru/i.test(lang))return 1;
+      if(/pl|cs|sk|bg/i.test(lang))return 2;
+      if(/en/i.test(lang))return 3;
+      return 4;
+    };
+    var sorted=vs.slice().sort(function(a,b){
+      var d=langOrder(a.lang)-langOrder(b.lang);
+      if(d!==0)return d;
+      return a.name.localeCompare(b.name);
+    });
+    var selectedSysName=defaultIsSystem?(pref.voiceName||(pickVoice()&&pickVoice().name)):null;
+    html+=sorted.map(function(v){
+      var flag='';
+      if(/uk/i.test(v.lang))flag='🇺🇦 ';
+      else if(/ru/i.test(v.lang))flag='🇷🇺 ';
+      else if(/en/i.test(v.lang))flag='🇬🇧 ';
+      else if(/pl/i.test(v.lang))flag='🇵🇱 ';
+      else if(/de/i.test(v.lang))flag='🇩🇪 ';
+      var selFlag=v.name===selectedSysName?' selected':'';
+      return '<option value="sys:'+v.name.replace(/"/g,'&quot;')+'"'+selFlag+'>'+flag+v.name+' ('+v.lang+')</option>';
+    }).join('');
+  } else {
+    html+='<option>Голоси завантажуються...</option>';
+  }
+  html+='</optgroup>';
+  html+='<optgroup label="🇺🇦 Український онлайн (експериментально, може не працювати)">'
+    +'<option value="ua:dmytro" '+(pref.uaVoice==='dmytro'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Дмитро (онлайн)</option>'
+    +'<option value="ua:tetiana" '+(pref.uaVoice==='tetiana'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Тетяна (онлайн)</option>'
+    +'<option value="ua:mykyta" '+(pref.uaVoice==='mykyta'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Микита (онлайн)</option>'
+    +'<option value="ua:oleksa" '+(pref.uaVoice==='oleksa'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Олекса (онлайн)</option>'
+    +'<option value="ua:lada" '+(pref.uaVoice==='lada'&&!pref.disableUkrainian?'selected':'')+'>🇺🇦 Лада (онлайн)</option>'
+    +'</optgroup>';
+  sel.innerHTML=html;
+  sel.onchange=function(){
+    var val=sel.value;
+    var p=getVoicePrefs();
+    if(val.indexOf('ua:')===0){
+      p.uaVoice=val.substring(3);
+      p.disableUkrainian=false;
+    } else if(val.indexOf('sys:')===0){
+      p.voiceName=val.substring(4);
+      p.disableUkrainian=true;
+      p.uaVoice=null;
+    }
+    saveVoicePrefs(p);
+    testVoice();
+  };
+  var rateInput=document.getElementById('voiceRate');
+  var rateVal=document.getElementById('voiceRateVal');
+  if(rateInput){
+    rateInput.value=pref.rate||1.0;
+    if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
+    rateInput.oninput=function(){
+      var p=getVoicePrefs();
+      p.rate=parseFloat(rateInput.value);
+      saveVoicePrefs(p);
+      if(rateVal)rateVal.textContent=Number(rateInput.value).toFixed(2)+'×';
+    };
+    rateInput.onchange=function(){testVoice();};
+  }
+}
+
+function testVoice(){
+  speakOrder('Гелетей','3013');
+}
+
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){
+    _voiceCache=null;
+    fillVoiceSelector();
+  };
+}
+
+// При завантаженні — якщо в localStorage лишився флаг українського онлайн, скидаємо його на системний
+(function resetUaPrefIfStuck(){
+  try{
+    var p=JSON.parse(localStorage.getItem(VOICE_KEY)||'{}');
+    if(p.uaVoice&&!p.disableUkrainian){
+      // Перевіримо чи був успіх — якщо ні, відключаємо
+      // Простіше — скидаємо завжди, бо API недоступний
+      p.uaVoice=null;
+      p.disableUkrainian=true;
+      localStorage.setItem(VOICE_KEY,JSON.stringify(p));
+    }
+  }catch(e){}
+})();
+
+// ============================================================
+//  ЗАПИС ВЛАСНИХ ГОЛОСІВ — цифри + клієнти
+// ============================================================
+var DIGIT_WORDS={
+  '0':'нуль','1':'один','2':'два','3':'три','4':'чотири',
+  '5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'
+};
+var _mediaRecorder=null;
+var _recChunks=[];
+var _currentRecTarget=null;
+
+// Локальне (швидке) збереження в IndexedDB + асинхронна синхронізація з Google Drive
+async function voiceSave(key,blob,skipDriveSync){
+  var db=await openVoiceCache();if(!db)return;
+  // 1) Зберігаємо локально (миттєво)
+  await new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').put({key:'rec:'+key,blob:blob,ts:Date.now(),synced:false});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+  // 2) Паралельно вивантажуємо в Drive (не блокуємо)
+  if(!skipDriveSync){
+    uploadVoiceToDrive(key,blob).catch(function(e){
+      console.warn('Drive upload failed:',e.message);
+    });
+  }
+}
+
+async function voiceLoad(key){
+  var db=await openVoiceCache();if(!db)return null;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').get('rec:'+key);
+      req.onsuccess=function(){resolve(req.result?req.result.blob:null);};
+      req.onerror=function(){resolve(null);};
+    }catch(e){resolve(null);}
+  });
+}
+
+async function voiceDelete(key){
+  var db=await openVoiceCache();if(!db)return;
+  // 1) Локально
+  await new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      tx.objectStore('audio').delete('rec:'+key);
+      tx.oncomplete=function(){resolve();};
+    }catch(e){resolve();}
+  });
+  // 2) Drive
+  deleteVoiceFromDrive(key).catch(function(e){
+    console.warn('Drive delete failed:',e.message);
+  });
+}
+
+// ============================================================
+//  СИНХРОНІЗАЦІЯ З GOOGLE DRIVE (через Apps Script)
+// ============================================================
+async function uploadVoiceToDrive(key,blob){
+  if(!SCRIPT_URL)return;
+  var base64=await blobToBase64(blob);
+  var pure=base64.indexOf(',')>=0?base64.split(',')[1]:base64;
+  var res=await callScriptPost('voiceUpload',{
+    key:key,
+    audio:pure,
+    mimeType:blob.type||'audio/webm'
+  });
+  if(res&&res.ok){
+    // Позначаємо локальний запис як синхронізований
+    markAsSynced(key);
+  }
+  return res;
+}
+
+async function deleteVoiceFromDrive(key){
+  if(!SCRIPT_URL)return;
+  return await callScript('voiceDelete',{key:key});
+}
+
+async function listVoicesFromDrive(){
+  if(!SCRIPT_URL)return [];
+  try{
+    var res=await callScript('voiceList',{});
+    if(res&&res.ok&&res.files)return res.files;
+  }catch(e){console.warn('voiceList err:',e);}
+  return [];
+}
+
+async function downloadVoiceFromDrive(key){
+  if(!SCRIPT_URL)return null;
+  try{
+    var res=await callScript('voiceGet',{key:key});
+    if(res&&res.ok&&res.audio){
+      var blob=base64ToBlob('data:'+res.mimeType+';base64,'+res.audio,res.mimeType);
+      return blob;
+    }
+  }catch(e){console.warn('voiceGet err:',e);}
+  return null;
+}
+
+async function markAsSynced(key){
+  var db=await openVoiceCache();if(!db)return;
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      var os=tx.objectStore('audio');
+      var req=os.get('rec:'+key);
+      req.onsuccess=function(){
+        if(req.result){
+          req.result.synced=true;
+          os.put(req.result);
+        }
+        resolve();
+      };
+      req.onerror=function(){resolve();};
+    }catch(e){resolve();}
+  });
+}
+
+// Синхронізація: довантажує з Drive все чого немає локально
+async function syncVoicesFromDrive(progressCb){
+  if(!SCRIPT_URL)return {downloaded:0,total:0};
+  var driveFiles=await listVoicesFromDrive();
+  if(!driveFiles.length)return {downloaded:0,total:0};
+  var downloaded=0;
+  for(var i=0;i<driveFiles.length;i++){
+    var df=driveFiles[i];
+    if(progressCb)progressCb(i+1,driveFiles.length,df.key);
+    var local=await voiceLoad(df.key);
+    if(local)continue;
+    var blob=await downloadVoiceFromDrive(df.key);
+    if(blob){
+      await voiceSave(df.key,blob,true);
+      await markAsSynced(df.key);
+      downloaded++;
+    }
+  }
+  return {downloaded:downloaded,total:driveFiles.length};
+}
+
+async function voiceListAll(){
+  var db=await openVoiceCache();if(!db)return [];
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readonly');
+      var req=tx.objectStore('audio').getAll();
+      req.onsuccess=function(){
+        var all=(req.result||[]).filter(function(r){return r.key&&r.key.indexOf('rec:')===0;});
+        resolve(all);
+      };
+      req.onerror=function(){resolve([]);};
+    }catch(e){resolve([]);}
+  });
+}
+
+// Запис аудіо
+async function startRecording(key,targetEl){
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){
+    stopRecording();
+    return;
+  }
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    _recChunks=[];
+    _currentRecTarget={key:key,el:targetEl};
+    var mime='audio/webm';
+    if(!MediaRecorder.isTypeSupported(mime))mime='audio/ogg';
+    _mediaRecorder=new MediaRecorder(stream,{mimeType:mime});
+    _mediaRecorder.ondataavailable=function(e){if(e.data.size)_recChunks.push(e.data);};
+    _mediaRecorder.onstop=async function(){
+      var blob=new Blob(_recChunks,{type:mime});
+      stream.getTracks().forEach(function(t){t.stop();});
+      if(_currentRecTarget){
+        await voiceSave(_currentRecTarget.key,blob);
+        _currentRecTarget=null;
+      }
+      _mediaRecorder=null;
+      renderDigitsGrid();
+      renderClientVoices();
+    };
+    _mediaRecorder.start();
+    if(targetEl)targetEl.classList.add('recording');
+    // Автостоп через 5 сек на цифру, 10 сек на імʼя
+    var timeout=key.indexOf('digit:')===0?2500:5000;
+    setTimeout(function(){
+      if(_mediaRecorder&&_mediaRecorder.state==='recording')stopRecording();
+    },timeout);
+  }catch(e){
+    alert('Помилка доступу до мікрофона: '+e.message+'\nДозволь мікрофон у налаштуваннях браузера.');
+  }
+}
+
+function stopRecording(){
+  if(_mediaRecorder&&_mediaRecorder.state==='recording'){
+    _mediaRecorder.stop();
+    if(_currentRecTarget&&_currentRecTarget.el){
+      _currentRecTarget.el.classList.remove('recording');
+    }
+  }
+}
+
+async function playRecording(key){
+  var blob=await voiceLoad(key);
+  if(!blob)return;
+  var url=URL.createObjectURL(blob);
+  var audio=new Audio(url);
+  audio.onended=function(){URL.revokeObjectURL(url);};
+  audio.play();
+}
+
+async function deleteRecording(key,refresh){
+  if(!confirm('Видалити цей запис?'))return;
+  await voiceDelete(key);
+  if(refresh==='digits')renderDigitsGrid();
+  else if(refresh==='clients')renderClientVoices();
+}
+
+// Рендер цифр
+async function renderDigitsGrid(){
+  var grid=document.getElementById('digitsGrid');
+  if(!grid)return;
+  var progress=0;
+  var html='';
+  for(var d=0;d<=9;d++){
+    var key='digit-'+d;
+    var has=await voiceLoad(key);
+    if(has)progress++;
+    var ds=String(d);
+    html+='<div class="dig-card'+(has?' done':'')+'" data-key="'+key+'">'
+      +'<div class="dig-num">'+ds+'</div>'
+      +'<div class="dig-word">'+DIGIT_WORDS[ds]+'</div>'
+      +'<div class="dig-actions">'
+        +(has
+          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶ Прослухати</button>'
+            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'digits\')">✕</button>'
+          :'<span style="font-size:11px;color:var(--mu)">— немає</span>')
+      +'</div>'
+    +'</div>';
+  }
+  grid.innerHTML=html;
+  var p=document.getElementById('digitsProgress');
+  if(p)p.textContent=progress;
+}
+
+// Рендер списку клієнтів
+async function renderClientVoices(){
+  var box=document.getElementById('clientVoicesList');
+  if(!box)return;
+  // Захист — якщо замовлення ще не завантажились
+  if(!window.orders||!Array.isArray(window.orders)||!orders.length){
+    box.innerHTML='<div style="padding:30px;text-align:center;color:var(--mu);font-size:13px">Завантаження замовлень... Якщо триває довго — оновити сторінку (F5).</div>';
+    var np=document.getElementById('namesProgress');if(np)np.textContent='0';
+    var nt=document.getElementById('namesTotal');if(nt)nt.textContent='0';
+    return;
+  }
+  // Збираємо унікальні імена з замовлень
+  var nameSet={};
+  orders.forEach(function(o){
+    if(o&&o.name){
+      var n=String(o.name).trim();
+      if(n){
+        if(!nameSet[n])nameSet[n]={count:0};
+        nameSet[n].count++;
+      }
+    }
+  });
+  var names=Object.keys(nameSet).map(function(n){return {name:n,count:nameSet[n].count};});
+  names.sort(function(a,b){return b.count-a.count;});
+  // Фільтр пошуку
+  var q=(document.getElementById('voicesSearch')||{}).value||'';
+  q=q.trim().toLowerCase();
+  var filtered=q?names.filter(function(x){return x.name.toLowerCase().indexOf(q)>=0;}):names;
+  // Підраховуємо хто має запис
+  var progress=0;
+  var rows='';
+  for(var i=0;i<filtered.length;i++){
+    var n=filtered[i];
+    var key='name-'+n.name;
+    var has=await voiceLoad(key);
+    if(has)progress++;
+    rows+='<div class="cl-voice-row">'
+      +'<div class="cl-name">'+esc(n.name)+'</div>'
+      +'<span class="cl-orders">'+n.count+' замовл.</span>'
+      +'<span class="cl-status '+(has?'has':'no')+'">'+(has?'✓ записано':'— немає')+'</span>'
+      +'<div class="cl-actions">'
+        +(has
+          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
+            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'clients\')">✕</button>'
+          :'')
+      +'</div>'
+    +'</div>';
+  }
+  box.innerHTML=rows||'<div style="padding:30px;text-align:center;color:var(--mu);font-size:13px">Немає клієнтів</div>';
+  var np=document.getElementById('namesProgress');if(np)np.textContent=progress;
+  var nt=document.getElementById('namesTotal');if(nt)nt.textContent=names.length;
+}
+
+// Експорт усіх записів у JSON
+async function exportVoicesZip(){
+  var all=await voiceListAll();
+  if(!all.length){alert('Немає записів для експорту');return;}
+  toast('Готую експорт...','in',2000);
+  var data={version:1,exported:new Date().toISOString(),records:[]};
+  for(var i=0;i<all.length;i++){
+    var r=all[i];
+    var b64=await blobToBase64(r.blob);
+    data.records.push({key:r.key,blob:b64,type:r.blob.type});
+  }
+  var json=JSON.stringify(data);
+  var b=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(b);
+  var a=document.createElement('a');
+  a.href=url;a.download='florium-voices-'+(new Date().toISOString().substring(0,10))+'.json';
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},5000);
+  toast('Експорт завершено: '+all.length+' записів','ok',3000);
+}
+
+function blobToBase64(blob){
+  return new Promise(function(resolve){
+    var r=new FileReader();
+    r.onloadend=function(){resolve(r.result);};
+    r.readAsDataURL(blob);
+  });
+}
+
+function base64ToBlob(b64,type){
+  var parts=b64.split(',');
+  var raw=atob(parts[1]||parts[0]);
+  var arr=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return new Blob([arr],{type:type||'audio/webm'});
+}
+
+async function importVoicesZip(e){
+  var f=e.target.files[0];
+  if(!f)return;
+  try{
+    var text=await f.text();
+    var data=JSON.parse(text);
+    if(!data.records||!Array.isArray(data.records)){
+      alert('Некоректний файл');return;
+    }
+    if(!confirm('Імпортувати '+data.records.length+' записів? Існуючі з тими ж ключами будуть замінені.'))return;
+    var imported=0;
+    for(var i=0;i<data.records.length;i++){
+      var r=data.records[i];
+      var blob=base64ToBlob(r.blob,r.type);
+      var key=r.key.replace(/^rec:/,'');
+      await voiceSave(key,blob);
+      imported++;
+    }
+    toast('Імпортовано: '+imported+' записів','ok',3000);
+    renderDigitsGrid();
+    renderClientVoices();
+  }catch(err){
+    alert('Помилка імпорту: '+err.message);
+  }
+  e.target.value='';
+}
+
+// Гібридне озвучування — тільки з записаних/згенерованих файлів
+async function speakOrderWithRecordings(clientName,orderNum){
+  var lastDigits=String(orderNum||'').slice(-2);
+  // 1) Імʼя клієнта (ключ як у ElevenLabs автогенераторі — 'name-X')
+  var nameBlob=clientName?await voiceLoad('name-'+clientName):null;
+  // 2) Останні 2 цифри (ключ як у ElevenLabs автогенераторі — 'digit-N')
+  var digitBlobs=[];
+  for(var i=0;i<lastDigits.length;i++){
+    var b=await voiceLoad('digit-'+lastDigits[i]);
+    if(b)digitBlobs.push(b);
+  }
+  // Програємо все що є
+  var sequence=[];
+  if(nameBlob)sequence.push(nameBlob);
+  if(digitBlobs.length)sequence=sequence.concat(digitBlobs);
+  if(sequence.length){
+    await playSequence(sequence);
+    return true;
+  }
+  return false;
+}
+
+// Послідовне програвання Blob'ів
+function playSequence(blobs){
+  return new Promise(function(resolve){
+    var i=0;
+    function next(){
+      if(i>=blobs.length){resolve();return;}
+      var url=URL.createObjectURL(blobs[i]);
+      var audio=new Audio(url);
+      var pref=getVoicePrefs();
+      audio.playbackRate=parseFloat(pref.rate)||1.0;
+      audio.onended=function(){URL.revokeObjectURL(url);i++;next();};
+      audio.onerror=function(){URL.revokeObjectURL(url);i++;next();};
+      audio.play().catch(function(){i++;next();});
+    }
+    next();
+  });
+}
+
+// Програвання однієї фрази з IndexedDB (системні фрази типу "Помилка сканування")
+async function speakPhrase(phraseKey){
+  try{
+    var blob=await voiceLoad(phraseKey);
+    if(!blob)return false;
+    await playSequence([blob]);
+    return true;
+  }catch(e){
+    console.warn('speakPhrase:',e);
+    return false;
+  }
+}
+
+// Програвання фрази + імені клієнта + цифр замовлення
+// Використовується при помилках сканування у конкретному замовленні
+async function speakPhraseWithOrder(phraseKey,clientName,orderNum){
+  try{
+    var blobs=[];
+    // 1) Фраза (типу "Цей артикул вже запакований")
+    var phraseBlob=await voiceLoad(phraseKey);
+    if(phraseBlob)blobs.push(phraseBlob);
+    // 2) Імʼя клієнта (якщо є запис)
+    if(clientName){
+      var nameBlob=await voiceLoad('name-'+clientName);
+      if(nameBlob)blobs.push(nameBlob);
+    }
+    // 3) Останні 2 цифри
+    if(orderNum){
+      var lastDigits=String(orderNum).slice(-2);
+      for(var i=0;i<lastDigits.length;i++){
+        var d=await voiceLoad('digit-'+lastDigits[i]);
+        if(d)blobs.push(d);
+      }
+    }
+    if(blobs.length){
+      await playSequence(blobs);
+      return true;
+    }
+  }catch(e){console.warn('speakPhraseWithOrder:',e);}
+  return false;
+}
+
+// Міграція старих ключів `digit:N` → `digit-N`, `name:X` → `name-X`
+async function migrateOldVoiceKeys(){
+  var db=await openVoiceCache();if(!db)return {migrated:0};
+  return new Promise(function(resolve){
+    try{
+      var tx=db.transaction('audio','readwrite');
+      var os=tx.objectStore('audio');
+      var req=os.getAll();
+      req.onsuccess=function(){
+        var all=req.result||[];
+        var migrated=0;
+        var toAdd=[];
+        var toDelete=[];
+        all.forEach(function(r){
+          if(!r||!r.key)return;
+          // Шукаємо записи з 'rec:digit:N' або 'rec:name:X'
+          var m=r.key.match(/^rec:(digit|name):(.+)$/);
+          if(m){
+            var newKey='rec:'+m[1]+'-'+m[2];
+            toAdd.push({key:newKey,blob:r.blob,ts:r.ts,synced:false});
+            toDelete.push(r.key);
+            migrated++;
+          }
+        });
+        var tx2=db.transaction('audio','readwrite');
+        var os2=tx2.objectStore('audio');
+        toAdd.forEach(function(rec){os2.put(rec);});
+        toDelete.forEach(function(k){os2.delete(k);});
+        tx2.oncomplete=function(){resolve({migrated:migrated});};
+        tx2.onerror=function(){resolve({migrated:migrated,error:'tx2'});};
+      };
+      req.onerror=function(){resolve({migrated:0});};
+    }catch(e){resolve({migrated:0,error:e.message});}
+  });
+}
+
+// Ручна синхронізація — викликається кнопкою
+async function manualSyncVoices(){
+  var statusEl=document.getElementById('voicesSyncStatus');
+  if(statusEl)statusEl.innerHTML='🔧 Перевіряю старі ключі...';
+  // 0) Спочатку міграція старих ключів якщо є (digit:N → digit-N)
+  var mig=await migrateOldVoiceKeys();
+  if(mig.migrated>0){
+    if(statusEl)statusEl.innerHTML='✅ Мігровано '+mig.migrated+' старих записів. Синхронізую з Drive...';
+    toast('🔧 Мігровано '+mig.migrated+' старих записів','ok',3000);
+  }
+  if(statusEl&&!mig.migrated)statusEl.innerHTML='☁️ Синхронізую з Google Drive...';
+  // 1) Спочатку довантажуємо те що є тільки на Drive
+  var result=await syncVoicesFromDrive(function(cur,total,key){
+    if(statusEl)statusEl.innerHTML='☁️ Завантажую '+cur+'/'+total+' з Drive...';
+  });
+  // 2) Тепер вивантажуємо те що є тільки локально (несинхронізоване)
+  var localAll=await voiceListAll();
+  var uploaded=0;
+  for(var i=0;i<localAll.length;i++){
+    var r=localAll[i];
+    if(r.synced)continue;
+    var key=r.key.replace(/^rec:/,'');
+    if(statusEl)statusEl.innerHTML='☁️ Вивантажую '+(i+1)+'/'+localAll.length+' на Drive...';
+    try{
+      await uploadVoiceToDrive(key,r.blob);
+      uploaded++;
+    }catch(e){console.warn('upload err:',e);}
+  }
+  if(statusEl){
+    statusEl.innerHTML='✅ Синхр.: ⬇️ '+result.downloaded+' завантажено, ⬆️ '+uploaded+' вивантажено';
+  }
+  toast('Синхронізація завершена: ⬇️ '+result.downloaded+' / ⬆️ '+uploaded,'ok',3000);
+  renderDigitsGrid();
+  renderClientVoices();
+}
+
+// Ініціалізація сторінки голосів
+// ============================================================
+//  АВТОГЕНЕРАЦІЯ ГОЛОСУ ЧЕРЕЗ ElevenLabs API
+// ============================================================
+var ELEVEN_KEY_STORAGE='florium_eleven_key';
+var ELEVEN_VOICE_STORAGE='florium_eleven_voice';
+var ELEVEN_MODEL='eleven_multilingual_v2';
+var ELEVEN_DEFAULT_VOICE_ID='21m00Tcm4TlvDq8ikWAM'; // Rachel - запасний
+
+// Список усього що треба згенерувати — key → text
+var TTS_DIGITS={
+  'digit-0':'нуль','digit-1':'один','digit-2':'два','digit-3':'три','digit-4':'чотири',
+  'digit-5':"пʼять",'digit-6':'шість','digit-7':'сім','digit-8':'вісім','digit-9':"девʼять"
+};
+var TTS_PHRASES={
+  'phrase-order-ready':'Замовлення готове',
+  'phrase-order-complete':'Замовлення повністю зібрано',
+  'phrase-order-verified':'Замовлення перевірено перед відправкою',
+  'phrase-not-in-order':'Цього артикула немає в замовленні',
+  'phrase-already-packed':'Цей товар вже запакований, постав в запас',
+  'phrase-unknown':'Невідомий артикул',
+  'phrase-scan-ok':'Скан правильний',
+  'phrase-scan-error':'Помилка сканування',
+  'phrase-exceeded':'Перевищено кількість',
+  'phrase-not-found':'Артикул не знайдено в системі',
+  'phrase-sent':'Замовлення відправлено',
+  'phrase-ready-to-send':'Готово до відправки',
+  'phrase-needs-verify':'Потрібна перевірка перед відправкою',
+  'phrase-extra-item':'Зайвий товар',
+  'phrase-wrong-package':'Чужий пакет',
+  'phrase-warning':'Увага помилка'
+};
+var TTS_WORDS={
+  'word-order':'Замовлення','word-client':'Клієнт','word-article':'Артикул',
+  'word-location':'Розміщення','word-quantity':'Кількість','word-pallet':'Палета',
+  'word-box':'Ящик','word-yes':'Так','word-no':'Ні','word-done':'Готово'
+};
+
+// Завантажуємо збережені значення при відкритті
+function loadElevenSettings(){
+  var keyEl=document.getElementById('elevenApiKey');
+  var voiceEl=document.getElementById('elevenVoiceId');
+  if(keyEl)keyEl.value=localStorage.getItem(ELEVEN_KEY_STORAGE)||'';
+  if(voiceEl)voiceEl.value=localStorage.getItem(ELEVEN_VOICE_STORAGE)||'';
+  // Зберігаємо при зміні
+  if(keyEl)keyEl.onchange=function(){localStorage.setItem(ELEVEN_KEY_STORAGE,keyEl.value.trim());};
+  if(voiceEl)voiceEl.onchange=function(){localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceEl.value.trim());};
+}
+
+function ttsLog(msg,type){
+  var box=document.getElementById('ttsLog');
+  if(!box)return;
+  box.style.display='block';
+  var color=type==='err'?'#c62828':(type==='ok'?'#1b5e20':'#444');
+  var time=new Date().toLocaleTimeString('uk-UA');
+  box.innerHTML+='<div style="color:'+color+'"><span style="color:#999">'+time+'</span> '+esc(msg)+'</div>';
+  box.scrollTop=box.scrollHeight;
+}
+
+function ttsSetProgress(text){
+  var el=document.getElementById('ttsProgress');
+  if(el)el.textContent=text;
+}
+
+// Перевірка ключа і голосу
+async function ttsTestConnection(){
+  var key=(document.getElementById('elevenApiKey')||{}).value||'';
+  key=key.trim();
+  if(!key){alert('Введи API ключ');return;}
+  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  ttsLog('Перевіряю API ключ...');
+  ttsSetProgress('🔍 Перевіряю підключення...');
+  // Спробуємо спочатку /user (для квоти)
+  var userOk=false;
+  try{
+    var r=await fetch('https://api.elevenlabs.io/v1/user',{headers:{'xi-api-key':key}});
+    if(r.ok){
+      var u=await r.json();
+      var quota=u.subscription?u.subscription.character_count+'/'+u.subscription.character_limit:'?';
+      ttsLog('✓ Ключ працює. Квота: '+quota,'ok');
+      ttsSetProgress('✅ Підключення ОК. Залишок символів: '+quota);
+      userOk=true;
+    } else {
+      ttsLog('⚠️ /user endpoint недоступний (можливо обмежені permissions). Пробую /voices...');
+    }
+  }catch(e){
+    ttsLog('⚠️ /user недоступний: '+e.message);
+  }
+  // Якщо /user не пройшов — пробуємо /voices (це достатньо щоб переконатися що ключ робочий)
+  if(!userOk){
+    try{
+      var r2=await fetch('https://api.elevenlabs.io/v1/voices',{headers:{'xi-api-key':key}});
+      if(r2.ok){
+        var v=await r2.json();
+        var voiceCount=(v.voices||[]).length;
+        ttsLog('✓ Ключ робочий (доступно '+voiceCount+' голосів). Квоту не видно через обмежені permissions.','ok');
+        ttsSetProgress('✅ Ключ ОК (без квоти). Можна генерувати!');
+        userOk=true;
+      } else {
+        var t=await r2.text();
+        ttsLog('✗ Помилка: '+r2.status+' '+t.substring(0,200),'err');
+        ttsSetProgress('❌ Невірний API ключ');
+        return;
+      }
+    }catch(e2){
+      ttsLog('✗ Помилка: '+e2.message,'err');
+      ttsSetProgress('❌ Помилка зʼєднання');
+      return;
+    }
+  }
+  // Перевіряємо voice
+  var voice=(document.getElementById('elevenVoiceId')||{}).value.trim();
+  if(voice){
+    var vid=await ttsResolveVoiceId(voice,key);
+    if(vid){
+      ttsLog('✓ Голос знайдено: '+vid,'ok');
+      localStorage.setItem(ELEVEN_VOICE_STORAGE,voice);
+    } else {
+      ttsLog('⚠️ Голос "'+voice+'" не знайдено. Перевір name або ID.','err');
+    }
+  }
+}
+
+// Resolve voice — приймає або ID або name (як "Yevhen")
+async function ttsResolveVoiceId(input,key){
+  if(!input)return ELEVEN_DEFAULT_VOICE_ID;
+  // Якщо схоже на ID (20+ символів alphanumeric) — використовуємо як є
+  if(/^[a-zA-Z0-9]{18,}$/.test(input))return input;
+  // Інакше шукаємо за іменем
+  try{
+    var r=await fetch('https://api.elevenlabs.io/v1/voices',{headers:{'xi-api-key':key}});
+    if(!r.ok)return null;
+    var d=await r.json();
+    var found=(d.voices||[]).find(function(v){
+      return v.name.toLowerCase()===input.toLowerCase();
+    });
+    return found?found.voice_id:null;
+  }catch(e){return null;}
+}
+
+// Генеруємо ОДИН файл
+async function ttsGenerateOne(key,voiceId,text){
+  var url='https://api.elevenlabs.io/v1/text-to-speech/'+voiceId+'?output_format=mp3_44100_128';
+  var body={
+    text:text,
+    model_id:ELEVEN_MODEL,
+    language_code:'uk',
+    voice_settings:{stability:0.6,similarity_boost:0.75,style:0,use_speaker_boost:true}
+  };
+  var r=await fetch(url,{
+    method:'POST',
+    headers:{
+      'xi-api-key':key,
+      'Content-Type':'application/json',
+      'Accept':'audio/mpeg'
+    },
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){
+    var t=await r.text();
+    throw new Error('API '+r.status+': '+t.substring(0,150));
+  }
+  return await r.blob();
+}
+
+// Головна функція — генерує по категорії
+async function ttsGenerateAll(category){
+  var key=(document.getElementById('elevenApiKey')||{}).value.trim();
+  var voiceInput=(document.getElementById('elevenVoiceId')||{}).value.trim();
+  if(!key){alert('Спочатку введи API ключ');return;}
+  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceInput);
+  
+  ttsSetProgress('🔍 Шукаю голос...');
+  var voiceId=await ttsResolveVoiceId(voiceInput,key);
+  if(!voiceId){
+    ttsLog('⚠️ Голос не знайдено, використовую Rachel за замовчуванням','err');
+    voiceId=ELEVEN_DEFAULT_VOICE_ID;
+  } else {
+    ttsLog('Голос: '+voiceInput+' ('+voiceId+')');
+  }
+  
+  // Збираємо список того що треба згенерувати
+  var todo={};
+  if(category==='digits'||category==='all')Object.assign(todo,TTS_DIGITS);
+  if(category==='phrases'||category==='all')Object.assign(todo,TTS_PHRASES);
+  if(category==='words'||category==='all')Object.assign(todo,TTS_WORDS);
+  if(category==='names'||category==='all'){
+    // Унікальні імена клієнтів з замовлень
+    var nameSet={};
+    (window.orders||[]).forEach(function(o){
+      if(o&&o.name){
+        var n=String(o.name).trim();
+        if(n)nameSet[n]=(nameSet[n]||0)+1;
+      }
+    });
+    // ВСІ імена (без обмеження)
+    var names=Object.keys(nameSet).map(function(n){return {name:n,count:nameSet[n]};});
+    names.sort(function(a,b){return b.count-a.count;});
+    names.forEach(function(x){todo['name-'+x.name]=x.name;});
+  }
+  
+  var keys=Object.keys(todo);
+  if(!keys.length){ttsSetProgress('Нема чого генерувати');return;}
+  
+  // Підраховуємо приблизну вартість в символах
+  var totalChars=0;
+  keys.forEach(function(k){totalChars+=String(todo[k]||'').length;});
+  
+  var skipExisting=confirm(
+    'Знайдено '+keys.length+' елементів для генерації.\n'+
+    'Орієнтовно: '+totalChars+' символів ('+Math.round(totalChars/100)/100+' тис.).\n'+
+    'Безкоштовний ліміт ElevenLabs: 10 000 символів/міс.\n\n'+
+    'Пропускати ті що вже є локально?\n\n'+
+    'OK = пропускати (швидше, економніше)\n'+
+    'Cancel = перегенерувати ВСЕ (витратить більше кредитів)'
+  );
+  
+  var done=0,skipped=0,failed=0;
+  ttsLog('▶ Починаю генерацію '+keys.length+' файлів ('+totalChars+' символів)...');
+  
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i];
+    var text=todo[k];
+    ttsSetProgress('⏳ '+(i+1)+'/'+keys.length+': "'+text+'" ('+done+' ✓ '+skipped+' ⏭ '+failed+' ✗)');
+    
+    // Перевіряємо чи є локально
+    if(skipExisting){
+      var exists=await voiceLoad(k);
+      if(exists){
+        skipped++;
+        ttsLog('⏭ '+k+' — вже є, пропускаю');
+        continue;
+      }
+    }
+    
+    try{
+      var blob=await ttsGenerateOne(key,voiceId,text);
+      // 1) Зберігаємо локально + автоматично на Drive
+      await voiceSave(k,blob);
+      done++;
+      ttsLog('✓ '+k+' — "'+text+'" ('+Math.round(blob.size/1024)+' КБ)','ok');
+      // Невелика пауза між запитами щоб не зловити rate limit
+      await new Promise(function(r){setTimeout(r,300);});
+    }catch(e){
+      failed++;
+      ttsLog('✗ '+k+' — '+e.message,'err');
+      // Якщо rate limit — більша пауза
+      if(/429|rate/i.test(e.message)){
+        ttsLog('  Чекаю 5 сек через rate limit...');
+        await new Promise(function(r){setTimeout(r,5000);});
+      }
+    }
+  }
+  
+  ttsSetProgress('✅ Готово! ✓'+done+' ⏭'+skipped+' ✗'+failed+' (всього '+keys.length+')');
+  ttsLog('▶ Завершено: '+done+' нових, '+skipped+' пропущено, '+failed+' помилок','ok');
+  toast('Згенеровано: '+done+' нових файлів','ok',5000);
+  // Оновити UI
+  renderDigitsGrid();
+  renderClientVoices();
+}
+
+// ============================================================
+//  ЗАПАС — управління аркушем "запас"
+// ============================================================
+var reserveItems=[];
+
+async function loadReserve(){
+  try{
+    var res=await callScript('reserveList',{});
+    if(res&&res.ok){
+      reserveItems=res.items||[];
+      // Сортуємо: останні дати зверху
+      reserveItems.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+      renderReserve();
+      updateReserveBadge();
+    }
+  }catch(e){console.warn('loadReserve:',e);}
+}
+
+function updateReserveBadge(){
+  var b=document.getElementById('bReserve');
+  if(b)b.textContent=reserveItems.length;
+}
+
+function renderReserve(){
+  var body=document.getElementById('reserveBody');
+  if(!body)return;
+  var q=(document.getElementById('reserveSearch')||{}).value||'';
+  q=q.trim().toLowerCase();
+  var filtered=q?reserveItems.filter(function(it){
+    return (it.art||'').toLowerCase().indexOf(q)>=0
+      || (it.name||'').toLowerCase().indexOf(q)>=0
+      || (it.from||'').toLowerCase().indexOf(q)>=0;
+  }):reserveItems;
+  // Підрахунок
+  document.getElementById('reserveTotal').textContent=filtered.length;
+  var totalQty=filtered.reduce(function(s,it){return s+(parseInt(it.qty)||0);},0);
+  document.getElementById('reserveTotalQty').textContent=totalQty;
+  if(!filtered.length){
+    body.innerHTML='<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--mu);font-size:13px">'
+      +(q?'Не знайдено за пошуком "'+esc(q)+'"':'📦 Запас порожній — нічого зайвого не сканувалось')
+      +'</td></tr>';
+    return;
+  }
+  body.innerHTML=filtered.map(function(it){
+    return '<tr>'
+      +'<td style="font-size:11px;color:var(--mu);font-family:monospace">'+esc(it.date||'')+'</td>'
+      +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
+      +'<td>'+esc(it.name||'')+'</td>'
+      +'<td style="text-align:right">'
+        +'<input type="number" min="0" value="'+(parseInt(it.qty)||0)+'" '
+        +'data-row="'+it.row+'" class="cm-inp cm-num" '
+        +'onchange="updateReserveQty('+it.row+',this.value)" '
+        +'style="width:60px;text-align:center;font-weight:700;color:var(--green)">'
+      +'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(it.from||'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(it.operator||'—')+'</td>'
+      +'<td style="text-align:center">'
+        +'<button class="dig-btn" onclick="deleteReserveItem('+it.row+')" title="Видалити">✕</button>'
+      +'</td>'
+    +'</tr>';
+  }).join('');
+}
+
+async function updateReserveQty(row,newQty){
+  try{
+    var q=parseInt(newQty)||0;
+    if(q<0)return;
+    if(q===0){
+      if(!confirm('Кількість 0 — видалити позицію?'))return;
+      await deleteReserveItem(row);
+      return;
+    }
+    await callScript('reserveUpdate',{row:row,qty:q});
+    var it=reserveItems.find(function(x){return x.row===row;});
+    if(it)it.qty=q;
+    renderReserve();
+    toast('✓ Оновлено','ok',1500);
+  }catch(e){
+    toast('Помилка оновлення','er',2000);
+  }
+}
+
+async function deleteReserveItem(row){
+  if(!confirm('Видалити цю позицію з запасу?'))return;
+  try{
+    await callScript('reserveDelete',{row:row});
+    reserveItems=reserveItems.filter(function(x){return x.row!==row;});
+    renderReserve();
+    updateReserveBadge();
+    toast('✓ Видалено','ok',1500);
+  }catch(e){
+    toast('Помилка видалення','er',2000);
+  }
+}
+
+function exportReserve(){
+  if(!reserveItems.length){toast('Немає що експортувати','wa');return;}
+  var rows=[['Дата','Артикул','Назва','К-сть','Звідки','Оператор']];
+  reserveItems.forEach(function(it){
+    rows.push([it.date,it.art,it.name,it.qty,it.from,it.operator]);
+  });
+  var csv=rows.map(function(r){
+    return r.map(function(c){
+      var s=String(c||'');
+      return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+    }).join(';');
+  }).join('\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='florium-zapas-'+(new Date().toISOString().substring(0,10))+'.csv';
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},5000);
+  toast('✓ Експортовано: '+reserveItems.length+' позицій','ok',3000);
+}
+
+// Додає товар в запас (викликається коли скан вже запакованого товару)
+async function addToReserve(art,name,qty,fromOrder){
+  try{
+    await callScript('reserveAdd',{
+      art:art,
+      name:name||'',
+      qty:qty||1,
+      fromOrder:fromOrder||'',
+      operator:'',
+      note:'Автоматично: товар вже запакований'
+    });
+    // Підвантажуємо оновлений список
+    loadReserve();
+  }catch(e){console.warn('addToReserve:',e);}
+}
+
+function initReservePage(){
+  loadReserve();
+}
+
+async function initVoicesPage(){
+  // 0) Спершу міграція старих ключів (digit:N → digit-N) — мовчазно
+  try{
+    var mig=await migrateOldVoiceKeys();
+    if(mig.migrated>0){
+      console.log('Мігровано записів:',mig.migrated);
+    }
+  }catch(e){console.warn('migration:',e);}
+  // Цифри і клієнти — миттєво (з локального IndexedDB)
+  renderDigitsGrid().catch(function(e){console.warn('digits error:',e);});
+  renderClientVoices().catch(function(e){console.warn('clients error:',e);});
+  // Завантажуємо збережені налаштування ElevenLabs
+  loadElevenSettings();
+  // Синхронізація з Google Drive у фоні
+  var statusEl=document.getElementById('voicesSyncStatus');
+  if(statusEl)statusEl.innerHTML='☁️ Синхронізую з Google Drive...';
+  try{
+    var result=await syncVoicesFromDrive(function(cur,total,key){
+      if(statusEl)statusEl.innerHTML='☁️ Завантажую '+cur+'/'+total+' з Drive...';
+    });
+    if(statusEl){
+      if(result.downloaded>0){
+        statusEl.innerHTML='✅ Синхронізовано: завантажено '+result.downloaded+' нових записів';
+        renderDigitsGrid();
+        renderClientVoices();
+      } else if(result.total>0){
+        statusEl.innerHTML='✅ Усі записи синхронізовані ('+result.total+' на Drive)';
+      } else {
+        statusEl.innerHTML='💡 На Drive поки немає записів';
+      }
+    }
+  }catch(e){
+    if(statusEl)statusEl.innerHTML='⚠️ Помилка синхронізації з Drive';
+    console.warn('sync error:',e);
+  }
+}
+
+
+
+function beep(type){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator();var g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    if(type==='ok'||type===true){
+      o.frequency.value=880;o.type='sine';
+      g.gain.setValueAtTime(.25,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
+      o.start();o.stop(ctx.currentTime+.12);
+    } else if(type==='complete'){
+      // Double beep for complete
+      o.frequency.value=660;o.type='sine';
+      g.gain.setValueAtTime(.2,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.1);
+      o.start();o.stop(ctx.currentTime+.1);
+      var o2=ctx.createOscillator();var g2=ctx.createGain();
+      o2.connect(g2);g2.connect(ctx.destination);
+      o2.frequency.value=880;o2.type='sine';
+      g2.gain.setValueAtTime(.2,ctx.currentTime+.15);
+      g2.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.28);
+      o2.start(ctx.currentTime+.15);o2.stop(ctx.currentTime+.28);
+    } else {
+      // error
+      o.frequency.value=220;o.type='sawtooth';
+      g.gain.setValueAtTime(.2,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.25);
+      o.start();o.stop(ctx.currentTime+.25);
+    }
+  }catch(e){}
+}
+
+// Status
+function sk(s){
+  s=(s||'').toLowerCase().trim();
+  if(s.includes('відмов')||s.includes('відмова'))return'cancel';
+  if(s.includes('частин')||s.includes('частков'))return'partial';
+  if(s.includes('відправ'))return'sent';
+  if(s.includes('відклад'))return'defer';
+  if(s.includes('перевір'))return'verified';
+  if(s.includes('фасу'))return'pack';
+  if(s.includes('готов'))return'ready';
+  if(s.includes('робот'))return'work';
+  return'new';
+}
+var SM={new:{l:'Нове',p:'p-new'},work:{l:'В роботі',p:'p-work'},pack:{l:'Фасується',p:'p-pack'},ready:{l:'Готове',p:'p-ready'},verified:{l:'Перевірено',p:'p-verified'},defer:{l:'Відкладжено',p:'p-defer'},sent:{l:'Відправлено',p:'p-sent'},partial:{l:'Частково',p:'p-partial'},cancel:{l:'Відмова',p:'p-cancel'}};
+var STATUSES_LIST=['Нове','В роботі','Фасується','Готове','Перевірено','Відкладжено','Відправлено','відправлено частинами','Відмова'];
+function pillH(s,big){var k=sk(s);var m=SM[k]||SM.new;return`<span class="pill${big?' lg':''} ${m.p}">${esc(s||m.l)}</span>`;}
+var STAGES=[{k:'new',l:'Нове'},{k:'work',l:'В роботі'},{k:'pack',l:'Фасується'},{k:'ready',l:'Готове'},{k:'verified',l:'Перевірено'},{k:'sent',l:'Відправлено'}];
+function stagesH(status){
+  var k=sk(status);var order=['new','work','pack','ready','verified','sent'];var si=order.indexOf(k);
+  return STAGES.map((st,i)=>{
+    var cls=k==='cancel'?(i===0?'canc':''):(i<si?'done':i===si?'curr':'');
+    var ic=cls==='done'?'✓':cls==='curr'?'●':cls==='canc'?'✕':'';
+    return `<div class="st ${cls}"><div class="sd">${ic}</div><div class="sn">${st.l}</div></div>`+(i<STAGES.length-1?`<div class="sl${i<si&&k!=='cancel'?' done':''}"></div>`:'');
+  }).join('');
+}
+
+// ===== STATE =====
+var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[];
+var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
+var multiMode=false,multiSel={};
+var combinedItems=[],combinedOrders=[];
+var combinedFilter=new Set(); // обрані категорії (порожньо = всі)
+var combinedAllItems=[]; // незмінений повний список для фільтрації
+
+// ===== INIT =====
+function init(){
+  loadAll();
+  setInterval(loadAll,5*60*1000); // 5 хвилин (було 1 хв — забагато)
+  setInterval(()=>G('sbt').textContent=new Date().toLocaleTimeString('uk-UA'),1000);
+  initKb();
+}
+function initKb(){
+  document.addEventListener('keydown',e=>{
+    
+    if(e.target.tagName==='INPUT')return;
+    if(e.key==='1')nav('dash');else if(e.key==='2')nav('orders');else if(e.key==='3')nav('picker');else if(e.key==='4')nav('scan');else if(e.key==='5')nav('stock');
+    if(e.key==='F5'){e.preventDefault();loadAll();}
+  });
+}
+
+// ===== NAV =====
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)'};
+function nav(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  G('page-'+p).classList.add('on');G('nav-'+p).classList.add('on');
+  G('pgTitle').textContent=TITLES[p]||'';
+  sbClose();
+  if(p==='scan'){setTimeout(()=>{initScanPage();G('scInp')?.focus();},100);}
+  if(p==='voices'){setTimeout(initVoicesPage,100);}
+  if(p==='reserve'){setTimeout(initReservePage,100);}
+}
+function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
+function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
+
+// ===== LOAD =====
+async function loadAll(skipCache){
+  setSyncState('pend','Оновлення...');
+  // Показуємо кеш одразу поки вантажаться нові дані (тільки якщо не skipCache)
+  if(!skipCache){
+    try{
+      var cached=localStorage.getItem(CACHE_KEY);
+      if(cached){
+        var c=JSON.parse(cached);
+        if(c.orders&&c.items&&c.stock){
+          orders=c.orders;items=c.items;stock=c.stock;
+          renderAll();
+          G('updTxt').textContent='Кеш '+(c.time||'')+'...';
+        }
+      }
+    }catch(e){}
+  }
+  try{
+    // Один запит getAllData замість 6 окремих (захищено токеном)
+    var res=await callScript('getAllData',{});
+    if(!res||!res.ok)throw new Error(res&&res.msg?res.msg:(res&&res.error?res.error:'getAllData failed'));
+    parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseIncome(res.income||[]);
+    // Зберегти в кеш
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
+    var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+    G('updTxt').textContent='Оновлено '+now;
+    if(G('updDot'))G('updDot').className='upd-dot ok';
+    setSyncState('ok','Підключено');
+    renderAll();
+  }catch(err){
+    console.error(err);G('updTxt').textContent='⚠️ Помилка';if(G('updDot'))G('updDot').className='upd-dot err';
+    setSyncState('err','Помилка зєднання');
+    toast('Помилка завантаження: '+err.message,'er');
+  }
+}
+function setSyncState(type,txt){
+  var dot=G('updDot');var t=G('updTxt');
+  if(dot)dot.className='upd-dot'+(type==='err'?' err':type==='pend'?' pend':' ok');
+  if(t)t.textContent=txt;
+}
+
+function parseOrders(rows,statusRows){
+  // Будуємо мапу статусів з аркуша "статуси" (якщо є)
+  var statusMap={};
+  if(statusRows&&statusRows.length){
+    for(var i=1;i<statusRows.length;i++){
+      var sr=statusRows[i]||[];
+      var sn=String(sr[0]||'').trim();
+      var st=String(sr[1]||'').trim();
+      if(sn&&st)statusMap[sn]=st;
+    }
+  }
+  orders=[];
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i]||[];
+    var name=(r[0]||'').trim(),num=(r[1]||'').trim();
+    if(!name&&!num)continue;
+    if(name.includes('#REF')||name.includes('#ERR')||name.includes('#N/A'))continue;
+    var status=(r[7]||'').trim();
+    // Якщо є запис в аркуші "статуси" — підмінюємо
+    if(num&&statusMap[num])status=statusMap[num];
+    orders.push({id:'r'+i,num,name,comment:(r[2]||'').trim(),address:(r[3]||'').trim(),note:(r[4]||'').trim(),ttn:(r[5]||'').trim(),declared:(r[6]||'').trim(),status:status,extra:(r[8]||'').trim()});
+  }
+}
+function parseItems(rows){
+  items={};
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i]||[];
+    var art=(r[0]||'').trim(),qty=(r[1]||'').trim(),name=(r[2]||'').trim();
+    var num=(r[5]||'').trim(),date=(r[8]||'').trim();
+    if(!num||!art)continue;
+    if(!items[num])items[num]=[];
+    items[num].push({art,qty:parseInt(qty)||0,name,date});
+  }
+}
+
+// Парсуємо дату вигрузки в об'єкт Date (формат dd.MM.yyyy або dd.MM.yyyy HH:mm)
+function parseItemDate(dateStr){
+  if(!dateStr)return null;
+  try{
+    var parts=dateStr.trim().split(' ');
+    var dp=parts[0].split('.');
+    if(dp.length<3)return null;
+    var d=parseInt(dp[0]),m=parseInt(dp[1])-1,y=parseInt(dp[2]);
+    var h=0,min=0;
+    if(parts[1]){var tp=parts[1].split(':');h=parseInt(tp[0])||0;min=parseInt(tp[1])||0;}
+    return new Date(y,m,d,h,min,0);
+  }catch(e){return null;}
+}
+
+// Знаходимо НАЙКРАЩЕ замовлення для артикулу по даті вигрузки
+// Логіка: вигрузка що найближча до ЗАРАЗ (але не в майбутньому)
+// Якщо немає дати — беремо перше незібране
+function findBestOrderForArt(art){
+  var now=new Date();
+  var candidates=[];
+
+  orders.forEach(function(o){
+    var k=sk(o.status);
+    if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return;
+    var its=items[o.num]||[];
+    var item=its.find(function(it){return it.art===art;});
+    if(!item)return;
+    if(!scanState[o.num])scanState[o.num]={};
+    var already=scanState[o.num][art]||0;
+    if(already>=item.qty)return; // вже зібрано
+
+    var itemDate=parseItemDate(item.date);
+    var diffMs=itemDate?Math.abs(now-itemDate):Infinity;
+    var isFuture=itemDate&&itemDate>now;
+
+    candidates.push({order:o,item:item,already:already,itemDate:itemDate,diffMs:diffMs,isFuture:isFuture});
+  });
+
+  if(!candidates.length)return null;
+
+  // Сортуємо: спочатку не-майбутні, потім за найближчою датою до зараз
+  candidates.sort(function(a,b){
+    // Не-майбутні мають пріоритет
+    if(a.isFuture&&!b.isFuture)return 1;
+    if(!a.isFuture&&b.isFuture)return-1;
+    // Серед однакових — найближча дата до зараз
+    return a.diffMs-b.diffMs;
+  });
+
+  return candidates[0];
+}
+// товар склад:
+// A=Артикул Флоріум (на ящику), B=Унікальний ID ящика, C=К-сть в ящику що приїхала
+// D=Назва, E=Розмір, F=Постачальник, G=Запас (розміщення), H=Залишок
+// I=Дата, J=Статус ящика, R=Категорія
+function parseStock(rows){
+  stock=[];
+  for(var i=2;i<rows.length;i++){
+    var r=rows[i]||[];
+    var art=(r[0]||'').toString().trim();
+    if(!art)continue;
+    stock.push({
+      art:art,                                  // A — артикул Флоріум на ящику
+      boxId:(r[1]||'').toString().trim(),       // B — унікальний ID ящика
+      qty:parseInt(r[2]||0)||0,                 // C — к-сть в ящику
+      name:(r[3]||'').toString().trim(),        // D — назва
+      size:(r[4]||'').toString().trim(),        // E — розмір
+      supplier:(r[5]||'').toString().trim(),    // F — постачальник
+      location:(r[6]||'').toString().trim(),    // G — розміщення
+      bulbs:parseInt(r[7]||0)||0,               // H — залишок цибулин
+      date:(r[8]||'').toString().trim(),        // I — дата
+      boxStatus:(r[9]||'').toString().trim(),   // J — статус ящика
+      category:(r[17]||'').toString().trim()    // R — категорія
+    });
+  }
+}
+
+// Пошук позиції на складі для товару з замовлення.
+// it.art = артикул дрібного гурту (M), а stock.art = артикул Флоріум (Q).
+// Тому спочатку отримуємо Q через fury, потім шукаємо в stock.
+function findStockForItem(art){
+  var fu=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+  var st=null;
+  if(fu&&fu.artFlorium)st=stock.find(function(s){return s.art===fu.artFlorium;});
+  if(!st)st=stock.find(function(s){return s.art===art;});
+  if(!st&&fu&&fu.artBox)st=stock.find(function(s){return s.art===fu.artBox;});
+  return st;
+}
+
+// Знаходить ВСІ палети де є товар + кількість, формат: "301Б (50), 305А (38)"
+// Виключає ящики з нульовим залишком
+function findAllStockLocations(art){
+  var fu=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+  var artFlorium=fu&&fu.artFlorium?fu.artFlorium:null;
+  // Збираємо всі stock записи що підходять (за артФлоріум або за самим art)
+  var matches=stock.filter(function(s){
+    if(!s)return false;
+    var match=false;
+    if(artFlorium&&s.art===artFlorium)match=true;
+    else if(s.art===art)match=true;
+    else if(fu&&fu.artBox&&s.art===fu.artBox)match=true;
+    if(!match)return false;
+    // Виключаємо порожні ящики
+    var q=parseInt(s.qty)||0;
+    if(q<=0)return false;
+    if(!s.location||!String(s.location).trim())return false;
+    return true;
+  });
+  if(!matches.length)return '';
+  // Групуємо по локації (на випадок якщо одна палета має кілька ящиків — додаємо к-сть)
+  var byLoc={};
+  matches.forEach(function(s){
+    var loc=String(s.location).trim();
+    var q=parseInt(s.qty)||0;
+    if(!byLoc[loc])byLoc[loc]=0;
+    byLoc[loc]+=q;
+  });
+  // Сортуємо за зменшенням кількості
+  var arr=Object.keys(byLoc).map(function(loc){return {loc:loc,qty:byLoc[loc]};});
+  arr.sort(function(a,b){return b.qty-a.qty;});
+  return arr.map(function(x){return x.loc+' ('+x.qty+')';}).join(', ');
+}
+
+function getCounts(){
+  var c={all:orders.length,new:0,work:0,pack:0,ready:0,defer:0,sent:0,partial:0,cancel:0};
+  orders.forEach(o=>{var k=sk(o.status);if(c[k]!==undefined)c[k]++;});
+  return c;
+}
+
+function renderAll(){
+  var c=getCounts();
+  if(G('bAll'))G('bAll').textContent=c.all;
+  var withItems=orders.filter(function(o){var k=sk(o.status);return k!=='sent'&&k!=='cancel'&&k!=='ready'&&k!=='defer'&&(items[o.num]||[]).length>0;}).length;
+  if(G('bPick'))G('bPick').textContent=withItems;
+  if(G('bScan'))G('bScan').textContent=withItems;
+  var prob=orders.filter(function(o){var its=items[o.num]||[];return its.some(function(it){var st=findStockForItem(it.art);return st&&st.qty<it.qty;});}).length;
+  if(G('sNew'))G('sNew').textContent=c.new;
+  if(G('sWork'))G('sWork').textContent=c.work+c.pack;
+  if(G('sReady'))G('sReady').textContent=c.ready;
+  if(G('sProb'))G('sProb').textContent=prob;
+  if(G('sTotal'))G('sTotal').textContent=c.all;
+  try{renderDash(c);}catch(e){console.warn('renderDash:',e);}
+  try{renderOrders();}catch(e){console.warn('renderOrders:',e);}
+  try{renderPicker();}catch(e){console.warn('renderPicker:',e);}
+  try{renderScanList();}catch(e){console.warn('renderScanList:',e);}
+  try{renderStock();}catch(e){console.warn('renderStock:',e);}
+  if(selOr)selectOrder(selOr);if(selPk)selectPicker(selPk);if(selSc)selectScan(selSc);
+}
+
+// ===== DASHBOARD =====
+function renderDash(c){
+  if(G('dashContent')){
+    G('dashContent').innerHTML='<p>Замовлень: <b>'+c.all+'</b> | Нові: <b>'+c.new+'</b> | В роботі: <b>'+c.work+'</b> | Готові: <b>'+c.ready+'</b> | Відправлено: <b>'+c.sent+'</b></p>';
+  }
+  return;}
+function renderDashOld(c){
+  var cards=[
+    {k:'all',l:'Всього',n:c.all,e:'📦',cls:'dc-all',col:'#333'},
+    {k:'new',l:'Нові',n:c.new,e:'🆕',cls:'dc-new',col:'var(--b)'},
+    {k:'work',l:'В роботі',n:c.work,e:'⚙️',cls:'dc-work',col:'var(--y)'},
+    {k:'pack',l:'Фасується',n:c.pack,e:'📦',cls:'dc-pack',col:'var(--o)'},
+    {k:'ready',l:'Готові',n:c.ready,e:'✅',cls:'dc-ready',col:'var(--g)'},
+    {k:'sent',l:'Відправлено',n:c.sent,e:'🚚',cls:'dc-sent',col:'var(--p)'},
+    {k:'defer',l:'Відкладжено',n:c.defer,e:'🕐',cls:'dc-defer',col:'var(--t)'},
+    {k:'cancel',l:'Відмова',n:c.cancel,e:'❌',cls:'dc-cancel',col:'var(--r)'},
+  ];
+  G('dGrid').innerHTML=cards.map(d=>`<div class="dc ${d.cls}" onclick="nav('orders');filter='${d.k}';renderOrders()"><div class="dc-num" style="color:${d.col}">${d.n}</div><div class="dc-lbl">${d.l}</div><div class="dc-emoji">${d.e}</div></div>`).join('');
+
+  var recent=orders.slice(-6).reverse();
+  G('dRecent').innerHTML=recent.length?recent.map(o=>{var it=items[o.num]||[];return`<div class="dp-item" onclick="nav('orders');selectOrder('${o.id}')"><span class="dpi-num">#${esc(o.num)}</span><span class="dpi-name">${esc(o.name)}</span>${pillH(o.status)}</div>`}).join(''):'<div class="es" style="padding:20px"><div class="es-ic" style="font-size:24px">📦</div><div class="es-s">Немає замовлень</div></div>';
+
+  // Увага — нові без вигрузки
+  var attn=orders.filter(o=>sk(o.status)==='new'&&!(items[o.num]||[]).length);
+  G('dAttention').innerHTML=attn.length?attn.slice(0,5).map(o=>`<div class="dp-item" onclick="nav('orders');selectOrder('${o.id}')"><span class="dpi-num">#${esc(o.num)}</span><span class="dpi-name">${esc(o.name)}</span><span style="font-size:10px;color:var(--o)">⚠️ Без вигрузки</span></div>`).join('')+'<div style="padding:8px 14px;font-size:11px;color:var(--mu)">'+attn.length+' замовлень без позицій</div>':'<div class="es" style="padding:20px"><div class="es-ic" style="font-size:20px">✅</div><div class="es-s">Все в порядку</div></div>';
+
+  var work=orders.filter(o=>{var k=sk(o.status);return k==='work'||k==='pack';});
+  G('dWork').innerHTML=work.length?work.slice(0,5).map(o=>`<div class="dp-item" onclick="nav('picker');selectPicker('${o.id}')"><span class="dpi-num">#${esc(o.num)}</span><span class="dpi-name">${esc(o.name)}</span>${pillH(o.status)}</div>`).join(''):'<div class="es" style="padding:20px"><div class="es-s">Немає активних</div></div>';
+
+  var rdy=orders.filter(o=>sk(o.status)==='ready');
+  G('dReady').innerHTML=rdy.length?rdy.slice(0,5).map(o=>`<div class="dp-item" onclick="nav('orders');selectOrder('${o.id}')"><span class="dpi-num">#${esc(o.num)}</span><span class="dpi-name">${esc(o.name)}</span>${pillH(o.status)}</div>`).join(''):'<div class="es" style="padding:20px"><div class="es-s">Немає готових</div></div>';
+}
+
+// ===== ORDERS =====
+function setFilter(f){
+  filter=f;
+  renderOrders();
+}
+function renderFilters(){
+  var c=getCounts();
+  var fs=[{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel},{k:'all',l:'Всі',n:c.all}];
+  G('orFilters').innerHTML=fs.map(f=>`<span class="chip${filter===f.k?' on':''}" data-f="${f.k}">${f.l}${f.n?' ('+f.n+')':''}</span>`).join('');
+  G('orFilters').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{filter=c.dataset.f;renderOrders();}));
+}
+function renderOrders(){
+  renderFilters();
+  var q=(G('orSearch').value||'').toLowerCase().trim();
+  var list=orders.filter(o=>{
+    if(filter!=='all'&&sk(o.status)!==filter)return false;
+    if(q&&!(o.name+o.num+o.comment).toLowerCase().includes(q))return false;
+    return true;
+  });
+  G('orCnt').textContent=list.length;
+  if(!list.length){G('orList').innerHTML='<div class="es"><div class="es-ic">🔍</div><div class="es-t">Нічого не знайдено</div></div>';return;}
+  var html='';
+  list.forEach(function(o){
+    var its=items[o.num]||[];var tq=its.reduce(function(s,i){return s+i.qty;},0);
+    html+='<div class="pk-card'+(selOr===o.id?' on':'')+'" data-id="'+o.id+'">'
+      +'<div class="pk-card-body">'
+        +'<div class="pk-card-r1"><span class="pk-card-num">#'+esc(o.num)+'</span>'+pillH(o.status)+'</div>'
+        +'<div class="pk-card-name">'+esc(o.name)+'</div>'
+        +'<div class="pk-card-meta">'+(its.length?its.length+' поз · '+tq+' шт':'—')+(o.comment?' · 💬 '+esc(o.comment):'')+'</div>'
+      +'</div>'
+    +'</div>';
+  });
+  G('orList').innerHTML=html;
+  G('orList').querySelectorAll('.pk-card').forEach(function(el){el.addEventListener('click',function(){selectOrder(el.dataset.id);});});
+}
+function selectOrder(id){
+  selOr=id;var o=orders.find(x=>x.id===id);if(!o)return;
+  G('orList').querySelectorAll('.pk-card').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
+  if(G('orEmpty'))G('orEmpty').style.display='none';var dv=G('orDetail');if(dv)dv.style.cssText='display:flex;flex:1;flex-direction:column;overflow:hidden;';
+  G('odN').textContent='#'+(o.num||'—');G('odC').textContent=o.name||'—';G('odS').textContent=o.comment||'';
+  G('odP').innerHTML=pillH(o.status,true);G('odSt').innerHTML=stagesH(o.status);
+  var k2=sk(o.status);
+  if(G('odPicker')){G('odPicker').style.display=(k2==='work'||k2==='pack')?'':'none';G('odPicker').onclick=function(){nav('picker');selectPicker(id);};}
+  if(G('odStatus')){G('odStatus').style.display=SCRIPT_URL?'':'none';G('odStatus').onclick=function(){openStatusModal(o);};}
+  // Кнопка "Перевірити" — показуємо тільки при статусі "Готове"
+  if(G('odVerify')){
+    G('odVerify').style.display=(k2==='ready'&&SCRIPT_URL)?'':'none';
+    G('odVerify').onclick=function(){openVerifyModal(o);};
+  }
+  var nextMap={new:'В роботі',work:'Фасується',pack:'Готове',verified:'Відправлено'};
+  var nextSt=nextMap[k2];
+  if(G('odNext')){
+    G('odNext').style.display=nextSt?'':'none';
+    if(nextSt){
+      var itsForCheck=items[o.num]||[];
+      // Захист: для переходу в "Готове" — потрібен повний скан
+      if(nextSt==='Готове'){
+        var collected=checkOrderCollected(o.num,itsForCheck);
+        if(!collected.allDone){
+          G('odNext').style.opacity='.5';
+          G('odNext').style.cursor='not-allowed';
+          G('odNext').title='Відскануйте всі позиції в прихід ('+collected.scannedQty+' з '+collected.neededQty+' шт)';
+          G('odNext').onclick=function(){
+            toast('⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт ('+collected.missing.length+' не вистачає)','wa',5000);
+          };
+        } else {
+          G('odNext').style.opacity='';G('odNext').style.cursor='';G('odNext').title='';
+          G('odNext').onclick=function(){changeStatus(o.num,o.name,nextSt);};
+        }
+      } else {
+        G('odNext').style.opacity='';G('odNext').style.cursor='';G('odNext').title='';
+        G('odNext').onclick=function(){changeStatus(o.num,o.name,nextSt);};
+      }
+    }
+  }
+  curTTN=o.ttn;
+  G('odTTN').style.display=o.ttn?'':'none';
+  G('odTTN').onclick=()=>{navigator.clipboard.writeText(o.ttn);toast('ТТН скопійовано','ok',2000);};
+  var k=sk(o.status);
+  G('odPicker').style.display=(k==='work'||k==='pack')?'':'none';
+  G('odPicker').onclick=()=>{nav('picker');selectPicker(id);};
+  G('odScan')&&(G('odScan').style.display=k==='pack'?'':'none');
+  G('odScan')&&(G('odScan').onclick=()=>{nav('scan');selectScan(id);});
+  G('odStatus').style.display=SCRIPT_URL?'':'none';
+  G('odStatus').onclick=()=>openStatusModal(o);
+  var its=items[o.num]||[];
+  var tq=its.reduce((s,i)=>s+i.qty,0);
+  var body='';
+  if(k==='cancel')body+='<div class="canc-c">❌ Замовлення відмовлено</div>';
+  if(its.length){
+    body+='<div class="sec-t">📦 ПОЗИЦІЇ ЗАМОВЛЕННЯ</div>';
+    // підрахунок загальних метрик
+    var grandTotalPcs=0;
+    var missingStock=0;
+    var rowsHtml=its.map(function(it,i){
+      var fu=fury[it.art]||fury['b_'+it.art]||fury['f_'+it.art]||null;
+      var artF=fu?fu.artFlorium:'—';
+      var st=findStockForItem(it.art);
+      var loc=st&&st.location?st.location:'—';
+      var packQ=fu?fu.packQty:'';
+      var packNum=parseInt(packQ)||0;
+      var totalPcs=packNum>0?(it.qty*packNum):0;
+      grandTotalPcs+=totalPcs;
+      var stk=st?st.qty:null;
+      var noStock=stk!==null&&stk<it.qty;
+      if(noStock)missingStock++;
+      var stockBadge='';
+      if(stk===null)stockBadge='<span class="stk-b stk-unk">—</span>';
+      else if(stk>=it.qty)stockBadge='<span class="stk-b stk-ok">'+stk+'</span>';
+      else stockBadge='<span class="stk-b stk-no">'+stk+'</span>';
+      return '<tr'+(noStock?' style="background:#fff0ef"':'')+'>'
+        +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
+        +'<td style="font-size:13px">'+esc(it.name)+'</td>'
+        +'<td style="text-align:center;font-weight:600">'+it.qty+'</td>'
+        +'<td style="text-align:center;color:var(--blue);font-weight:500">'+(packQ||'—')+'</td>'
+        +'<td style="text-align:center;color:var(--green-d);font-weight:600">'+(totalPcs||'—')+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:11px;color:var(--purple)">'+esc(artF)+'</td>'
+        +'<td><span style="background:var(--gray6);padding:2px 7px;border-radius:5px;font-size:11px;color:var(--tx3);white-space:nowrap">'+esc(loc)+'</span></td>'
+        +'<td style="text-align:center">'+stockBadge+'</td>'
+        +'</tr>';
+    }).join('');
+    body+='<div style="overflow:auto;border:1px solid var(--bo);border-radius:10px;background:#fff">'
+      +'<table class="dt" style="font-size:13px;width:100%">'
+      +'<thead><tr style="font-size:10px;background:var(--gray6)">'
+        +'<th style="text-align:center">#</th>'
+        +'<th>Артикул</th>'
+        +'<th>Назва</th>'
+        +'<th style="text-align:center">К-сть</th>'
+        +'<th style="text-align:center;color:var(--blue)">В уп.</th>'
+        +'<th style="text-align:center;color:var(--green-d)">Всього шт</th>'
+        +'<th style="color:var(--purple)">Арт.Флоріум</th>'
+        +'<th>Розміщення</th>'
+        +'<th style="text-align:center">Склад</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rowsHtml+'</tbody>'
+      +'</table></div>';
+    // Підсумок
+    body+='<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">'
+      +'<div class="sum-tag"><span class="sum-l">Позицій</span><span class="sum-v">'+its.length+'</span></div>'
+      +'<div class="sum-tag"><span class="sum-l">Упаковок</span><span class="sum-v">'+tq+'</span></div>'
+      +'<div class="sum-tag"><span class="sum-l">Всього шт</span><span class="sum-v" style="color:var(--green-d)">'+(grandTotalPcs||'?')+'</span></div>'
+      +(missingStock>0?'<div class="sum-tag" style="background:var(--red-l);color:var(--red)"><span class="sum-l" style="color:var(--red)">⚠️ Немає в наявності</span><span class="sum-v" style="color:var(--red)">'+missingStock+'</span></div>':'')
+      +'</div>';
+  } else {
+    body+='<div style="padding:32px;text-align:center;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px">Немає позицій</div><div style="font-size:12px;margin-top:4px">Додайте дані в аркуш «вигрузка»</div></div>';
+  }
+  body+=`<div class="sc-title">🚚 Доставка</div><div class="ig">`;
+  if(o.ttn)body+=`<div class="ic sp"><div class="ic-l">ТТН</div><div class="ttn-r"><span class="ic-v mo">${esc(o.ttn)}</span><button class="cpbtn" onclick="navigator.clipboard.writeText('${esc(o.ttn)}');toast('ТТН скопійовано','ok',2000)">📋</button></div></div>`;
+  if(o.address)body+=`<div class="ic sp"><div class="ic-l">Адреса</div><div class="ic-v">${esc(o.address)}</div></div>`;
+  if(o.declared)body+=`<div class="ic"><div class="ic-l">Огол. вартість</div><div class="ic-v">${esc(o.declared)}</div></div>`;
+  if(o.extra)body+=`<div class="ic"><div class="ic-l">Додаток</div><div class="ic-v">${esc(o.extra)}</div></div>`;
+  body+=`</div>`;
+  if(o.note)body+=`<div class="note-c">📝 <span>${esc(o.note)}</span></div>`;
+
+  // Історія приходу з аркушу "прихід"
+  var orderHistory=income.filter(function(r){return r.orderNum===o.num;});
+  if(orderHistory.length){
+    body+='<div class="sec-t">📥 Історія приходу</div>';
+    body+='<div style="overflow:auto"><table class="dt" style="font-size:13px"><thead><tr><th>Дата</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th><th>Оператор</th></tr></thead><tbody>';
+    orderHistory.forEach(function(r){
+      body+='<tr><td style="font-size:11px;color:var(--mu)">'+esc(r.date)+'</td>'
+        +'<td class="art">'+esc(r.art)+'</td>'
+        +'<td style="font-size:13px">'+esc(r.name)+'</td>'
+        +'<td style="text-align:center;font-weight:700">'+r.qty+'</td>'
+        +'<td style="font-size:11px;color:var(--mu)">'+esc(r.operator)+'</td>'
+        +'</tr>';
+    });
+    body+='</tbody></table></div>';
+    var totalScanned=orderHistory.reduce(function(s,r){return s+r.qty;},0);
+    body+='<div class="tbl-total">Всього отримано: '+totalScanned+' шт</div>';
+  }
+
+  G('odB').innerHTML=body;
+}
+
+// ===== STATUS MODAL =====
+function openStatusModal(o){
+  var itsForCheck=items[o.num]||[];
+  var collected=checkOrderCollected(o.num,itsForCheck);
+  G('statusBtns').innerHTML=STATUSES_LIST.map(function(s){
+    var isReady=s==='Готове';
+    var disabled=isReady&&!collected.allDone;
+    var cur=sk(s)===sk(o.status);
+    var cls='btn sm'+(cur?' pr':'')+(disabled?' is-disabled':'');
+    var style=disabled?'opacity:.5;cursor:not-allowed;position:relative':'';
+    var title=disabled?' title="Спочатку відскануйте всі позиції в прихід ('+collected.scannedQty+'/'+collected.neededQty+' шт)"':'';
+    var click=disabled
+      ?'onclick="toast(\'⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт\',\'wa\',5000)"'
+      :'onclick="changeStatus(\''+esc(o.num)+'\',\''+esc(o.name)+'\',\''+esc(s)+'\')"';
+    var lockIcon=disabled?' 🔒':'';
+    return '<button class="'+cls+'" style="'+style+'"'+title+' '+click+'>'+s+lockIcon+'</button>';
+  }).join('');
+  G('statusModal').style.display='flex';
+}
+function closeStatusModal(){G('statusModal').style.display='none';}
+async function changeStatus(num,name,newStatus){
+  closeStatusModal();
+  // ЗАХИСТ: не дозволяємо ставити "Готове" якщо не всі позиції просканувалися в прихід
+  if(newStatus==='Готове'){
+    var ns0=String(num).trim();
+    var ord=orders.find(function(x){return String(x.num).trim()===ns0;});
+    if(ord){
+      var its0=items[ord.num]||[];
+      var collected=checkOrderCollected(ord.num,its0);
+      if(!collected.allDone){
+        var msg='⛔ Не можна перевести в «Готове»: відскановано '+collected.scannedQty+' з '+collected.neededQty+' шт';
+        if(collected.missing.length){
+          var miss=collected.missing.slice(0,3).map(function(m){return m.art+' ('+m.got+'/'+m.need+')';}).join(', ');
+          if(collected.missing.length>3)miss+=' та ще '+(collected.missing.length-3);
+          msg+='. Не вистачає: '+miss;
+        }
+        toast(msg,'er',6000);
+        return;
+      }
+    }
+  }
+  toast('Змінюємо статус...','in',2000);
+  var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
+  if(res.ok){
+    toast('Статус змінено на «'+newStatus+'»','ok');
+    var ns=String(num).trim();
+    var o=orders.find(function(x){return String(x.num).trim()===ns;});
+    if(o){
+      o.status=newStatus;
+      renderAll();
+    }
+    setTimeout(function(){loadAll(true);},1500);
+  }
+  else toast('Помилка: '+(res.error||res.msg||'?'),'er');
+}
+
+// ===== PICKER =====
+function renderPicker(){
+  var list=orders.filter(o=>{var k=sk(o.status);return k==='work'||k==='pack';});
+  G('pkCnt').textContent=list.length;
+  updateMultiCount();
+  if(!list.length){G('pkList').innerHTML='<div class="es"><div class="es-ic">✅</div><div class="es-t">Немає активних</div></div>';return;}
+  G('pkList').innerHTML=list.map(function(o){
+    var its=items[o.num]||[];
+    var tq=its.reduce(function(s,i){return s+i.qty;},0);
+    var isSel=!!multiSel[o.id];
+    var isCur=selPk===o.id;
+    var cls='pk-card'+(isCur&&!multiMode?' on':'')+(isSel?' sel':'');
+    return '<div class="'+cls+'" data-id="'+o.id+'">'
+      +'<div class="pk-card-cb">'+(isSel?'✓':'')+'</div>'
+      +'<div class="pk-card-body">'
+        +'<div class="pk-card-r1"><span class="pk-card-num">#'+esc(o.num)+'</span>'+pillH(o.status)+'</div>'
+        +'<div class="pk-card-name">'+esc(o.name)+'</div>'
+        +'<div class="pk-card-meta">'+its.length+' поз · '+tq+' шт</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  G('pkList').querySelectorAll('.pk-card').forEach(function(el){
+    el.addEventListener('click',function(){
+      if(multiMode)togglePickerSelection(el.dataset.id);
+      else selectPicker(el.dataset.id);
+    });
+  });
+}
+
+// ===== MULTI-SELECT =====
+function toggleMultiMode(){
+  multiMode=!multiMode;
+  var wrap=G('pkListWrap');
+  if(multiMode){wrap.classList.add('multi-mode');G('multiBtn').classList.add('on');G('multiBtn').textContent='✕ Скасувати';}
+  else{wrap.classList.remove('multi-mode');G('multiBtn').classList.remove('on');G('multiBtn').textContent='☑ Вибрати кілька';multiSel={};}
+  renderPicker();
+}
+function togglePickerSelection(id){
+  if(multiSel[id])delete multiSel[id];else multiSel[id]=true;
+  renderPicker();
+}
+function selectAllPicker(){
+  var list=orders.filter(function(o){var k=sk(o.status);return k==='work'||k==='pack';});
+  list.forEach(function(o){multiSel[o.id]=true;});
+  renderPicker();
+}
+function clearMultiSelection(){
+  multiSel={};
+  renderPicker();
+}
+function updateMultiCount(){
+  var n=Object.keys(multiSel).length;
+  var el=G('multiCount');if(el)el.textContent='Вибрано: '+n;
+}
+function getSelectedOrders(){
+  return orders.filter(function(o){return multiSel[o.id];});
+}
+function openCombinedList(){
+  var sel=getSelectedOrders();
+  if(!sel.length){toast('Спочатку виберіть замовлення','wa');return;}
+  // об'єднуємо всі позиції з усіх замовлень
+  var merged={};
+  sel.forEach(function(o){
+    var its=items[o.num]||[];
+    its.forEach(function(it){
+      var key=it.art;
+      if(!merged[key]){
+        merged[key]={
+          art:it.art,
+          name:it.name,
+          qty:0,
+          fromOrders:[]
+        };
+      }
+      merged[key].qty+=it.qty;
+      merged[key].fromOrders.push(o.num);
+    });
+  });
+  combinedItems=Object.values(merged);
+  combinedOrders=sel.slice();
+  // довантажуємо інфо з fury + stock для кожної позиції
+  combinedItems.forEach(function(ci){
+    var fu=fury[ci.art]||fury['b_'+ci.art]||fury['f_'+ci.art]||null;
+    var st=findStockForItem(ci.art);
+    ci.artFlorium=fu?fu.artFlorium:'';
+    ci.packQty=fu?fu.packQty:'';
+    // Усі палети з кількостями: "301Б (50), 305А (38)"
+    var allLocs=findAllStockLocations(ci.art);
+    ci.location=allLocs||(st&&st.location?st.location:'');
+    ci.category=st&&st.category?st.category:'';
+    if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
+  });
+  combinedAllItems=combinedItems.slice();
+  combinedFilter=new Set();
+  // дефолтне сортування — по категорії, потім по назві
+  sortCombinedByCategory();
+  renderCombinedModal();
+  G('combinedModal').style.display='flex';
+}
+
+function renderCombinedModal(){
+  var tq=combinedItems.reduce(function(s,i){return s+i.qty;},0);
+  var orderNums=combinedOrders.map(function(o){return '#'+o.num;}).join(', ');
+  G('cmHead').innerHTML='<div style="font-size:13px;color:var(--mu);margin-bottom:4px">Об\'єднано замовлень: '+combinedOrders.length+'</div>'
+    +'<div style="font-size:12px;color:var(--tx2);word-break:break-word">'+esc(orderNums)+'</div>';
+  G('cmStats').innerHTML='<strong>'+combinedItems.length+'</strong> позицій · <strong>'+tq+'</strong> уп';
+  // ЧІПИ КАТЕГОРІЙ
+  var cats=getCombinedCategories();
+  var chipsHtml='';
+  if(cats.length>1){
+    chipsHtml='<div class="cm-chips">'
+      +'<span class="cm-chips-lbl">Категорії:</span>'
+      +'<span class="cm-chip'+(combinedFilter.size===0?' on':'')+'" onclick="clearCategoryFilter()">Усі ('+combinedAllItems.length+')</span>'
+      +cats.map(function(c){
+        var isOn=combinedFilter.has(c.name);
+        return '<span class="cm-chip'+(isOn?' on':'')+'" onclick="toggleCategoryFilter(\''+esc(c.name).replace(/'/g,"\\'")+'\')">'+esc(c.name)+' ('+c.count+')</span>';
+      }).join('')
+      +'</div>';
+  }
+  // РЯДКИ З РОЗДІЛЬНИКАМИ КАТЕГОРІЙ
+  var lastCat=null;
+  var rows=combinedItems.map(function(ci,i){
+    var packNum=parseInt(ci.packQty)||0;
+    var totalPcs=packNum>0?(ci.qty*packNum):0;
+    var missing=(!ci.location||!ci.artFlorium);
+    var cat=ci.category||'(без категорії)';
+    var groupHeader='';
+    if(cat!==lastCat){
+      groupHeader='<tr class="cm-group-row"><td colspan="8">'+esc(cat)+'</td></tr>';
+      lastCat=cat;
+    }
+    return groupHeader
+      +'<tr'+(missing?' style="background:#fff8e1"':'')+'>'
+        +'<td style="text-align:center;color:var(--mu)">'+(i+1)+'</td>'
+        +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(ci.art)+'</td>'
+        +'<td><input class="cm-inp" data-i="'+i+'" data-f="name" value="'+esc(ci.name||'')+'" style="width:100%"></td>'
+        +'<td style="text-align:center;font-weight:700">'+ci.qty+'</td>'
+        +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="packQty" value="'+esc(ci.packQty||'')+'"></td>'
+        +'<td style="text-align:center;color:var(--gd);font-weight:700">'+(totalPcs||'—')+'</td>'
+        +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="artFlorium" value="'+esc(ci.artFlorium||'')+'" style="font-family:monospace;color:#7b1fa2"></td>'
+        +'<td><input class="cm-inp" data-i="'+i+'" data-f="location" value="'+esc(ci.location||'')+'" placeholder="вкажіть..." style="width:100%;min-width:240px;font-family:monospace;font-size:12px"></td>'
+      +'</tr>';
+  }).join('');
+  G('cmBody').innerHTML=chipsHtml+'<table class="dt" style="font-size:13px">'
+    +'<thead><tr style="font-size:11px">'
+      +'<th style="width:30px">#</th>'
+      +'<th>Артикул</th>'
+      +'<th>Назва</th>'
+      +'<th style="text-align:center">К-сть</th>'
+      +'<th style="text-align:center;color:var(--b)">В уп.</th>'
+      +'<th style="text-align:center;color:var(--gd)">Всього шт</th>'
+      +'<th style="color:#7b1fa2">Арт.Флоріум</th>'
+      +'<th>Розміщення</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  // bind input handlers
+  G('cmBody').querySelectorAll('.cm-inp').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var i=parseInt(inp.dataset.i),f=inp.dataset.f;
+      combinedItems[i][f]=inp.value;
+      if(f==='packQty'){
+        var packNum=parseInt(inp.value)||0;
+        var ci=combinedItems[i];
+        var totalPcs=packNum>0?(ci.qty*packNum):0;
+        var cell=inp.closest('tr').children[5];
+        if(cell)cell.textContent=totalPcs||'—';
+      }
+    });
+  });
+}
+
+function closeCombinedModal(){G('combinedModal').style.display='none';}
+
+// ============= VERIFY MODAL =============
+var verifyState={order:null,items:[],scanned:{},strangers:[]};
+
+function openVerifyModal(o){
+  verifyState.order=o;
+  verifyState.items=items[o.num]||[];
+  verifyState.scanned={};
+  verifyState.strangers=[];
+  G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:3px">#'+esc(o.num)+' · '+esc(o.name)+'</div>'
+    +'<div style="font-size:12px;color:var(--tx4)">Скануй штрихкоди — система рахує автоматично. Можна ввести вручну і натиснути Enter.</div>';
+  renderVerifyTable();
+  G('verifyModal').style.display='flex';
+  setTimeout(function(){
+    var inp=G('vmInput');
+    if(inp){
+      inp.focus();
+      var modal=G('verifyModal');
+      modal.onclick=function(e){
+        if(e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON'){
+          setTimeout(function(){inp.focus();},10);
+        }
+      };
+    }
+  },100);
+  // Скидаємо попередній таймер дебаунсу
+  if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+  var inp=G('vmInput');
+  // Enter — миттєвий скан
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'||e.key==='Tab'){
+      e.preventDefault();
+      if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+      verifyScanArt();
+    }
+  };
+  // Дебаунс — якщо введено >=3 символів і немає вводу >180мс, виконати скан
+  // Це покриває сканери що не шлють Enter
+  inp.oninput=function(){
+    if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+    var v=inp.value.trim();
+    if(v.length>=3){
+      window._verifyDebounce=setTimeout(function(){
+        verifyScanArt();
+      },200);
+    }
+  };
+}
+
+function closeVerifyModal(){
+  G('verifyModal').style.display='none';
+  verifyState={order:null,items:[],scanned:{},strangers:[]};
+}
+
+function renderVerifyTable(){
+  var its=verifyState.items;
+  var totalNeed=its.reduce(function(s,i){return s+i.qty;},0);
+  var totalScanned=0;
+  var allDone=its.length>0;
+  
+  var rows=its.map(function(it,i){
+    var got=verifyState.scanned[it.art]||0;
+    totalScanned+=Math.min(got,it.qty);
+    var done=got>=it.qty;
+    var partial=got>0&&!done;
+    if(!done)allDone=false;
+    var bg=done?'background:#e8fdf0':partial?'background:#fff8e1':'';
+    return '<tr style="'+bg+'">'
+      +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
+      +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
+      +'<td style="font-size:13px">'+esc(it.name)+'</td>'
+      +'<td style="text-align:center;font-weight:600">'+it.qty+'</td>'
+      +'<td style="text-align:center;font-weight:700;font-size:15px;color:'+(done?'var(--green-d)':partial?'var(--orange)':'var(--tx4)')+'">'+got+'</td>'
+      +'<td style="text-align:center">'+(done?'<span style="color:var(--green);font-size:18px">✓</span>':partial?'<span style="color:var(--orange);font-weight:700">'+(it.qty-got)+'</span>':'<span style="color:var(--tx4)">—</span>')+'</td>'
+      +'</tr>';
+  }).join('');
+  
+  G('vmStats').innerHTML='<strong>'+totalScanned+'</strong> / <strong>'+totalNeed+'</strong> шт';
+  G('vmBody').innerHTML='<table class="dt" style="font-size:13px;width:100%">'
+    +'<thead><tr style="font-size:10px;background:var(--gray6)">'
+      +'<th style="text-align:center">#</th>'
+      +'<th>Артикул</th>'
+      +'<th>Назва</th>'
+      +'<th style="text-align:center">Треба</th>'
+      +'<th style="text-align:center">Скановано</th>'
+      +'<th style="text-align:center">Лишилось</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  
+  // Активуємо/деактивуємо кнопку
+  var btn=G('vmFinish');
+  if(allDone&&its.length){
+    btn.disabled=false;
+    btn.style.opacity='1';
+    btn.style.cursor='pointer';
+    btn.textContent='✓ Підтвердити перевірку → «Перевірено»';
+    btn.onclick=confirmVerification;
+  } else {
+    btn.disabled=true;
+    btn.style.opacity='.5';
+    btn.style.cursor='not-allowed';
+    btn.textContent='✓ Підтвердити перевірку';
+    btn.onclick=null;
+  }
+}
+
+async function verifyScanArt(){
+  var input=G('vmInput');
+  var art=input.value.trim();
+  var qty=parseInt(G('vmQty').value)||1;
+  if(!art){input.focus();return;}
+  
+  // Перевіряємо чи артикул у замовленні
+  var itemMatch=verifyState.items.find(function(it){return it.art===art;});
+  
+  if(itemMatch){
+    var needed=itemMatch.qty;
+    var got=verifyState.scanned[art]||0;
+    
+    // ЗАХИСТ: якщо вже зібрано повну к-сть — не додаємо, тривога
+    if(got>=needed){
+      showVerifyAlert('⛔ ВЖЕ ЗАПАКОВАНО','Артикул '+art+' ('+itemMatch.name+') уже зібрано: '+got+'/'+needed+'. НЕ кидати в пакет — постав в ЗАПАС!');
+      beepAlert();
+      speakPhrase('phrase-already-packed');
+      // Автоматично додаємо в запас
+      addToReserve(art,itemMatch.name,qty||1,'#'+verifyState.order.num+' '+verifyState.order.name);
+      input.value='';input.focus();
+      return;
+    }
+    
+    // Перевищення (якщо qty більше потрібного)
+    if(got+qty>needed){
+      var canAdd=needed-got;
+      showVerifyAlert('⛔ ПЕРЕВИЩЕНО','Можна додати тільки '+canAdd+' шт (треба '+needed+', вже '+got+')');
+      beepAlert();
+      speakPhrase('phrase-exceeded');
+      input.value='';input.focus();
+      return;
+    }
+    
+    // Правильний скан
+    verifyState.scanned[art]=got+qty;
+    var newGot=verifyState.scanned[art];
+    if(newGot===needed){
+      toast('✓ '+art+' — повністю!','ok',1500);
+      speakPhrase('phrase-scan-ok');
+    } else {
+      toast('✓ '+art+' ('+newGot+'/'+needed+')','ok',1500);
+      speakPhrase('phrase-scan-ok');
+    }
+  } else {
+    // Артикул не належить замовленню — перевіримо чи він взагалі існує в системі
+    var existsInSystem=fury[art]||fury['b_'+art]||fury['f_'+art]||stock.find(function(s){return s.art===art;});
+    if(!existsInSystem){
+      showVerifyAlert('⛔ НЕВІДОМИЙ АРТИКУЛ','Артикул "'+art+'" не існує в системі. Перевірте скан!');
+      beepAlert();
+      speakPhrase('phrase-unknown');
+      input.value='';input.focus();
+      return;
+    }
+    // Артикул існує, але НЕ з цього замовлення — велике попередження
+    var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art];
+    var itemName=furyInfo?furyInfo.name:(existsInSystem.name||'');
+    showVerifyAlert('⛔ ЧУЖИЙ АРТИКУЛ','"'+art+'" ('+itemName+') НЕ належить замовленню #'+verifyState.order.num+'. Перевірте чи правильний пакет!');
+    beepAlert();
+    speakPhrase('phrase-wrong-package');
+    input.value='';input.focus();
+    return;
+  }
+  
+  // Записуємо у Apps Script
+  if(SCRIPT_URL){
+    try{
+      await callScript('verifyScan',{
+        orderNum:verifyState.order.num,
+        orderName:verifyState.order.name,
+        art:art,
+        name:itemMatch?itemMatch.name:'',
+        qty:qty,
+        operator:'Адмін'
+      });
+    }catch(e){}
+  }
+  
+  input.value='';
+  G('vmQty').value='1';
+  input.focus();
+  renderVerifyTable();
+  // Підсвітка рядка — миттєвий візуальний фідбек
+  setTimeout(function(){
+    var rows=G('vmBody').querySelectorAll('tbody tr');
+    rows.forEach(function(tr){
+      var artCell=tr.querySelector('td:nth-child(2)');
+      if(artCell&&artCell.textContent.trim()===art){
+        tr.style.transition='background .15s';
+        var origBg=tr.style.background;
+        tr.style.background='#bbf7d0';
+        setTimeout(function(){tr.style.background=origBg;},400);
+      }
+    });
+  },10);
+}
+
+// Велике червоне попередження зверху модалки
+function showVerifyAlert(title,msg){
+  var existing=document.getElementById('vmAlert');
+  if(existing)existing.remove();
+  var div=document.createElement('div');
+  div.id='vmAlert';
+  div.style.cssText='position:absolute;top:0;left:0;right:0;background:linear-gradient(135deg,#ff3b30,#c62828);color:#fff;padding:24px 28px;display:flex;align-items:center;gap:18px;z-index:100;animation:alertShake .5s ease;box-shadow:0 6px 24px rgba(255,59,48,.4);border-radius:14px 14px 0 0;';
+  div.innerHTML='<div style="font-size:42px;flex-shrink:0">⚠️</div>'
+    +'<div style="flex:1"><div style="font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px">'+esc(title)+'</div>'
+    +'<div style="font-size:15px;opacity:.95;font-weight:500">'+esc(msg)+'</div></div>'
+    +'<button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">OK</button>';
+  var box=G('verifyModal').querySelector('.cm-box');
+  box.style.position='relative';
+  box.insertBefore(div,box.firstChild);
+  // Автозникнення за 5 секунд
+  setTimeout(function(){
+    if(div.parentNode){
+      div.style.transition='opacity .4s, transform .4s';
+      div.style.opacity='0';
+      div.style.transform='translateY(-20px)';
+      setTimeout(function(){div.remove();},400);
+    }
+  },5000);
+}
+
+// Звук тривоги
+function beepAlert(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    // Три "пі-пі-пі"
+    [0,150,300].forEach(function(delay){
+      setTimeout(function(){
+        var osc=ctx.createOscillator();
+        var gain=ctx.createGain();
+        osc.type='square';
+        osc.frequency.value=880;
+        gain.gain.value=.15;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
+        osc.stop(ctx.currentTime+.13);
+      },delay);
+    });
+  }catch(e){}
+}
+
+async function confirmVerification(){
+  var o=verifyState.order;
+  toast('Підтверджуємо перевірку...','in',2000);
+  if(SCRIPT_URL){
+    try{
+      var res=await callScript('verifyComplete',{
+        orderNum:o.num,
+        orderName:o.name,
+        markAsVerified:'true'
+      });
+      if(res&&res.ok&&res.allDone){
+        toast('🔍 Перевірено! Можна відправляти','ok',3000);
+        speakPhrase('phrase-order-verified');
+        // Локально оновити статус
+        var ord=orders.find(function(x){return String(x.num).trim()===String(o.num).trim();});
+        if(ord){ord.status='Перевірено';renderAll();}
+        closeVerifyModal();
+        setTimeout(function(){loadAll(true);},1500);
+        return;
+      }
+    }catch(e){}
+  }
+  toast('Помилка перевірки','er',3000);
+}
+
+// Сортування зведеного списку по категорії + назві
+function sortCombinedByCategory(){
+  combinedItems.sort(function(a,b){
+    var ca=(a.category||'я').toLowerCase();
+    var cb=(b.category||'я').toLowerCase();
+    if(ca<cb)return -1;
+    if(ca>cb)return 1;
+    var na=(a.name||'').toLowerCase();
+    var nb=(b.name||'').toLowerCase();
+    return na<nb?-1:na>nb?1:0;
+  });
+}
+
+// Унікальні категорії у поточному списку
+function getCombinedCategories(){
+  var set={};
+  combinedAllItems.forEach(function(ci){
+    var c=ci.category||'(без категорії)';
+    set[c]=(set[c]||0)+1;
+  });
+  return Object.keys(set).sort().map(function(c){return {name:c,count:set[c]};});
+}
+
+// Перемикання категорії у фільтрі
+function toggleCategoryFilter(cat){
+  if(combinedFilter.has(cat))combinedFilter.delete(cat);
+  else combinedFilter.add(cat);
+  applyCategoryFilter();
+}
+
+function clearCategoryFilter(){
+  combinedFilter.clear();
+  applyCategoryFilter();
+}
+
+function applyCategoryFilter(){
+  if(combinedFilter.size===0){
+    combinedItems=combinedAllItems.slice();
+  } else {
+    combinedItems=combinedAllItems.filter(function(ci){
+      var c=ci.category||'(без категорії)';
+      return combinedFilter.has(c);
+    });
+  }
+  sortCombinedByCategory();
+  renderCombinedModal();
+}
+
+async function printCombinedList(){
+  // зберігаємо локальну копію
+  var itemsCopy=combinedItems.slice();
+  var ordersCopy=combinedOrders.slice();
+  
+  // 1) перевіряємо дублікати замовлень у "списки"
+  var duplicates=[];
+  if(SCRIPT_URL){
+    toast('Перевірка дублікатів...','in',1500);
+    try {
+      var dupRes=await callScript('checkListDupes',{
+        orderNums:JSON.stringify(ordersCopy.map(function(o){return o.num;}))
+      });
+      if(dupRes&&dupRes.ok&&dupRes.duplicates)duplicates=dupRes.duplicates;
+    } catch(e){}
+  }
+  
+  // 2) Якщо є дублікати — показуємо попередження
+  if(duplicates.length>0){
+    showDuplicateWarning(duplicates,itemsCopy,ordersCopy);
+    return; // продовжуємо тільки якщо користувач підтвердить
+  }
+  
+  // 3) Немає дублікатів — друкуємо нормально
+  doPrintAndSave(itemsCopy,ordersCopy,[]);
+}
+
+// Показ попередження про дублікати
+function showDuplicateWarning(duplicates,itemsCopy,ordersCopy){
+  var dupList=duplicates.map(function(n){return '#'+esc(n);}).join(', ');
+  var html=''
+    +'<div class="modal-box" style="width:480px">'
+      +'<div class="modal-t" style="color:#a04000">⚠️ Замовлення вже друкувались</div>'
+      +'<div style="font-size:14px;color:var(--tx2);margin-bottom:12px;line-height:1.5">'
+        +'Ці замовлення вже є в аркуші <strong>"списки"</strong>:<br>'
+        +'<div style="margin-top:8px;padding:8px 10px;background:#fff8e1;border-radius:6px;font-family:monospace;font-size:13px;color:#856404">'+dupList+'</div>'
+      +'</div>'
+      +'<div style="font-size:13px;color:var(--mu);margin-bottom:16px;line-height:1.5">'
+        +'Якщо продовжите — список <strong>надрукується повністю</strong>, але <strong>позиції цих замовлень не запишуться повторно</strong> в аркуш (щоб не дублювати).'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+        +'<button class="btn" style="flex:1" onclick="closeDuplicateWarning()">Скасувати</button>'
+        +'<button class="btn pr" style="flex:1" onclick="confirmDuplicatePrint()">Продовжити друк</button>'
+      +'</div>'
+    +'</div>';
+  var d=document.createElement('div');
+  d.className='modal-ov';
+  d.id='dupWarnModal';
+  d.style.zIndex='6000';
+  d.innerHTML=html;
+  document.body.appendChild(d);
+  // зберігаємо стан для confirm
+  window._pendingPrint={itemsCopy:itemsCopy,ordersCopy:ordersCopy,duplicates:duplicates};
+}
+
+function closeDuplicateWarning(){
+  var d=G('dupWarnModal');
+  if(d)d.remove();
+  window._pendingPrint=null;
+}
+
+function confirmDuplicatePrint(){
+  var p=window._pendingPrint;
+  closeDuplicateWarning();
+  if(!p)return;
+  doPrintAndSave(p.itemsCopy,p.ordersCopy,p.duplicates);
+}
+
+// Спільна функція друку + збереження
+async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders){
+  var listNum=null;
+  if(SCRIPT_URL){
+    toast('Зберігаємо список...','in',2000);
+    // готуємо позиції для запису (з усією інфо + orderNum + orderName кожна)
+    var itemsForSave=[];
+    ordersCopy.forEach(function(o){
+      var its=items[o.num]||[];
+      its.forEach(function(it){
+        var fu=fury[it.art]||fury['b_'+it.art]||fury['f_'+it.art]||null;
+        var st=findStockForItem(it.art);
+        var artFlorium=fu?fu.artFlorium:'';
+        var packQty=fu?fu.packQty:'';
+        var location=st&&st.location?st.location:'';
+        // якщо користувач відредагував у модалці — взяти його значення
+        var edited=itemsCopy.find(function(ci){return ci.art===it.art;});
+        if(edited){
+          if(edited.artFlorium)artFlorium=edited.artFlorium;
+          if(edited.packQty)packQty=edited.packQty;
+          if(edited.location)location=edited.location;
+        }
+        var packNum=parseInt(packQty)||0;
+        var totalPcs=packNum>0?(it.qty*packNum):0;
+        itemsForSave.push({
+          orderNum:o.num,
+          orderName:o.name,
+          art:it.art,
+          name:it.name||(fu?fu.name:''),
+          qty:it.qty,
+          packQty:packNum,
+          totalPcs:totalPcs,
+          artFlorium:artFlorium,
+          location:location
+        });
+      });
+    });
+    try {
+      var res=await callScript('createList',{
+        items:JSON.stringify(itemsForSave),
+        skipOrders:JSON.stringify(skipOrders),
+        operator:'Адмін'
+      });
+      if(res&&res.ok&&res.listNum){
+        listNum=res.listNum;
+        var msg='Список #'+listNum+' збережено';
+        if(skipOrders.length>0)msg+=' (пропущено: '+skipOrders.length+')';
+        toast(msg,'ok',3000);
+      } else {
+        toast('Apps Script помилка — друкую без №','wa',3000);
+      }
+    } catch(e){
+      toast('Apps Script не оновлено — друкую без №','wa',3000);
+    }
+  }
+  
+  // закрити модалку перед друком
+  closeCombinedModal();
+  if(multiMode){multiMode=false;multiSel={};G('pkListWrap').classList.remove('multi-mode');G('multiBtn').classList.remove('on');G('multiBtn').textContent='☑ Вибрати кілька';renderPicker();}
+  // друк
+  setTimeout(function(){doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum);},200);
+  // статуси
+  if(SCRIPT_URL){
+    setTimeout(async function(){
+      for(var i=0;i<ordersCopy.length;i++){
+        var o=ordersCopy[i];
+        try{await callScript('setStatus',{orderNum:o.num,orderName:o.name,status:'Фасується'});}catch(e){}
+      }
+      toast('Статуси оновлено → «Фасується»','ok',3000);
+      loadAll(true);
+    },1500);
+  }
+}
+
+function doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum){
+  var tq=itemsCopy.reduce(function(s,i){return s+i.qty;},0);
+  var grandTotal=0;
+  var rowsHtml=itemsCopy.map(function(ci,i){
+    var packNum=parseInt(ci.packQty)||0;
+    var totalPcs=packNum>0?(ci.qty*packNum):0;
+    grandTotal+=totalPcs;
+    return '<tr>'
+      +'<td class="c">'+(i+1)+'</td>'
+      +'<td class="m">'+esc(ci.art)+'</td>'
+      +'<td>'+esc(ci.name||'—')+'</td>'
+      +'<td class="big">'+ci.qty+'</td>'
+      +'<td class="c">'+esc(ci.packQty||'—')+'</td>'
+      +'<td class="big">'+(totalPcs||'—')+'</td>'
+      +'<td class="m">'+esc(ci.artFlorium||'—')+'</td>'
+      +'<td class="c">'+esc(ci.location||'—')+'</td>'
+      +'<td class="c"><span class="chk"></span></td>'
+      +'</tr>';
+  }).join('');
+  var title=listNum?'Список #'+listNum:'Зведений список';
+  var subtitle=ordersCopy.length+' замовл. · '+itemsCopy.length+' поз · '+tq+' уп · '+(grandTotal||'?')+' шт';
+  G('pz').innerHTML=''
+    +'<div class="ph">'
+      +'<div class="ph-l">'+esc(title)+'</div>'
+      +'<div class="ph-r">'+esc(subtitle)+'</div>'
+    +'</div>'
+    +'<table class="pt">'
+      +'<thead><tr>'
+        +'<th style="width:32px">#</th>'
+        +'<th>Артикул</th>'
+        +'<th>Назва</th>'
+        +'<th style="width:60px">К-сть</th>'
+        +'<th style="width:60px">В уп.</th>'
+        +'<th style="width:80px">Всього шт</th>'
+        +'<th>Арт.Флоріум</th>'
+        +'<th>Розміщення</th>'
+        +'<th style="width:40px">✓</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rowsHtml+'</tbody>'
+    +'</table>';
+  window.print();
+}
+function selectPicker(id){
+  selPk=id;var o=orders.find(x=>x.id===id);if(!o)return;
+  G('pkList').querySelectorAll('.pk-card').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
+  if(G('pkEmpty'))G('pkEmpty').style.display='none';var dv=G('pkDetail');if(dv)dv.style.cssText='display:flex;flex:1;flex-direction:column;overflow:hidden;';
+  G('pdN').textContent='#'+esc(o.num);G('pdC').textContent=esc(o.name);G('pdP').innerHTML=pillH(o.status,true);
+  var its=items[o.num]||[];
+  if(!its.length){G('pdB').innerHTML='<div class="es"><div class="es-ic">📋</div><div class="es-t">Немає позицій</div><div class="es-s">Додайте дані в аркуш «вигрузка»</div></div>';return;}
+  var tq=its.reduce((s,i)=>s+i.qty,0);
+  G('pdB').innerHTML=(function(){
+    var rows=its.map(function(it,i){
+      var fu=fury[it.art]||fury['b_'+it.art]||null;
+      var artF=fu?fu.artFlorium:'—';
+      var st=findStockForItem(it.art);
+      var loc=st&&st.location?st.location:'—';
+      var packQ=fu?fu.packQty:'';
+      var packNum=parseInt(packQ)||0;
+      var totalPcs=packNum>0?(it.qty*packNum):0;
+      var ss=scanState[o.num]||{};
+      var done=(ss[it.art]||0)>=it.qty;
+      return '<tr style="'+(done?'background:#f1f8e9':'')+' font-size:14px">'
+        +'<td style="color:var(--mu);text-align:center;width:30px">'+(i+1)+'</td>'
+        +'<td style="font-family:monospace;font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
+        +'<td style="font-size:14px;font-weight:500">'+esc(it.name)+'</td>'
+        +'<td style="text-align:center;font-weight:700;font-size:15px">'+it.qty+'</td>'
+        +'<td style="text-align:center;font-size:13px;color:var(--b);font-weight:600">'+(packQ||'—')+'</td>'
+        +'<td style="text-align:center;font-weight:700;font-size:15px;color:var(--gd)">'+(totalPcs||'—')+'</td>'
+        +'<td style="font-family:monospace;font-size:12px;color:#7b1fa2;font-weight:600">'+esc(artF)+'</td>'
+        +'<td style="font-size:12px;color:var(--mu)"><span style="background:var(--bo2);padding:2px 6px;border-radius:4px;white-space:nowrap">'+esc(loc)+'</span></td>'
+        +'<td style="text-align:center"><div class="pk-chk" onclick="pkChkToggle(this)""></div></td>'
+        +'</tr>';
+    }).join('');
+    var grandTotal=its.reduce(function(s,it){
+      var fu=fury[it.art]||fury['b_'+it.art]||null;
+      var pq=fu?parseInt(fu.packQty)||0:0;
+      return s+(pq>0?it.qty*pq:0);
+    },0);
+    return '<div style="overflow:auto;flex:1">'
+      +'<table class="dt" style="font-size:14px">'
+      +'<thead><tr style="font-size:11px">'
+      +'<th style="text-align:center;width:30px">#</th>'
+      +'<th>Артикул</th>'
+      +'<th>Назва</th>'
+      +'<th style="text-align:center">К-сть</th>'
+      +'<th style="text-align:center;color:var(--b)">В уп.</th>'
+      +'<th style="text-align:center;color:var(--gd)">Всього шт</th>'
+      +'<th style="color:#7b1fa2">Арт.Флоріум</th>'
+      +'<th>Розміщення</th>'
+      +'<th style="text-align:center">&#10003;</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table></div>'
+      +'<div style="padding:8px 4px"><div class="tbl-total">Всього: '+its.length+' поз · '+tq+' уп · '+(grandTotal||'?')+' шт</div></div>';
+  })();
+  G('printBtn').onclick=function(){doPrint(o,its);};
+  if(G('pkNext')){
+    var k2=sk(o.status);
+    var nextMap2={new:'В роботі',work:'Фасується',pack:'Готове'};
+    var ns2=nextMap2[k2];
+    G('pkNext').style.display=ns2&&SCRIPT_URL?'':'none';
+    if(ns2){
+      // Перевірка: для переходу в "Готове" — потрібен повний скан в прихід
+      if(ns2==='Готове'){
+        var collected=checkOrderCollected(o.num,its);
+        if(!collected.allDone){
+          G('pkNext').classList.add('disabled');
+          G('pkNext').style.opacity='.5';
+          G('pkNext').style.cursor='not-allowed';
+          G('pkNext').title='Відскануйте всі позиції в прихід ('+collected.scannedQty+' з '+collected.neededQty+' шт)';
+          G('pkNext').onclick=function(){
+            toast('⛔ Спочатку відскануйте всі позиції в прихід: '+collected.scannedQty+'/'+collected.neededQty+' шт ('+collected.missing.length+' не вистачає)','wa',5000);
+          };
+        } else {
+          G('pkNext').classList.remove('disabled');
+          G('pkNext').style.opacity='';
+          G('pkNext').style.cursor='';
+          G('pkNext').title='';
+          G('pkNext').onclick=function(){changeStatus(o.num,o.name,ns2);};
+        }
+      } else {
+        G('pkNext').classList.remove('disabled');
+        G('pkNext').style.opacity='';
+        G('pkNext').style.cursor='';
+        G('pkNext').title='';
+        G('pkNext').onclick=function(){changeStatus(o.num,o.name,ns2);};
+      }
+    }
+  }
+}
+
+// Перевірка чи замовлення повністю зібране (по аркушу "прихід")
+function checkOrderCollected(orderNum,its){
+  if(!its||!its.length)return {allDone:false,scannedQty:0,neededQty:0,missing:[]};
+  var scanned={};
+  income.forEach(function(r){
+    if(String(r.orderNum||'').trim()===String(orderNum).trim()){
+      var a=String(r.art||'').trim();
+      if(a)scanned[a]=(scanned[a]||0)+(parseInt(r.qty)||0);
+    }
+  });
+  var neededQty=0,scannedQty=0,missing=[];
+  its.forEach(function(it){
+    var need=parseInt(it.qty)||0;
+    var got=scanned[it.art]||0;
+    neededQty+=need;
+    scannedQty+=Math.min(got,need);
+    if(got<need){
+      missing.push({art:it.art,name:it.name,need:need,got:got});
+    }
+  });
+  return {allDone:missing.length===0&&neededQty>0,scannedQty:scannedQty,neededQty:neededQty,missing:missing};
+}
+function doPrint(o,its){
+  var tq=its.reduce(function(s,i){return s+i.qty;},0);
+  var grandTotal=0;
+  var rowsHtml=its.map(function(it,i){
+    var fu=fury[it.art]||fury['b_'+it.art]||null;
+    var artF=fu?fu.artFlorium:'—';
+    var st=findStockForItem(it.art);
+    var loc=st&&st.location?st.location:'—';
+    var packQ=fu?fu.packQty:'';
+    var packNum=parseInt(packQ)||0;
+    var totalPcs=packNum>0?(it.qty*packNum):0;
+    grandTotal+=totalPcs;
+    return '<tr>'
+      +'<td class="c">'+(i+1)+'</td>'
+      +'<td class="m">'+esc(it.art)+'</td>'
+      +'<td>'+esc(it.name)+'</td>'
+      +'<td class="big">'+it.qty+'</td>'
+      +'<td class="c">'+(packQ||'—')+'</td>'
+      +'<td class="big">'+(totalPcs||'—')+'</td>'
+      +'<td class="m">'+esc(artF)+'</td>'
+      +'<td class="c">'+esc(loc)+'</td>'
+      +'<td class="c"><span class="chk"></span></td>'
+      +'</tr>';
+  }).join('');
+  G('pz').innerHTML=''
+    +'<div class="ph">'
+      +'<div class="ph-l">#'+esc(o.num)+' &nbsp; '+esc(o.name)+'</div>'
+      +'<div class="ph-r">'+its.length+' поз · '+tq+' уп · '+(grandTotal||'?')+' шт</div>'
+    +'</div>'
+    +'<table class="pt">'
+      +'<thead><tr>'
+        +'<th style="width:32px">#</th>'
+        +'<th>Артикул</th>'
+        +'<th>Назва</th>'
+        +'<th style="width:60px">К-сть</th>'
+        +'<th style="width:60px">В уп.</th>'
+        +'<th style="width:80px">Всього шт</th>'
+        +'<th>Арт.Флоріум</th>'
+        +'<th>Розміщення</th>'
+        +'<th style="width:40px">✓</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rowsHtml+'</tbody>'
+    +'</table>';
+  window.print();
+  setTimeout(async()=>{
+    toast('Надруковано! Змінюємо статус на «Фасується»...','in',3000);
+    if(SCRIPT_URL){
+      var res=await callScript('setStatus',{orderNum:o.num,orderName:o.name,status:'Фасується'});
+      if(res.ok){toast('Статус змінено → «Фасується»','ok');loadAll(true);}
+    } else {
+      toast('Не забудьте змінити статус на «Фасується» в таблиці!','wa',5000);
+    }
+  },600);
+}
+
+// ===== SCAN - прийом по артикулу =====
+var scanTimer=null;
+
+function pkChkToggle(el){
+  el.classList.toggle('on');
+  el.innerHTML=el.classList.contains('on')?'&#10003;':'';
+}
+function makeReadyBtn(num, name) {
+  var btn = document.createElement('div');
+  btn.style.cssText = 'padding:10px 14px;background:#e8f5e9;border-top:1px solid #a5d6a7;display:flex;gap:8px;align-items:center;';
+  btn.innerHTML = '<span style="font-size:12px;color:var(--gd);font-weight:600;">&#127881; Всі позиції зібрано!</span>';
+  var b = document.createElement('button');
+  b.className = 'btn sm pr';
+  b.textContent = 'Позначити Готове';
+  b.addEventListener('click', function(){ markOrderReady(num, name); });
+  btn.appendChild(b);
+  return btn;
+}
+
+function renderScanList(){
+  var list=orders.filter(function(o){
+    var k=sk(o.status);
+    if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return false;
+    return (items[o.num]||[]).length>0;
+  });
+  G('scCnt').textContent=list.length;
+  var container=G('scOrdersList');
+  if(!list.length){
+    container.innerHTML='<div class="es"><div class="es-ic">&#128230;</div><div class="es-t">Немає замовлень з вигрузкою</div></div>';
+    return;
+  }
+  container.innerHTML='';
+  list.forEach(function(o){
+    var its=items[o.num]||[];
+    var ss=scanState[o.num]||{};
+    var done=its.filter(function(it){return(ss[it.art]||0)>=it.qty;}).length;
+    var pct=its.length?Math.round(done/its.length*100):0;
+    var complete=pct===100;
+
+    // Create block
+    var block=document.createElement('div');
+    block.className='scan-order-block'+(complete?' complete':'');
+    block.style.marginBottom='8px';
+
+    // Header
+    var head=document.createElement('div');
+    head.className='sob-head';
+    var pctColor=complete?'var(--g)':'var(--mu)';
+    head.innerHTML='<div><span class="sob-num">#'+esc(o.num)+'</span><span class="sob-name">'+esc(o.name)+'</span></div>'
+      +'<div class="sob-right">'+pillH(o.status)
+      +'<span style="font-size:11px;font-weight:700;color:'+pctColor+'">'+done+'/'+its.length+'</span>'
+      +'<div class="pb-w"><div class="pb-f" style="width:'+pct+'%"></div></div>'
+      +(complete?'<span style="color:var(--g)">&#10003;</span>':'<span style="color:var(--mu);font-size:10px">&#9660;</span>')
+      +'</div>';
+
+    var body=document.createElement('div');
+    body.className='sob-body';
+    body.style.display='none';
+
+    // Items rows
+    its.forEach(function(it){
+      var sc=ss[it.art]||0;var ok=sc>=it.qty;var part=sc>0&&!ok;
+      var st=findStockForItem(it.art);
+      var loc=st?st.location:'--';
+      var row=document.createElement('div');
+      row.className='sob-row'+(ok?' ok':part?' part':'');
+      row.innerHTML='<span class="sob-art">'+esc(it.art)+'</span>'
+        +'<span style="flex:1">'+esc(it.name)+'</span>'
+        +'<span class="sob-loc">'+esc(loc)+'</span>'
+        +'<span style="font-size:11px;color:var(--mu)">'+it.qty+' шт</span>'
+        +'<span class="sob-st" style="color:'+(ok?'var(--g)':part?'var(--o)':'var(--mu)')+';">'
+        +(ok?'&#10003;':part?sc+'/'+it.qty:'--')+'</span>';
+      body.appendChild(row);
+    });
+
+    if(complete){body.appendChild(makeReadyBtn(o.num,o.name));}
+
+    head.addEventListener('click',function(){
+      body.style.display=body.style.display==='none'?'block':'none';
+    });
+
+    block.appendChild(head);
+    block.appendChild(body);
+    container.appendChild(block);
+  });
+}
+
+async function markOrderReady(num,name){
+  if(SCRIPT_URL){
+    var res=await callScript('setStatus',{orderNum:num,orderName:name,status:'Готове'});
+    if(res.ok){toast('Статус Готове','ok');loadAll(true);}
+    else toast('Помилка: '+(res.error||'?'),'er');
+  } else {
+    toast('Змініть статус в Google Sheets','wa',4000);
+  }
+}
+
+function initScanPage(){
+  var inp=G('scInp');if(!inp)return;
+  inp.value='';
+  inp.onkeydown=function(e){if(e.key==='Enter'){clearTimeout(scanTimer);processIncomingScan();}};
+  inp.oninput=function(){
+    clearTimeout(scanTimer);
+    if(inp.value.trim().length>=5)scanTimer=setTimeout(processIncomingScan,250);
+  };
+  // Заповнюємо випадаючий список голосів
+  fillVoiceSelector();
+}
+
+async function processIncomingScan(){
+  var inp=G('scInp');
+  var art=inp.value.trim();
+  inp.value='';inp.focus();
+  if(!art)return;
+  var fb=G('scFb');
+  // Знаходимо найкраще замовлення по даті вигрузки
+  var best=findBestOrderForArt(art);
+
+  if(!best){
+    // Перевіримо чи вже повністю зібрано
+    var allDone=[];
+    orders.forEach(function(o){
+      var its=items[o.num]||[];
+      var item=its.find(function(it){return it.art===art;});
+      if(item&&(scanState[o.num]||{})[art]>=item.qty)allDone.push(o);
+    });
+
+    inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
+    beep('error');
+
+    if(allDone.length){
+      fb.className='s-fb sf-wa';
+      fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ');
+      speakPhrase('phrase-already-packed');
+      // Автоматично додаємо в запас
+      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+      var itemName=furyInfo?furyInfo.name:'';
+      var fromOrders=allDone.map(function(o){return '#'+o.num+' '+o.name;}).join(', ');
+      addToReserve(art,itemName,1,fromOrders);
+      toast('📦 Товар додано в Запас','wa',3000);
+    } else {
+      fb.className='s-fb sf-er';
+      fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в жодному активному замовленні';
+      toast('Артикул '+art+' не знайдено — записано в прихід як «загальний»','wa',3000);
+      speakPhrase('phrase-not-in-order');
+    }
+    addScanLog(art,'','er');
+    // Записуємо в прихід навіть якщо не знайдено в замовленнях (тип "загальний")
+    if(SCRIPT_URL){
+      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+      var fallbackName=furyInfo?furyInfo.name:'';
+      try{await callScript('scan',{art:art,name:fallbackName,qty:1,orderNum:'',orderName:''});}catch(e){}
+    }
+    return;
+  }
+
+  var o=best.order;var item=best.item;
+  // Голосовий асистент — каже імʼя клієнта і останні 4 цифри номера замовлення
+  speakOrder(o.name,o.num);
+  if(!scanState[o.num])scanState[o.num]={};
+  scanState[o.num][art]=(scanState[o.num][art]||0)+1;
+  var newCount=scanState[o.num][art];
+  var isDone=newCount>=item.qty;
+
+  // Формуємо інфо про дату вигрузки
+  var dateInfo='';
+  if(best.itemDate){
+    var now2=new Date();
+    var diffH=Math.round((now2-best.itemDate)/3600000);
+    if(diffH<1)dateInfo=' (вигрузка тільки що)';
+    else if(diffH<24)dateInfo=' (вигрузка '+diffH+'год тому)';
+    else dateInfo=' (вигрузка '+item.date+')';
+  }
+
+  fb.className='s-fb sf-ok';
+  fb.innerHTML='&#10003; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>'
+    +'&#128230; <strong>#'+esc(o.num)+'</strong> --- '+esc(o.name)
+    +'<span style="font-size:11px;color:var(--g)">'+dateInfo+'</span><br>'
+    +'<span style="font-size:11px;color:var(--mu)">'+newCount+'/'+item.qty+(isDone?' --- позиція зібрана &#10003;':' --- ще '+(item.qty-newCount)+' шт')+'</span>';
+
+  // Показуємо інші замовлення де теж потрібен цей артикул
+  var otherCandidates=[];
+  orders.forEach(function(o2){
+    if(o2.num===o.num)return;
+    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return;
+    var its=items[o2.num]||[];
+    var it2=its.find(function(it){return it.art===art;});
+    if(it2&&(scanState[o2.num]||{})[art]<it2.qty)otherCandidates.push(o2);
+  });
+  if(otherCandidates.length){
+    fb.innerHTML+='<br><span style="font-size:11px;color:var(--b)">Також потрібен: '
+      +otherCandidates.map(function(o2){return '#'+esc(o2.num)+' '+esc(o2.name);}).join(', ')+'</span>';
+  }
+
+  addScanLog(art,item.name,'ok');
+  renderScanList();
+
+  if(SCRIPT_URL){
+    var res=await callScript('scan',{art:art,name:item.name,qty:1,orderNum:o.num,orderName:o.name});
+    if(res&&res.complete){
+      toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);
+      speakPhrase('phrase-order-complete');
+      loadAll();
+    }
+  }
+  if(isDone){toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);}
+}
+
+// ===== PARSE FURY =====
+// інфо фури:
+// A=Назва, B=Розмір, C=Постачальник
+// J=Артикул ящика (опт), K=К-сть в ящику, L=Куплено під J
+// M=Артикул дрібного гурту (наш, у замовленнях), N=К-сть в упаковці дрібного гурту, O=Куплено під M
+// Q=Артикул Флоріум (маркування ящиків на складі), R=К-сть цибульок на складі
+function parseFury(rows){
+  fury={};
+  for(var i=2;i<rows.length;i++){
+    var r=rows[i]||[];
+    var artBox=(r[9]||'').toString().trim();     // J = артикул ящика
+    var artRetail=(r[12]||'').toString().trim(); // M = артикул дрібного гурту (наш)
+    var artFlorium=(r[16]||'').toString().trim();// Q = артикул Флоріум (склад)
+    if(!artBox&&!artRetail&&!artFlorium)continue;
+    var obj={
+      name:(r[0]||'').trim(),
+      size:(r[1]||'').trim(),
+      supplier:(r[2]||'').trim(),
+      artBox:artBox,                                  // J
+      packBoxQty:(r[10]||'').toString().trim(),       // K — к-сть в ящику
+      boughtBox:(r[11]||'').toString().trim(),        // L — куплено ящиком
+      artRetail:artRetail,                            // M
+      packQty:(r[13]||'').toString().trim(),          // N — к-сть в упаковці дрібного гурту
+      boughtRetail:(r[14]||'').toString().trim(),     // O — куплено дрібним гуртом
+      artFlorium:artFlorium,                          // Q — артикул Флоріум (склад)
+      stockQty:(r[17]||'').toString().trim(),         // R — к-сть на складі
+    };
+    if(artRetail)fury[artRetail]=obj;        // основний ключ — артикул із замовлення (M)
+    if(artBox)fury['b_'+artBox]=obj;          // запасний — артикул ящика (J)
+    if(artFlorium)fury['f_'+artFlorium]=obj;  // запасний — артикул Флоріум (Q)
+  }
+  console.log('Fury loaded:', Object.keys(fury).length, 'items');
+}
+
+// ===== PARSE INCOME (прихід) =====
+// прихід: A=Дата/час, B=Артикул, C=Назва, D=К-сть, E=№ замовлення, F=Клієнт, G=Оператор, H=Тип
+function parseIncome(rows){
+  income=[];
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i]||[];
+    if(!(r[1]||'').trim())continue;
+    income.push({
+      date:(r[0]||'').trim(),
+      art:(r[1]||'').trim(),
+      name:(r[2]||'').trim(),
+      qty:parseInt(r[3])||0,
+      orderNum:(r[4]||'').trim(),
+      client:(r[5]||'').trim(),
+      operator:(r[6]||'').trim(),
+      type:(r[7]||'').trim()
+    });
+  }
+  // Відновлюємо scanState з реальних даних "прихід" (щоб прогрес зберігався після оновлення)
+  scanState={};
+  income.forEach(function(inc){
+    if(!inc.orderNum||!inc.art)return; // пропускаємо "загальний" тип і порожні
+    if(!scanState[inc.orderNum])scanState[inc.orderNum]={};
+    scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+(inc.qty||1);
+  });
+  console.log('scanState відновлено для',Object.keys(scanState).length,'замовлень');
+}
+
+// ===== SCAN LOG =====
+function addScanLog(art,name,type){
+  var time=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  scanLog.unshift({art:art,name:name,type:type,time:time});
+  if(scanLog.length>50)scanLog.pop();
+  var wrap=G('slogWrap');var body=G('slogBody');
+  if(!wrap||!body)return;
+  wrap.style.display='';
+  body.innerHTML=scanLog.slice(0,12).map(function(l){
+    var cls=l.type==='ok'?'color:var(--g)':l.type==='wa'?'color:var(--o)':'color:var(--r)';
+    return '<div style="padding:7px 14px;border-bottom:1px solid var(--bo2);display:flex;align-items:center;gap:8px;font-size:12px;">'
+      +'<span style="font-family:monospace;font-weight:700;color:var(--gd);min-width:80px;">'+esc(l.art)+'</span>'
+      +'<span style="flex:1">'+esc(l.name)+'</span>'
+      +'<span style="font-size:10px;font-weight:700;'+cls+'">'+( l.type==='ok'?'OK':l.type==='wa'?'Чужий':'Не той')+'</span>'
+      +'<span style="font-size:10px;color:var(--mu);margin-left:auto">'+l.time+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+// ===== STOCK =====
+function renderStock(){
+  var q=((G('stkSearch')?.value)||'').toLowerCase();
+  var list=stock.filter(function(s){return !q||(s.art+' '+s.boxId+' '+s.name).toLowerCase().includes(q);});
+  G('stkCnt').textContent=list.length+' позицій';
+  if(!list.length){G('stkBody').innerHTML='<tr><td colspan="10" class="es">Нічого</td></tr>';return;}
+  G('stkBody').innerHTML=list.map(function(s){
+    var qc=s.qty>10?'qb-g':s.qty>0?'qb-y':'qb-r';
+    return '<tr>'
+      +'<td class="art" style="font-family:monospace;font-weight:700;color:#7b1fa2">'+esc(s.art)+'</td>'
+      +'<td style="font-family:monospace;font-size:12px;color:var(--mu)">'+esc(s.boxId)+'</td>'
+      +'<td>'+esc(s.name)+'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(s.size)+'</td>'
+      +'<td style="text-align:right"><span class="qb '+qc+'">'+s.qty+'</span></td>'
+      +'<td style="text-align:right;font-size:12px;font-weight:600">'+s.bulbs+'</td>'
+      +'<td><span class="stk-loc" title="'+esc(s.location)+'">'+esc(s.location||'—')+'</span></td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(s.supplier)+'</td>'
+      +'<td style="font-size:11px">'+esc(s.boxStatus)+'</td>'
+      +'<td style="font-size:11px;color:var(--mu)">'+esc(s.category)+'</td>'
+    +'</tr>';
+  }).join('');
+}
+
+// Wait for DOM before init
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+  checkAuth();
+}
+
+
+
+</script>
+</body>
+</html>
