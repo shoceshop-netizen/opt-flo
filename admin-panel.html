@@ -455,6 +455,21 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 .cm-chip.on{background:var(--g);color:#fff;border-color:var(--g);}
 .cm-group-row td{background:#e8f5e9!important;font-weight:800!important;color:var(--gd)!important;font-size:12px!important;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px!important;border-top:2px solid var(--g)!important;}
 
+/* AUTO-HIDE SIDEBAR (десктоп: вузька, розкривається при наведенні мишки) */
+.ni-lbl{white-space:nowrap;}
+@media(min-width:769px){
+  .sb{position:fixed;left:0;top:0;height:100vh;width:64px;overflow:hidden;z-index:300;transition:width .18s ease, box-shadow .18s ease;}
+  .sb:hover{width:220px;box-shadow:var(--sh2);}
+  .main{margin-left:64px;}
+  .ni-lbl,.nb,.nav-sec,.sb-name,.sb-sub,.sb-foot{transition:opacity .15s ease;}
+  .sb:not(:hover) .ni-lbl,
+  .sb:not(:hover) .nb,
+  .sb:not(:hover) .nav-sec,
+  .sb:not(:hover) .sb-name,
+  .sb:not(:hover) .sb-sub,
+  .sb:not(:hover) .sb-foot{opacity:0;}
+}
+
 /* MOBILE */
 @media(max-width:768px){
   .sb{position:fixed;left:-230px;width:230px;z-index:200;transition:left .2s;}
@@ -539,17 +554,18 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
   </div>
   <div class="sb-nav">
     <div class="nav-sec">Робота</div>
-    <div class="ni on" id="nav-orders"><span class="ni-ic">📦</span>Замовлення<span class="nb nb-g" id="bAll">0</span></div>
-    <div class="ni" id="nav-picker"><span class="ni-ic">🚛</span>Фасування<span class="nb nb-y" id="bPick">0</span></div>
-    <div class="ni" id="nav-scan"><span class="ni-ic">📱</span>Склад<span class="nb nb-b" id="bScan">0</span></div>
-    <div class="nav-sec">Довідники</div>
-    <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span>Товари</div>
-    <div class="ni" id="nav-reserve"><span class="ni-ic">📦</span>Запас<span class="nb nb-g" id="bReserve">0</span></div>
-    <div class="ni" id="nav-voices"><span class="ni-ic">🎙</span>Голоси</div>
+    <div class="ni on" id="nav-orders"><span class="ni-ic">📦</span><span class="ni-lbl">Замовлення</span><span class="nb nb-g" id="bAll">0</span></div>
+    <div class="ni" id="nav-picker"><span class="ni-ic">🚛</span><span class="ni-lbl">Фасування</span><span class="nb nb-y" id="bPick">0</span></div>
+    <div class="ni" id="nav-scan"><span class="ni-ic">📲</span><span class="ni-lbl">Прийом фасованого товару</span><span class="nb nb-b" id="bScan">0</span></div>
+    <div class="ni" onclick="goVerify()"><span class="ni-ic">🔍</span><span class="ni-lbl">Перескановка перед відправкою</span></div>
+    <div class="nav-sec">Окремо</div>
+    <div class="ni" id="nav-stock"><span class="ni-ic">🌿</span><span class="ni-lbl">Товари</span></div>
+    <div class="ni" id="nav-reserve"><span class="ni-ic">📦</span><span class="ni-lbl">Запас</span><span class="nb nb-g" id="bReserve">0</span></div>
+    <div class="ni" id="nav-voices"><span class="ni-ic">🎙</span><span class="ni-lbl">Голоси</span></div>
   </div>
   <div class="sb-foot" id="sbt"></div>
   <div style="padding:10px 18px;border-top:1px solid var(--bo)">
-    <button onclick="logout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid var(--bo);color:var(--tx3);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='var(--red-l)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--tx3)';this.style.borderColor='var(--bo)'">🔒 Вийти</button>
+    <button onclick="logout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid var(--bo);color:var(--tx3);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='var(--red-l)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--tx3)';this.style.borderColor='var(--bo)'">🔒 <span class="ni-lbl">Вийти</span></button>
   </div>
 </aside>
 
@@ -806,7 +822,7 @@ body{font-family:var(--font);font-size:14px;color:var(--tx);background:var(--bg)
 // ===== CONFIG =====
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
-var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
+var SHEET_ID='1vcLTDJ-7VyH29xZpzVpbwWnZ-sg2RfeenZrj8i8yjBM'; // лише для кнопки «↗ Таблиця»
 var CACHE_KEY='fl_cache';
 
 // ===== AUTH — відключено =====
@@ -895,6 +911,8 @@ async function doLogin(){
       // Показуємо додаток
       var ls=G('loginScreen');if(ls)ls.remove();
       showApp();
+      // Головний екран (ОПТ) показуємо ТІЛЬКИ одразу після входу
+      showWelcomeScreen();
     } else {
       errEl.textContent=(res&&res.error)?res.error:'Невірний пароль';
       pwdInp.value='';
@@ -954,8 +972,6 @@ function showApp(){
     });
   });
   init();
-  // Показуємо welcome екран з вибором дії
-  showWelcomeScreen();
   // Перевіряємо expiry кожні 5 хв
   setInterval(checkSessionExpiry,5*60*1000);
 }
@@ -2765,6 +2781,12 @@ function renderDashOld(c){
 function setFilter(f){
   filter=f;
   renderOrders();
+}
+function goVerify(){
+  hideWelcome();
+  nav('orders');
+  setFilter('ready');
+  toast('Виберіть замовлення зі статусом «Готове» і натисніть «🔍 Перевірити»','in',5000);
 }
 function renderFilters(){
   var c=getCounts();
