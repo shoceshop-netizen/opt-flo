@@ -2627,7 +2627,7 @@ function findBestOrderForArt(art){
 
   orders.forEach(function(o){
     var k=sk(o.status);
-    if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return;
+    if(k==='sent'||k==='cancel'||k==='ready')return; // усі активні (вкл. нові та відкладені), крім готових/відправлених/відмов
     var its=items[o.num]||[];
     var item=its.find(function(it){return it.art===art;});
     if(!item)return;
@@ -3231,15 +3231,15 @@ function openVerifyModal(o){
       verifyScanArt();
     }
   };
-  // Дебаунс — якщо введено >=3 символів і немає вводу >180мс, виконати скан
-  // Це покриває сканери що не шлють Enter
+  // Дебаунс — автоскан лише якщо немає вводу 10 секунд (щоб встигнути набрати вручну).
+  // Сканери шлють Enter (миттєвий скан вище); це лише запасний варіант для сканерів без Enter.
   inp.oninput=function(){
     if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
     var v=inp.value.trim();
     if(v.length>=3){
       window._verifyDebounce=setTimeout(function(){
         verifyScanArt();
-      },200);
+      },10000);
     }
   };
 }
@@ -3889,7 +3889,7 @@ function makeReadyBtn(num, name) {
 function renderScanList(){
   var list=orders.filter(function(o){
     var k=sk(o.status);
-    if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return false;
+    if(k==='sent'||k==='cancel'||k==='ready')return false; // усі активні, крім готових/відправлених/відмов
     return (items[o.num]||[]).length>0;
   });
   G('scCnt').textContent=list.length;
@@ -3970,7 +3970,8 @@ function initScanPage(){
   inp.onkeydown=function(e){if(e.key==='Enter'){clearTimeout(scanTimer);processIncomingScan();}};
   inp.oninput=function(){
     clearTimeout(scanTimer);
-    if(inp.value.trim().length>=5)scanTimer=setTimeout(processIncomingScan,250);
+    // автоскан лише після 10 сек паузи (щоб встигнути набрати вручну); Enter = миттєво
+    if(inp.value.trim().length>=5)scanTimer=setTimeout(processIncomingScan,10000);
   };
   // Заповнюємо випадаючий список голосів
   fillVoiceSelector();
@@ -4051,7 +4052,7 @@ async function processIncomingScan(){
   var otherCandidates=[];
   orders.forEach(function(o2){
     if(o2.num===o.num)return;
-    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready'||k==='defer')return;
+    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready')return; // усі активні, крім готових/відправлених/відмов
     var its=items[o2.num]||[];
     var it2=its.find(function(it){return it.art===art;});
     if(it2&&(scanState[o2.num]||{})[art]<it2.qty)otherCandidates.push(o2);
