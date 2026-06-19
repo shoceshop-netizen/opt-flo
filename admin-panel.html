@@ -2604,10 +2604,10 @@ function parseItems(rows){
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
     var art=(r[0]||'').trim(),qty=(r[1]||'').trim(),name=(r[2]||'').trim();
-    var num=(r[5]||'').trim(),date=(r[8]||'').trim();
+    var num=(r[3]||'').trim(),client=(r[4]||'').trim(),date=(r[5]||'').trim();
     if(!num||!art)continue;
     if(!items[num])items[num]=[];
-    items[num].push({art,qty:parseInt(qty)||0,name,date});
+    items[num].push({art,qty:parseInt(qty)||0,name,date,client});
   }
 }
 
@@ -4002,24 +4002,27 @@ async function processIncomingScan(){
   if(!raw)return;
   var fb=G('scFb');
 
-  // Наліпка ящика: "артикул штрихкод к-сть" (через пробіли).
-  // 1 частина = старий режим (лише артикул, к-сть 1, без штрихкоду).
+  // Наліпка ящика: "артикул штрихкод К-сть_в_упаковці" (через пробіли).
+  // К-сть в упаковці — ЛИШЕ для звірки з інфо фури; у замовлення завжди додається 1 ящик.
   var parts=raw.split(/\s+/).filter(function(x){return x;});
   var art=parts[0];
   var barcode=parts.length>=2?parts[1]:'';
-  var qty=parts.length>=3?(parseInt(parts[2],10)||1):1;
+  var packQty=parts.length>=3?(parseInt(parts[2],10)||0):0;
 
-  // --- Локальна дедуплікація по штрихкоду (миттєво, ще до сервера) ---
+  // --- Локальна дедуплікація по унікальному штрихкоду ---
   if(barcode&&scannedBarcodes[barcode]){
     var ex=scannedBarcodes[barcode];
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
     fb.className='s-fb sf-er';
-    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum)+(ex.qty?' ('+ex.qty+' шт)':''):'');
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum):'');
     speakPhrase('phrase-already-packed');
     addScanLog(art,'дубль ящика','er');
     return;
   }
+
+  // --- Звірка К-сті в упаковці з інфо фури (J->K ящик, M->N дрібний гурт) ---
+  var packCheck=computePackCheck(art,packQty);
 
   // --- Знаходимо найкраще замовлення по артикулу ---
   var best=findBestOrderForArt(art);
@@ -4027,7 +4030,6 @@ async function processIncomingScan(){
   var itemName=best?best.item.name:(furyInfo?furyInfo.name:'');
 
   if(!best){
-    // Не знайдено активного замовлення з таким артикулом
     var allDone=[];
     orders.forEach(function(o){
       var its=items[o.num]||[];
@@ -4038,25 +4040,23 @@ async function processIncomingScan(){
     beep('error');
     if(allDone.length){
       fb.className='s-fb sf-wa';
-      fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ')+'<br><span style="font-size:11px;color:var(--mu)">'+qty+' шт &#8594; Запас</span>';
+      fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ')+'<br><span style="font-size:11px;color:var(--mu)">1 ящик &#8594; Запас</span>'+packLine(packCheck);
       speakPhrase('phrase-already-packed');
       var fromOrders=allDone.map(function(o){return '#'+o.num+' '+o.name;}).join(', ');
-      addToReserve(art,itemName,qty,fromOrders);
-      toast('Товар (' + qty + ' шт) додано в Запас','wa',3000);
+      addToReserve(art,itemName,1,fromOrders);
+      toast('Ящик додано в Запас','wa',3000);
     } else {
       fb.className='s-fb sf-er';
-      fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в активних замовленнях<br><span style="font-size:11px;color:var(--mu)">записано в прихід як «загальний»</span>';
+      fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в активних замовленнях<br><span style="font-size:11px;color:var(--mu)">записано в прихід як «загальний»</span>'+packLine(packCheck);
       speakPhrase('phrase-not-in-order');
       toast('Артикул '+art+' не знайдено — у прихід як «загальний»','wa',3000);
     }
     addScanLog(art,itemName,'er');
     if(SCRIPT_URL){
       try{
-        var resG=await callScript('scan',{art:art,barcode:barcode,name:itemName,qty:qty,orderNum:'',orderName:''});
-        if(resG&&resG.duplicate){
-          fb.className='s-fb sf-er';
-          fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано';
-        } else if(barcode){scannedBarcodes[barcode]={orderNum:'',art:art,qty:qty,name:itemName};}
+        var resG=await callScript('scan',{art:art,barcode:barcode,name:itemName,qty:1,packQty:packQty,orderNum:'',orderName:''});
+        if(resG&&resG.duplicate){fb.className='s-fb sf-er';fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано';}
+        else if(barcode){scannedBarcodes[barcode]={orderNum:'',art:art,qty:1,name:itemName};}
       }catch(e){}
     }
     return;
@@ -4068,46 +4068,39 @@ async function processIncomingScan(){
   // Без бекенду — лише локальний оптимістичний підрахунок
   if(!SCRIPT_URL){
     if(!scanState[o.num])scanState[o.num]={};
-    scanState[o.num][art]=(scanState[o.num][art]||0)+qty;
-    if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:qty,name:item.name};
-    renderScanOk(fb,art,item,o,best,scanState[o.num][art],item.qty);
+    scanState[o.num][art]=(scanState[o.num][art]||0)+1;
+    if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};
+    renderScanOk(fb,art,item,o,best,scanState[o.num][art],item.qty,packCheck);
     addScanLog(art,item.name,'ok');renderScanList();
     return;
   }
 
-  // --- Сервер записує ящик і повертає: потрібно / прийшло / статус ---
-  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:qty,orderNum:o.num,orderName:o.name});
+  // --- Сервер записує 1 ящик + унікальний штрихкод і повертає прогрес ---
+  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name});
 
-  // дубль штрихкоду (зловив сервер)
   if(res&&res.duplicate){
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
     fb.className='s-fb sf-er';
-    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(res.existingOrder?' &#8594; #'+esc(res.existingOrder)+(res.existingQty?' ('+res.existingQty+' шт)':''):'');
-    if(barcode)scannedBarcodes[barcode]={orderNum:res.existingOrder||'',art:res.art||art,qty:res.existingQty||0,name:res.name||''};
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(res.existingOrder?' &#8594; #'+esc(res.existingOrder):'');
+    if(barcode)scannedBarcodes[barcode]={orderNum:res.existingOrder||'',art:res.art||art,qty:1,name:res.name||''};
     speakPhrase('phrase-already-packed');
     addScanLog(art,'дубль ящика','er');
     return;
   }
-  if(!res||!res.ok){
-    beep('error');
-    fb.className='s-fb sf-er';
-    fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');
-    return;
-  }
+  if(!res||!res.ok){beep('error');fb.className='s-fb sf-er';fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');return;}
 
-  // оновлюємо локальний стан із серверних чисел
   var needed=(res.needed!=null)?res.needed:item.qty;
-  var received=(res.received!=null)?res.received:(((scanState[o.num]||{})[art]||0)+qty);
+  var received=(res.received!=null)?res.received:(((scanState[o.num]||{})[art]||0)+1);
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=received;
-  if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:qty,name:item.name};
+  if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};
 
-  // ПЕРЕБІР — відкриваємо меню розподілу зайвих ящиків
+  // ПЕРЕБІР — меню розподілу зайвих ящиків
   if(res.status==='overflow'){
     beep('error');
     fb.className='s-fb sf-wa';
-    fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong> (+'+(res.excess!=null?res.excess:(received-needed))+')';
+    fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck);
     speakPhrase('phrase-exceeded');
     addScanLog(art,item.name,'wa');
     renderScanList();
@@ -4116,19 +4109,33 @@ async function processIncomingScan(){
   }
 
   // НЕДОБІР / РІВНО
-  renderScanOk(fb,art,item,o,best,received,needed);
+  renderScanOk(fb,art,item,o,best,received,needed,packCheck);
   addScanLog(art,item.name,'ok');
   renderScanList();
   if(res.status==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
-  if(res.orderComplete||res.complete){
-    toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);
-    speakPhrase('phrase-order-complete');
-    loadAll();
-  }
+  if(res.orderComplete||res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);speakPhrase('phrase-order-complete');loadAll();}
 }
 
-// Зелений фідбек скану (недобір/рівно) + підказка інших замовлень
-function renderScanOk(fb,art,item,o,best,received,needed){
+// Звірка К-сті в упаковці з інфо фури: артикул у J -> очікувана к-сть з K; у M -> з N
+function computePackCheck(art,packQty){
+  if(!packQty)return null;
+  var fbx=fury['b_'+art]; // J — артикул ящика (опт)
+  if(fbx&&fbx.packBoxQty){var ex=parseInt(fbx.packBoxQty,10)||0;return {scanned:packQty,expected:ex,ok:(ex===packQty),kind:'ящик'};}
+  var fre=fury[art];      // M — артикул дрібного гурту (наш)
+  if(fre&&fre.packQty){var ex2=parseInt(fre.packQty,10)||0;return {scanned:packQty,expected:ex2,ok:(ex2===packQty),kind:'упаковка'};}
+  return {scanned:packQty,expected:null,ok:null,kind:null}; // нема в інфо фури — звірити нема з чим
+}
+
+// Рядок фідбеку про звірку К-сті в упаковці
+function packLine(pc){
+  if(!pc)return '';
+  if(pc.expected==null)return '<br><span style="font-size:11px;color:var(--mu)">упаковка '+pc.scanned+' шт — нема в інфо фури, не звірено</span>';
+  if(pc.ok)return '<br><span style="font-size:11px;color:var(--g)">упаковка '+pc.scanned+' шт &#10003; звірено з фурою</span>';
+  return '<br><span style="font-size:12px;color:var(--r);font-weight:700">&#9888; упаковка '+pc.scanned+' шт, а в фурі '+pc.expected+' шт — перевір ящик!</span>';
+}
+
+// Зелений фідбек скану (недобір/рівно) + звірка упаковки + підказка інших замовлень
+function renderScanOk(fb,art,item,o,best,received,needed,packCheck){
   var dateInfo='';
   if(best&&best.itemDate){
     var now2=new Date();var diffH=Math.round((now2-best.itemDate)/3600000);
@@ -4141,7 +4148,8 @@ function renderScanOk(fb,art,item,o,best,received,needed){
   fb.innerHTML='&#10003; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>'
     +'&#128230; <strong>#'+esc(o.num)+'</strong> --- '+esc(o.name)
     +'<span style="font-size:11px;color:var(--g)">'+dateInfo+'</span><br>'
-    +'<span style="font-size:11px;color:var(--mu)">'+received+'/'+needed+(done?' --- позиція зібрана &#10003;':' --- ще '+(needed-received)+' шт')+'</span>';
+    +'<span style="font-size:11px;color:var(--mu)">'+received+'/'+needed+(done?' --- позиція зібрана &#10003;':' --- ще '+(needed-received)+' шт')+'</span>'
+    +packLine(packCheck);
   var others=[];
   orders.forEach(function(o2){
     if(o2.num===o.num)return;
@@ -4182,7 +4190,7 @@ function openOverflowModal(order,art,name,needed,boxes){
     rows+='<div class="ovf-row" data-bc="'+esc(b.barcode||'')+'" data-qty="'+(b.qty||0)+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bo2);border-radius:10px;margin-bottom:8px;">'
       +'<div style="flex:1;min-width:0;">'
         +'<div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--tx);">'+esc(b.barcode||'(без штрихкоду)')+'</div>'
-        +'<div style="font-size:11px;color:var(--mu);">'+(b.qty||0)+' шт</div>'
+        +'<div style="font-size:11px;color:var(--mu);">1 ящик'+(b.packQty?' &middot; '+b.packQty+' шт/уп':'')+'</div>'
       +'</div>'
       +'<select class="ovf-sel" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;">'+optsHtml()+'</select>'
     +'</div>';
@@ -4307,18 +4315,19 @@ function parseIncome(rows){
   income=[];scannedBarcodes={};
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
-    if(!(r[1]||'').trim())continue;
-    var bc=(r[8]||'').trim(); // I = Штрихкод ящика
+    if(!(r[0]||'').trim())continue; // A = артикул
+    var bc=(r[1]||'').trim(); // B = Штрихкод ящика
     var rec={
-      date:(r[0]||'').trim(),
-      art:(r[1]||'').trim(),
-      name:(r[2]||'').trim(),
-      qty:parseInt(r[3])||0,
-      orderNum:(r[4]||'').trim(),
-      client:(r[5]||'').trim(),
-      operator:(r[6]||'').trim(),
-      type:(r[7]||'').trim(),
-      barcode:bc
+      art:(r[0]||'').trim(),       // A
+      barcode:bc,                   // B
+      packQty:parseInt(r[2])||0,    // C — кільк в упаковці
+      qty:parseInt(r[3])||0,        // D
+      name:(r[4]||'').trim(),       // E
+      orderNum:(r[5]||'').trim(),   // F
+      client:(r[6]||'').trim(),     // G
+      operator:(r[7]||'').trim(),   // H
+      type:(r[8]||'').trim(),       // I
+      date:(r[9]||'').trim()        // J
     };
     income.push(rec);
     if(bc)scannedBarcodes[bc]={orderNum:rec.orderNum,art:rec.art,qty:rec.qty,name:rec.name};
