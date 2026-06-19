@@ -2490,7 +2490,7 @@ function stagesH(status){
 }
 
 // ===== STATE =====
-var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[];
+var orders=[],items={},stock=[],fury={},income=[],scanState={},scanLog=[],scannedBarcodes={};
 var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
 var multiMode=false,multiSel={};
 var combinedItems=[],combinedOrders=[];
@@ -3979,102 +3979,275 @@ function initScanPage(){
 
 async function processIncomingScan(){
   var inp=G('scInp');
-  var art=inp.value.trim();
+  var raw=inp.value.trim();
   inp.value='';inp.focus();
-  if(!art)return;
+  if(!raw)return;
   var fb=G('scFb');
-  // Знаходимо найкраще замовлення по даті вигрузки
+
+  // Наліпка ящика: "артикул штрихкод к-сть" (через пробіли).
+  // 1 частина = старий режим (лише артикул, к-сть 1, без штрихкоду).
+  var parts=raw.split(/\s+/).filter(function(x){return x;});
+  var art=parts[0];
+  var barcode=parts.length>=2?parts[1]:'';
+  var qty=parts.length>=3?(parseInt(parts[2],10)||1):1;
+
+  // --- Локальна дедуплікація по штрихкоду (миттєво, ще до сервера) ---
+  if(barcode&&scannedBarcodes[barcode]){
+    var ex=scannedBarcodes[barcode];
+    inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
+    beep('error');
+    fb.className='s-fb sf-er';
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum)+(ex.qty?' ('+ex.qty+' шт)':''):'');
+    speakPhrase('phrase-already-packed');
+    addScanLog(art,'дубль ящика','er');
+    return;
+  }
+
+  // --- Знаходимо найкраще замовлення по артикулу ---
   var best=findBestOrderForArt(art);
+  var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
+  var itemName=best?best.item.name:(furyInfo?furyInfo.name:'');
 
   if(!best){
-    // Перевіримо чи вже повністю зібрано
+    // Не знайдено активного замовлення з таким артикулом
     var allDone=[];
     orders.forEach(function(o){
       var its=items[o.num]||[];
-      var item=its.find(function(it){return it.art===art;});
-      if(item&&(scanState[o.num]||{})[art]>=item.qty)allDone.push(o);
+      var it=its.find(function(x){return x.art===art;});
+      if(it&&(scanState[o.num]||{})[art]>=it.qty)allDone.push(o);
     });
-
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
-
     if(allDone.length){
       fb.className='s-fb sf-wa';
-      fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ');
+      fb.innerHTML='&#9989; <strong>'+esc(art)+'</strong> --- вже повністю зібрано для: '+allDone.map(function(o){return '#'+esc(o.num);}).join(', ')+'<br><span style="font-size:11px;color:var(--mu)">'+qty+' шт &#8594; Запас</span>';
       speakPhrase('phrase-already-packed');
-      // Автоматично додаємо в запас
-      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
-      var itemName=furyInfo?furyInfo.name:'';
       var fromOrders=allDone.map(function(o){return '#'+o.num+' '+o.name;}).join(', ');
-      addToReserve(art,itemName,1,fromOrders);
-      toast('📦 Товар додано в Запас','wa',3000);
+      addToReserve(art,itemName,qty,fromOrders);
+      toast('Товар (' + qty + ' шт) додано в Запас','wa',3000);
     } else {
       fb.className='s-fb sf-er';
-      fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в жодному активному замовленні';
-      toast('Артикул '+art+' не знайдено — записано в прихід як «загальний»','wa',3000);
+      fb.innerHTML='&#10060; <strong>'+esc(art)+'</strong> --- не знайдено в активних замовленнях<br><span style="font-size:11px;color:var(--mu)">записано в прихід як «загальний»</span>';
       speakPhrase('phrase-not-in-order');
+      toast('Артикул '+art+' не знайдено — у прихід як «загальний»','wa',3000);
     }
-    addScanLog(art,'','er');
-    // Записуємо в прихід навіть якщо не знайдено в замовленнях (тип "загальний")
+    addScanLog(art,itemName,'er');
     if(SCRIPT_URL){
-      var furyInfo=fury[art]||fury['b_'+art]||fury['f_'+art]||null;
-      var fallbackName=furyInfo?furyInfo.name:'';
-      try{await callScript('scan',{art:art,name:fallbackName,qty:1,orderNum:'',orderName:''});}catch(e){}
+      try{
+        var resG=await callScript('scan',{art:art,barcode:barcode,name:itemName,qty:qty,orderNum:'',orderName:''});
+        if(resG&&resG.duplicate){
+          fb.className='s-fb sf-er';
+          fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано';
+        } else if(barcode){scannedBarcodes[barcode]={orderNum:'',art:art,qty:qty,name:itemName};}
+      }catch(e){}
     }
     return;
   }
 
   var o=best.order;var item=best.item;
-  // Голосовий асистент — каже імʼя клієнта і останні 4 цифри номера замовлення
   speakOrder(o.name,o.num);
-  if(!scanState[o.num])scanState[o.num]={};
-  scanState[o.num][art]=(scanState[o.num][art]||0)+1;
-  var newCount=scanState[o.num][art];
-  var isDone=newCount>=item.qty;
 
-  // Формуємо інфо про дату вигрузки
+  // Без бекенду — лише локальний оптимістичний підрахунок
+  if(!SCRIPT_URL){
+    if(!scanState[o.num])scanState[o.num]={};
+    scanState[o.num][art]=(scanState[o.num][art]||0)+qty;
+    if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:qty,name:item.name};
+    renderScanOk(fb,art,item,o,best,scanState[o.num][art],item.qty);
+    addScanLog(art,item.name,'ok');renderScanList();
+    return;
+  }
+
+  // --- Сервер записує ящик і повертає: потрібно / прийшло / статус ---
+  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:qty,orderNum:o.num,orderName:o.name});
+
+  // дубль штрихкоду (зловив сервер)
+  if(res&&res.duplicate){
+    inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
+    beep('error');
+    fb.className='s-fb sf-er';
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(res.existingOrder?' &#8594; #'+esc(res.existingOrder)+(res.existingQty?' ('+res.existingQty+' шт)':''):'');
+    if(barcode)scannedBarcodes[barcode]={orderNum:res.existingOrder||'',art:res.art||art,qty:res.existingQty||0,name:res.name||''};
+    speakPhrase('phrase-already-packed');
+    addScanLog(art,'дубль ящика','er');
+    return;
+  }
+  if(!res||!res.ok){
+    beep('error');
+    fb.className='s-fb sf-er';
+    fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');
+    return;
+  }
+
+  // оновлюємо локальний стан із серверних чисел
+  var needed=(res.needed!=null)?res.needed:item.qty;
+  var received=(res.received!=null)?res.received:(((scanState[o.num]||{})[art]||0)+qty);
+  if(!scanState[o.num])scanState[o.num]={};
+  scanState[o.num][art]=received;
+  if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:qty,name:item.name};
+
+  // ПЕРЕБІР — відкриваємо меню розподілу зайвих ящиків
+  if(res.status==='overflow'){
+    beep('error');
+    fb.className='s-fb sf-wa';
+    fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong> (+'+(res.excess!=null?res.excess:(received-needed))+')';
+    speakPhrase('phrase-exceeded');
+    addScanLog(art,item.name,'wa');
+    renderScanList();
+    openOverflowModal(o,art,item.name,needed,res.boxes||[]);
+    return;
+  }
+
+  // НЕДОБІР / РІВНО
+  renderScanOk(fb,art,item,o,best,received,needed);
+  addScanLog(art,item.name,'ok');
+  renderScanList();
+  if(res.status==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
+  if(res.orderComplete||res.complete){
+    toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);
+    speakPhrase('phrase-order-complete');
+    loadAll();
+  }
+}
+
+// Зелений фідбек скану (недобір/рівно) + підказка інших замовлень
+function renderScanOk(fb,art,item,o,best,received,needed){
   var dateInfo='';
-  if(best.itemDate){
-    var now2=new Date();
-    var diffH=Math.round((now2-best.itemDate)/3600000);
+  if(best&&best.itemDate){
+    var now2=new Date();var diffH=Math.round((now2-best.itemDate)/3600000);
     if(diffH<1)dateInfo=' (вигрузка тільки що)';
     else if(diffH<24)dateInfo=' (вигрузка '+diffH+'год тому)';
     else dateInfo=' (вигрузка '+item.date+')';
   }
-
+  var done=received>=needed;
   fb.className='s-fb sf-ok';
   fb.innerHTML='&#10003; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>'
     +'&#128230; <strong>#'+esc(o.num)+'</strong> --- '+esc(o.name)
     +'<span style="font-size:11px;color:var(--g)">'+dateInfo+'</span><br>'
-    +'<span style="font-size:11px;color:var(--mu)">'+newCount+'/'+item.qty+(isDone?' --- позиція зібрана &#10003;':' --- ще '+(item.qty-newCount)+' шт')+'</span>';
-
-  // Показуємо інші замовлення де теж потрібен цей артикул
-  var otherCandidates=[];
+    +'<span style="font-size:11px;color:var(--mu)">'+received+'/'+needed+(done?' --- позиція зібрана &#10003;':' --- ще '+(needed-received)+' шт')+'</span>';
+  var others=[];
   orders.forEach(function(o2){
     if(o2.num===o.num)return;
-    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready')return; // усі активні, крім готових/відправлених/відмов
-    var its=items[o2.num]||[];
-    var it2=its.find(function(it){return it.art===art;});
-    if(it2&&(scanState[o2.num]||{})[art]<it2.qty)otherCandidates.push(o2);
+    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready')return;
+    var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
+    if(it2&&((scanState[o2.num]||{})[art]||0)<it2.qty)others.push(o2);
   });
-  if(otherCandidates.length){
-    fb.innerHTML+='<br><span style="font-size:11px;color:var(--b)">Також потрібен: '
-      +otherCandidates.map(function(o2){return '#'+esc(o2.num)+' '+esc(o2.name);}).join(', ')+'</span>';
+  if(others.length){
+    fb.innerHTML+='<br><span style="font-size:11px;color:var(--b)">Також потрібен: '+others.map(function(o2){return '#'+esc(o2.num)+' '+esc(o2.name);}).join(', ')+'</span>';
+  }
+}
+
+// ===== Меню розподілу при ПЕРЕБОРІ =====
+function openOverflowModal(order,art,name,needed,boxes){
+  closeOverflowModal();
+  // інші замовлення, де потрібен цей артикул і ще є місце
+  var others=[];
+  orders.forEach(function(o2){
+    if(o2.num===order.num)return;
+    var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready')return;
+    var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
+    if(!it2)return;
+    var have=(scanState[o2.num]||{})[art]||0;
+    if(have<it2.qty)others.push({num:o2.num,name:o2.name,room:it2.qty-have});
+  });
+
+  function optsHtml(){
+    var s='<option value="keep">Залишити (#'+esc(order.num)+')</option>';
+    s+='<option value="reserve">У Запас</option>';
+    others.forEach(function(od){
+      s+='<option value="re:'+esc(od.num)+'">&#8594; #'+esc(od.num)+' '+esc(od.name)+' (ще '+od.room+')</option>';
+    });
+    return s;
   }
 
-  addScanLog(art,item.name,'ok');
-  renderScanList();
+  var rows='';
+  boxes.forEach(function(b){
+    rows+='<div class="ovf-row" data-bc="'+esc(b.barcode||'')+'" data-qty="'+(b.qty||0)+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bo2);border-radius:10px;margin-bottom:8px;">'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--tx);">'+esc(b.barcode||'(без штрихкоду)')+'</div>'
+        +'<div style="font-size:11px;color:var(--mu);">'+(b.qty||0)+' шт</div>'
+      +'</div>'
+      +'<select class="ovf-sel" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;">'+optsHtml()+'</select>'
+    +'</div>';
+  });
 
-  if(SCRIPT_URL){
-    var res=await callScript('scan',{art:art,name:item.name,qty:1,orderNum:o.num,orderName:o.name});
-    if(res&&res.complete){
-      toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);
-      speakPhrase('phrase-order-complete');
-      loadAll();
+  var card='<div style="background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">'
+    +'<div style="padding:16px 18px;border-bottom:1px solid var(--bo2);">'
+      +'<div style="font-size:16px;font-weight:800;color:var(--o);">&#9888; Перебір товару</div>'
+      +'<div style="font-size:13px;color:var(--tx);margin-top:4px;">#'+esc(order.num)+' '+esc(order.name)+' &middot; артикул <b>'+esc(art)+'</b></div>'
+      +'<div style="font-size:12px;color:var(--mu);margin-top:2px;">'+esc(name)+'</div>'
+      +'<div style="font-size:12px;color:var(--tx2);margin-top:6px;">Треба в це замовлення: <b>'+needed+' шт</b>. Розкидай зайві ящики:</div>'
+    +'</div>'
+    +'<div style="padding:14px 18px;">'+rows
+      +'<div id="ovfSummary" style="margin-top:6px;font-size:13px;font-weight:700;"></div>'
+    +'</div>'
+    +'<div style="padding:14px 18px;border-top:1px solid var(--bo2);display:flex;gap:10px;justify-content:flex-end;">'
+      +'<button onclick="closeOverflowModal()" style="padding:10px 16px;border:1.5px solid var(--bo2);background:#fff;border-radius:9px;font-family:inherit;font-size:14px;cursor:pointer;color:var(--tx);">Скасувати</button>'
+      +'<button id="ovfConfirm" onclick="confirmOverflow()" class="btn pr" style="padding:10px 18px;">Підтвердити розподіл</button>'
+    +'</div>'
+  +'</div>';
+
+  var ov=document.createElement('div');
+  ov.id='ovfModal';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(20,30,25,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML=card;
+  ov._ctx={order:order,art:art,needed:needed,others:others};
+  document.body.appendChild(ov);
+  var sels=ov.querySelectorAll('.ovf-sel');
+  for(var i=0;i<sels.length;i++)sels[i].addEventListener('change',recomputeOverflow);
+  recomputeOverflow();
+}
+
+function recomputeOverflow(){
+  var ov=G('ovfModal');if(!ov)return;
+  var needed=ov._ctx.needed;
+  var keep=0;
+  var rows=ov.querySelectorAll('.ovf-row');
+  for(var i=0;i<rows.length;i++){
+    var sel=rows[i].querySelector('.ovf-sel');
+    if(sel&&sel.value==='keep')keep+=parseInt(rows[i].getAttribute('data-qty'),10)||0;
+  }
+  var ok=keep<=needed;
+  var sum=G('ovfSummary');
+  if(sum){
+    sum.style.color=ok?'var(--g)':'var(--r)';
+    sum.innerHTML='Залишиться в #'+esc(ov._ctx.order.num)+': '+keep+' / '+needed+(ok?' &#10003;':' &#10060; (забагато — розкидай ще)');
+  }
+  var btn=G('ovfConfirm');
+  if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'.5';btn.style.cursor=ok?'pointer':'not-allowed';}
+}
+
+async function confirmOverflow(){
+  var ov=G('ovfModal');if(!ov)return;
+  var ctx=ov._ctx;
+  var tasks=[];
+  var rows=ov.querySelectorAll('.ovf-row');
+  for(var i=0;i<rows.length;i++){
+    var bc=rows[i].getAttribute('data-bc');
+    var v=rows[i].querySelector('.ovf-sel').value;
+    if(v==='keep')continue;
+    if(v==='reserve'){tasks.push({type:'reserve',barcode:bc});}
+    else if(v.indexOf('re:')===0){
+      var num=v.slice(3);
+      var od=null;for(var j=0;j<ctx.others.length;j++){if(String(ctx.others[j].num)===String(num)){od=ctx.others[j];break;}}
+      tasks.push({type:'reassign',barcode:bc,toNum:num,toName:od?od.name:''});
     }
   }
-  if(isDone){toast(art+' --- '+item.name+' --- замовлення #'+o.num,'ok',2000);}
+  if(!tasks.length){closeOverflowModal();return;}
+  var btn=G('ovfConfirm');if(btn){btn.disabled=true;btn.textContent='Зберігаю...';}
+  for(var t=0;t<tasks.length;t++){
+    var task=tasks[t];
+    try{
+      if(task.type==='reserve')await callScript('boxToReserve',{barcode:task.barcode});
+      else await callScript('reassignBox',{barcode:task.barcode,toOrderNum:task.toNum,toClient:task.toName});
+    }catch(e){}
+  }
+  closeOverflowModal();
+  toast('Розподіл збережено','ok',2500);
+  loadAll(true);
 }
+
+function closeOverflowModal(){var ov=G('ovfModal');if(ov)ov.remove();}
+
 
 // ===== PARSE FURY =====
 // інфо фури:
@@ -4111,13 +4284,14 @@ function parseFury(rows){
 }
 
 // ===== PARSE INCOME (прихід) =====
-// прихід: A=Дата/час, B=Артикул, C=Назва, D=К-сть, E=№ замовлення, F=Клієнт, G=Оператор, H=Тип
+// прихід: A=Дата/час, B=Артикул, C=Назва, D=К-сть, E=№ замовлення, F=Клієнт, G=Оператор, H=Тип, I=Штрихкод
 function parseIncome(rows){
-  income=[];
+  income=[];scannedBarcodes={};
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
     if(!(r[1]||'').trim())continue;
-    income.push({
+    var bc=(r[8]||'').trim(); // I = Штрихкод ящика
+    var rec={
       date:(r[0]||'').trim(),
       art:(r[1]||'').trim(),
       name:(r[2]||'').trim(),
@@ -4125,8 +4299,11 @@ function parseIncome(rows){
       orderNum:(r[4]||'').trim(),
       client:(r[5]||'').trim(),
       operator:(r[6]||'').trim(),
-      type:(r[7]||'').trim()
-    });
+      type:(r[7]||'').trim(),
+      barcode:bc
+    };
+    income.push(rec);
+    if(bc)scannedBarcodes[bc]={orderNum:rec.orderNum,art:rec.art,qty:rec.qty,name:rec.name};
   }
   // Відновлюємо scanState з реальних даних "прихід" (щоб прогрес зберігався після оновлення)
   scanState={};
@@ -4135,7 +4312,7 @@ function parseIncome(rows){
     if(!scanState[inc.orderNum])scanState[inc.orderNum]={};
     scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+(inc.qty||1);
   });
-  console.log('scanState відновлено для',Object.keys(scanState).length,'замовлень');
+  console.log('scanState відновлено для',Object.keys(scanState).length,'замовлень, штрихкодів:',Object.keys(scannedBarcodes).length);
 }
 
 // ===== SCAN LOG =====
