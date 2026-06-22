@@ -2640,7 +2640,7 @@ function findBestOrderForArt(art){
     if(!item)return;
     if(!scanState[o.num])scanState[o.num]={};
     var already=scanState[o.num][art]||0;
-    if(already>=item.qty)return; // вже зібрано
+    if(already>=targetQty(art,item))return; // вже зібрано
 
     var itemDate=parseItemDate(item.date);
     var diffMs=itemDate?Math.abs(now-itemDate):Infinity;
@@ -3726,7 +3726,7 @@ function selectPicker(id){
       var packNum=parseInt(packQ)||0;
       var totalPcs=packNum>0?(it.qty*packNum):0;
       var ss=scanState[o.num]||{};
-      var done=(ss[it.art]||0)>=it.qty;
+      var done=(ss[it.art]||0)>=targetQty(it.art,it);
       return '<tr style="'+(done?'background:#f1f8e9':'')+' font-size:14px">'
         +'<td style="color:var(--mu);text-align:center;width:30px">'+(i+1)+'</td>'
         +'<td style="font-family:var(--mono);font-weight:700;color:var(--gd);font-size:13px">'+esc(it.art)+'</td>'
@@ -3909,7 +3909,7 @@ function renderScanList(){
   list.forEach(function(o){
     var its=items[o.num]||[];
     var ss=scanState[o.num]||{};
-    var done=its.filter(function(it){return(ss[it.art]||0)>=it.qty;}).length;
+    var done=its.filter(function(it){return(ss[it.art]||0)>=targetQty(it.art,it);}).length;
     var pct=its.length?Math.round(done/its.length*100):0;
     var complete=pct===100;
 
@@ -3935,7 +3935,8 @@ function renderScanList(){
 
     // Items rows
     its.forEach(function(it){
-      var sc=ss[it.art]||0;var ok=sc>=it.qty;var part=sc>0&&!ok;
+      var tq=targetQty(it.art,it);
+      var sc=ss[it.art]||0;var ok=sc>=tq;var part=sc>0&&!ok;
       var st=findStockForItem(it.art);
       var loc=st?st.location:'--';
       var row=document.createElement('div');
@@ -3943,9 +3944,9 @@ function renderScanList(){
       row.innerHTML='<span class="sob-art">'+esc(it.art)+'</span>'
         +'<span style="flex:1">'+esc(it.name)+'</span>'
         +'<span class="sob-loc">'+esc(loc)+'</span>'
-        +'<span style="font-size:11px;color:var(--mu)">'+it.qty+' шт</span>'
+        +'<span style="font-size:11px;color:var(--mu)">'+tq+' шт</span>'
         +'<span class="sob-st" style="color:'+(ok?'var(--g)':part?'var(--o)':'var(--mu)')+';">'
-        +(ok?'&#10003;':part?sc+'/'+it.qty:'--')+'</span>';
+        +(ok?'&#10003;':part?sc+'/'+tq:'--')+'</span>';
       body.appendChild(row);
     });
 
@@ -4055,7 +4056,7 @@ async function processIncomingScan(){
     orders.forEach(function(o){
       var its=items[o.num]||[];
       var it=its.find(function(x){return x.art===art;});
-      if(it&&(scanState[o.num]||{})[art]>=it.qty)allDone.push(o);
+      if(it&&(scanState[o.num]||{})[art]>=targetQty(art,it))allDone.push(o);
     });
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
@@ -4089,9 +4090,10 @@ async function processIncomingScan(){
   // Без бекенду — лише локальний оптимістичний підрахунок
   if(!SCRIPT_URL){
     if(!scanState[o.num])scanState[o.num]={};
-    scanState[o.num][art]=(scanState[o.num][art]||0)+1;
+    var pkA=furyPackOf(art);
+    scanState[o.num][art]=(scanState[o.num][art]||0)+(pkA?packQty:1);
     if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};
-    renderScanOk(fb,art,item,o,best,scanState[o.num][art],item.qty,packCheck);
+    renderScanOk(fb,art,item,o,best,scanState[o.num][art],targetQty(art,item),packCheck);
     addScanLog(art,item.name,'ok');renderScanList();
     return;
   }
@@ -4111,7 +4113,7 @@ async function processIncomingScan(){
   }
   if(!res||!res.ok){beep('error');fb.className='s-fb sf-er';fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');return;}
 
-  var needed=(res.needed!=null)?res.needed:item.qty;
+  var needed=(res.needed!=null)?res.needed:targetQty(art,item);
   var received=(res.received!=null)?res.received:(((scanState[o.num]||{})[art]||0)+1);
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=received;
@@ -4135,6 +4137,21 @@ async function processIncomingScan(){
   renderScanList();
   if(res.status==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
   if(res.orderComplete||res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);speakPhrase('phrase-order-complete');loadAll();}
+}
+
+// К-сть в упаковці (стебел) для артикулу з інфо фури: M->N (наш), інакше J->K (опт). 0 = нема в фурі.
+function furyPackOf(art){
+  var fre=fury[art];
+  if(fre&&fre.packQty){var n=parseInt(fre.packQty,10)||0;if(n)return n;}
+  var fbx=fury['b_'+art];
+  if(fbx&&fbx.packBoxQty){var k=parseInt(fbx.packBoxQty,10)||0;if(k)return k;}
+  return 0;
+}
+// Ціль позиції у СТЕБЛАХ: к-сть ящиків (вигрузка) × упаковка. Якщо упаковки нема в фурі — лишаємо як ящики.
+function targetQty(art,item){
+  var pack=furyPackOf(art);
+  var boxes=parseInt(item.qty,10)||0;
+  return pack?boxes*pack:boxes;
 }
 
 // Звірка К-сті в упаковці з інфо фури: артикул у J -> очікувана к-сть з K; у M -> з N
@@ -4176,7 +4193,7 @@ function renderScanOk(fb,art,item,o,best,received,needed,packCheck){
     if(o2.num===o.num)return;
     var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready')return;
     var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
-    if(it2&&((scanState[o2.num]||{})[art]||0)<it2.qty)others.push(o2);
+    if(it2&&((scanState[o2.num]||{})[art]||0)<targetQty(art,it2))others.push(o2);
   });
   if(others.length){
     fb.innerHTML+='<br><span style="font-size:11px;color:var(--b)">Також потрібен: '+others.map(function(o2){return '#'+esc(o2.num)+' '+esc(o2.name);}).join(', ')+'</span>';
@@ -4194,24 +4211,29 @@ function openOverflowModal(order,art,name,needed,boxes){
     var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
     if(!it2)return;
     var have=(scanState[o2.num]||{})[art]||0;
-    if(have<it2.qty)others.push({num:o2.num,name:o2.name,room:it2.qty-have});
+    var tgt=targetQty(art,it2);
+    if(have<tgt)others.push({num:o2.num,name:o2.name,room:tgt-have});
   });
 
   function optsHtml(){
     var s='<option value="keep">Залишити (#'+esc(order.num)+')</option>';
     s+='<option value="reserve">У Запас</option>';
+    s+='<option value="repack">На Перефасовку</option>';
     others.forEach(function(od){
       s+='<option value="re:'+esc(od.num)+'">&#8594; #'+esc(od.num)+' '+esc(od.name)+' (ще '+od.room+')</option>';
     });
     return s;
   }
 
+  var pack=furyPackOf(art);
+  var unit=pack?'шт':'ящ';
   var rows='';
   boxes.forEach(function(b){
-    rows+='<div class="ovf-row" data-bc="'+esc(b.barcode||'')+'" data-qty="'+(b.qty||0)+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bo2);border-radius:10px;margin-bottom:8px;">'
+    var contrib=pack?(b.packQty||0):(b.qty||0);
+    rows+='<div class="ovf-row" data-bc="'+esc(b.barcode||'')+'" data-qty="'+contrib+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bo2);border-radius:10px;margin-bottom:8px;">'
       +'<div style="flex:1;min-width:0;">'
         +'<div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--tx);">'+esc(b.barcode||'(без штрихкоду)')+'</div>'
-        +'<div style="font-size:11px;color:var(--mu);">1 ящик'+(b.packQty?' &middot; '+b.packQty+' шт/уп':'')+'</div>'
+        +'<div style="font-size:11px;color:var(--mu);">1 ящик'+(b.packQty?' &middot; '+b.packQty+' шт':'')+'</div>'
       +'</div>'
       +'<select class="ovf-sel" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;">'+optsHtml()+'</select>'
     +'</div>';
@@ -4222,7 +4244,7 @@ function openOverflowModal(order,art,name,needed,boxes){
       +'<div style="font-size:16px;font-weight:800;color:var(--o);">&#9888; Перебір товару</div>'
       +'<div style="font-size:13px;color:var(--tx);margin-top:4px;">#'+esc(order.num)+' '+esc(order.name)+' &middot; артикул <b>'+esc(art)+'</b></div>'
       +'<div style="font-size:12px;color:var(--mu);margin-top:2px;">'+esc(name)+'</div>'
-      +'<div style="font-size:12px;color:var(--tx2);margin-top:6px;">Треба в це замовлення: <b>'+needed+' шт</b>. Розкидай зайві ящики:</div>'
+      +'<div style="font-size:12px;color:var(--tx2);margin-top:6px;">Треба в це замовлення: <b>'+needed+' '+unit+'</b>. Розкидай зайве:</div>'
     +'</div>'
     +'<div style="padding:14px 18px;">'+rows
       +'<div id="ovfSummary" style="margin-top:6px;font-size:13px;font-weight:700;"></div>'
@@ -4273,6 +4295,7 @@ async function confirmOverflow(){
     var v=rows[i].querySelector('.ovf-sel').value;
     if(v==='keep')continue;
     if(v==='reserve'){tasks.push({type:'reserve',barcode:bc});}
+    else if(v==='repack'){tasks.push({type:'repack',barcode:bc});}
     else if(v.indexOf('re:')===0){
       var num=v.slice(3);
       var od=null;for(var j=0;j<ctx.others.length;j++){if(String(ctx.others[j].num)===String(num)){od=ctx.others[j];break;}}
@@ -4285,6 +4308,7 @@ async function confirmOverflow(){
     var task=tasks[t];
     try{
       if(task.type==='reserve')await callScript('boxToReserve',{barcode:task.barcode});
+      else if(task.type==='repack')await callScript('boxToRepack',{barcode:task.barcode});
       else await callScript('reassignBox',{barcode:task.barcode,toOrderNum:task.toNum,toClient:task.toName});
     }catch(e){}
   }
@@ -4358,7 +4382,8 @@ function parseIncome(rows){
   income.forEach(function(inc){
     if(!inc.orderNum||!inc.art)return; // пропускаємо "загальний" тип і порожні
     if(!scanState[inc.orderNum])scanState[inc.orderNum]={};
-    scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+(inc.qty||1);
+    var pk=furyPackOf(inc.art); // є упаковка → рахуємо стебла (inc.packQty), нема → ящики (inc.qty)
+    scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+(pk?(inc.packQty||0):(inc.qty||1));
   });
   console.log('scanState відновлено для',Object.keys(scanState).length,'замовлень, штрихкодів:',Object.keys(scannedBarcodes).length);
 }
