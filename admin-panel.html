@@ -3875,7 +3875,7 @@ function doPrint(o,its){
 }
 
 // ===== SCAN - прийом по артикулу =====
-var scanTimer=null;
+var scanTimer=null;var scanLastT=0;
 
 function pkChkToggle(el){
   el.classList.toggle('on');
@@ -3974,11 +3974,31 @@ async function markOrderReady(num,name){
 function initScanPage(){
   var inp=G('scInp');if(!inp)return;
   inp.value='';
-  inp.onkeydown=function(e){if(e.key==='Enter'){clearTimeout(scanTimer);processIncomingScan();}};
+  // --- Розумний прийом сканера ---
+  // Сканер може на пробілі слати Tab/Enter (перемикання поля), і тоді частини "вилітають" з поля.
+  // Якщо події йдуть швидкою чергою (<60 мс) — це сканер: Tab/Enter трактуємо як роздільник,
+  // склеюємо все назад і обробляємо як ОДНЕ сканування. Повільне ручне введення — як раніше (Enter = миттєво).
+  function scanDoProcess(){clearTimeout(scanTimer);scanTimer=null;processIncomingScan();}
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'||e.key==='Tab'){
+      var dt=Date.now()-scanLastT;
+      if(dt<100){
+        // роздільник усередині швидкого скану → не переходимо/не відправляємо, а склеюємо частини
+        e.preventDefault();
+        if(inp.value&&!/\s$/.test(inp.value))inp.value+=' ';
+        scanLastT=Date.now();
+        clearTimeout(scanTimer);scanTimer=setTimeout(scanDoProcess,160);
+      } else if(e.key==='Enter'){
+        e.preventDefault();scanDoProcess();
+      }
+    }
+  };
   inp.oninput=function(){
+    var now=Date.now();var dt=now-scanLastT;scanLastT=now;
     clearTimeout(scanTimer);
-    // автоскан лише після 10 сек паузи (щоб встигнути набрати вручну); Enter = миттєво
-    if(inp.value.trim().length>=5)scanTimer=setTimeout(processIncomingScan,10000);
+    if(inp.value.trim().length<1)return;
+    // швидка черга символів = сканер (обробити невдовзі після завершення); повільно = ручне (довга пауза)
+    scanTimer=setTimeout(scanDoProcess, dt<100?160:10000);
   };
   // Тримаємо фокус у полі скану, щоб символи зі сканера летіли сюди, а не в гарячі клавіші
   inp.onblur=function(){
@@ -4003,9 +4023,9 @@ async function processIncomingScan(){
   var fb=G('scFb');
 
   // Наліпка ящика: ОДИН штрихкод з 3 значеннями "артикул*штрихкод*К-сть_в_упаковці".
-  // Роздільник * (або пробіл / ; / |). Сканер не ріже рядок на *, тому всі 3 значення приходять разом за одне сканування.
+  // ВАЖЛИВО: у штрихкоді НЕ можна пробіли — сканер ріже рядок на пробілі. Роздільник: * або - (також ; | , / _).
   // К-сть в упаковці — ЛИШЕ для звірки з інфо фури; у замовлення завжди додається 1 ящик.
-  var parts=raw.split(/[\s*;|]+/).filter(function(x){return x;});
+  var parts=raw.split(/[\s*;|,\/_-]+/).filter(function(x){return x;});
   var art=parts[0];
   var barcode=parts.length>=2?parts[1]:'';
   var packQty=parts.length>=3?(parseInt(parts[2],10)||0):0;
