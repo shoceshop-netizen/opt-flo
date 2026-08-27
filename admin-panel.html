@@ -236,7 +236,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
 .stat-item:hover{opacity:.65;}
 .stat-num{font-size:40px;font-weight:600;letter-spacing:-2px;line-height:1;margin-bottom:5px;font-family:var(--mono);font-feature-settings:'tnum';}
 .stat-lbl{font-size:11px;color:var(--tx4);margin-top:0;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.c-new{color:var(--blue);}.c-work{color:var(--orange);}.c-ready{color:var(--green);}.c-prob{color:var(--red);}.c-all{color:var(--tx3);}
+.c-new{color:var(--blue);}.c-work{color:var(--orange);}.c-ready{color:var(--green);}.c-prob{color:var(--red);}.c-all{color:var(--tx3);}.c-sent{color:var(--purple);}
 
 /* LAYOUT */
 .orders-layout{flex:1;display:flex;overflow:hidden;}
@@ -605,6 +605,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
       <div class="stat-item" onclick="setFilter('new')"><div class="stat-num c-new" id="sNew">—</div><div class="stat-lbl">Нових</div></div>
       <div class="stat-item" onclick="setFilter('work')"><div class="stat-num c-work" id="sWork">—</div><div class="stat-lbl">В роботі</div></div>
       <div class="stat-item" onclick="setFilter('ready')"><div class="stat-num c-ready" id="sReady">—</div><div class="stat-lbl">Готово</div></div>
+      <div class="stat-item" onclick="setFilter('sent')"><div class="stat-num c-sent" id="sSent">—</div><div class="stat-lbl">Відправлено</div></div>
       <div class="stat-item" onclick="setFilter('all')"><div class="stat-num c-prob" id="sProb">—</div><div class="stat-lbl">Проблем</div></div>
       <div class="stat-item" onclick="setFilter('all')"><div class="stat-num c-all" id="sTotal">—</div><div class="stat-lbl">Всього</div></div>
     </div>
@@ -2905,6 +2906,7 @@ function renderAll(){
   if(G('sNew'))G('sNew').textContent=c.new;
   if(G('sWork'))G('sWork').textContent=c.work+c.pack;
   if(G('sReady'))G('sReady').textContent=c.ready;
+  if(G('sSent'))G('sSent').textContent=c.sent;
   if(G('sProb'))G('sProb').textContent=prob;
   if(G('sTotal'))G('sTotal').textContent=c.all;
   try{renderDash(c);}catch(e){console.warn('renderDash:',e);}
