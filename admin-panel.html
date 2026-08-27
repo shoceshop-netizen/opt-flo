@@ -681,6 +681,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
     <div class="scan-top">
       <div class="scan-wrap">
         <div class="scan-lbl">📱 Сканування приходу — система знайде замовлення автоматично</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mu);margin:8px 0 2px;cursor:pointer;user-select:none;"><input type="checkbox" id="fastReceiveChk" onchange="setFastReceive(this.checked)" style="width:15px;height:15px;cursor:pointer;"><span>⚡ Швидкий прийом — без вводу к-сті і без попереджень про перебір</span></label>
         <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
         <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
       </div>
@@ -4216,6 +4217,7 @@ async function markOrderReady(num,name){
 function initScanPage(){
   var inp=G('scInp');if(!inp)return;
   inp.value='';
+  var frc=G('fastReceiveChk');if(frc)frc.checked=fastReceive;
   // --- Розумний прийом сканера ---
   // Сканер може на пробілі слати Tab/Enter (перемикання поля), і тоді частини "вилітають" з поля.
   // Якщо події йдуть швидкою чергою (<60 мс) — це сканер: Tab/Enter трактуємо як роздільник,
@@ -4257,6 +4259,9 @@ function initScanPage(){
   inp.focus();
 }
 
+var fastReceive=(function(){try{return localStorage.getItem('fastReceive')!=='0';}catch(e){return true;}})();
+function setFastReceive(v){fastReceive=!!v;try{localStorage.setItem('fastReceive',v?'1':'0');}catch(e){}toast(v?'⚡ Швидкий прийом увімкнено':'Звичайний прийом','in',2000);}
+
 async function processIncomingScan(){
   var inp=G('scInp');
   var raw=inp.value.trim();
@@ -4275,7 +4280,8 @@ async function processIncomingScan(){
   // --- ВАЛІДАЦІЯ: сканер дав ЛИШЕ артикул (без штрихкоду й кількості) ---
   // відкриваємо вікно, де вручну вводимо кількість; у прихід пишемо артикул + кількість, без штрихкоду.
   if(parts.length===1){
-    openQtyModal(art);
+    if(fastReceive){doScanRecord(art,'',furyPackOf(art));}
+    else{openQtyModal(art);}
     return;
   }
   // Прийшли артикул + штрихкод + кількість — пишемо як раніше.
@@ -4390,6 +4396,7 @@ async function doScanRecord(art,barcode,packQty){
 
   // ПЕРЕБІР — меню розподілу зайвих ящиків
   if(res.status==='overflow'){
+    if(fastReceive){renderScanOk(fb,art,item,o,best,received,needed,packCheck);addScanLog(art,item.name,'ok');renderScanList();if(res.orderComplete||res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);speakPhrase('phrase-order-complete');loadAll();}return;}
     beep('error');
     fb.className='s-fb sf-wa';
     fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck);
