@@ -4048,9 +4048,9 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders,noPrint){
       });
     });
     try {
-      var res=await callScript('createList',{
-        items:JSON.stringify(itemsForSave),
-        skipOrders:JSON.stringify(skipOrders),
+      var res=await callScriptPost('createList',{
+        items:itemsForSave,
+        skipOrders:skipOrders,
         operator:'Адмін'
       });
       if(res&&res.ok&&res.listNum){
