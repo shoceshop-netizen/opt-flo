@@ -4121,7 +4121,7 @@ function doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum){
     var atLoc=d.arr.length?d.arr[0].qty:0;
     var backups=d.arr.slice(1).map(function(x){return x.loc+' ('+x.qty+')';}).join(' · ');
     var totalPcs=packNum>0?ci.qty*packNum:0;
-    return {art:ci.art,artFlorium:ci.artFlorium||'',name:ci.name||'',size:size,unit:unit,qty:ci.qty,packNum:packNum,totalPcs:totalPcs,primLoc:primLoc,atLoc:atLoc,backups:backups,total:d.total,count:d.count,note:(furyGet(ci.art)||{}).note||''};
+    return {art:ci.art,artFlorium:(ci.artFlorium||(fus&&fus.artFlorium?fus.artFlorium:'')),name:ci.name||'',size:size,unit:unit,qty:ci.qty,packNum:packNum,totalPcs:totalPcs,primLoc:primLoc,atLoc:atLoc,backups:backups,total:d.total,count:d.count,note:(furyGet(ci.art)||{}).note||''};
   });
   var tq=itemsCopy.reduce(function(a,i){return a+i.qty;},0);
   var grand=enr.reduce(function(a,x){return a+(x.totalPcs||0);},0);
