@@ -4055,9 +4055,10 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders,noPrint){
       });
       if(res&&res.ok&&res.listNum){
         listNum=res.listNum;
-        var msg='Список #'+listNum+' збережено';
-        if(skipOrders.length>0)msg+=' (пропущено: '+skipOrders.length+')';
-        toast(msg,'ok',3000);
+        var wr=(res.writtenRows!=null)?res.writtenRows:0;
+        var ds=(res.dupSkipped!=null)?res.dupSkipped:0;
+        if(wr>0){toast('Список #'+listNum+' — записано '+wr+' поз.'+(ds>0?' (дублів пропущено: '+ds+')':''),'ok',4000);}
+        else{toast('Не записано: усі '+ds+' поз. вже є в «списки» (дублі)','wa',5000);}
       } else {
         toast('Apps Script помилка — друкую без №','wa',3000);
       }
