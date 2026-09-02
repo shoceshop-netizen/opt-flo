@@ -630,6 +630,12 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
       <button id="sortCat" class="cm-sort on" onclick="setCombinedSort('category')">Категорії</button>
       <button id="sortLoc" class="cm-sort" onclick="setCombinedSort('location')">Розміщення ↑</button>
       <button id="sortArt" class="cm-sort" onclick="setCombinedSort('article')">Артикул ↑</button>
+      <span style="width:100%;height:0"></span>
+      <span style="font-size:12px;color:var(--mu)">Вибір:</span>
+      <button class="cm-sort" onclick="selectWithLocation()">☑ З розміщенням</button>
+      <button class="cm-sort" onclick="selectNotPicked()">☑ Усі невідібрані</button>
+      <button class="cm-sort" onclick="selectNoneCombined()">☐ Зняти</button>
+      <span style="font-size:12px;color:var(--tx2)">Вибрано: <b id="cmSelCount">0</b></span>
     </div>
     <div id="cmBody" class="cm-body"></div>
     <div class="cm-foot">
@@ -2686,6 +2692,7 @@ var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
 var multiMode=false,multiSel={};
 var combinedItems=[],combinedOrders=[];
 var pickedSet=new Set();
+var combinedPickSel=new Set();
 var combinedFilter=new Set(); // обрані категорії (порожньо = всі)
 var combinedAllItems=[]; // незмінений повний список для фільтрації
 
@@ -2983,9 +2990,9 @@ function parseStock(rows){
 function findStockForItem(art){
   var fu=furyGet(art)||null;
   var st=null;
-  if(fu&&fu.artFlorium)st=stock.find(function(s){return s.art===fu.artFlorium;});
-  if(!st)st=stock.find(function(s){return s.art===art;});
-  if(!st&&fu&&fu.artBox)st=stock.find(function(s){return s.art===fu.artBox;});
+  if(fu&&fu.artFlorium)st=stock.find(function(s){return nk(s.art)===nk(fu.artFlorium);});
+  if(!st)st=stock.find(function(s){return nk(s.art)===nk(art);});
+  if(!st&&fu&&fu.artBox)st=stock.find(function(s){return nk(s.art)===nk(fu.artBox);});
   return st;
 }
 
@@ -2998,9 +3005,9 @@ function findAllStockLocations(art){
   var matches=stock.filter(function(s){
     if(!s)return false;
     var match=false;
-    if(artFlorium&&s.art===artFlorium)match=true;
-    else if(s.art===art)match=true;
-    else if(fu&&fu.artBox&&s.art===fu.artBox)match=true;
+    if(artFlorium&&nk(s.art)===nk(artFlorium))match=true;
+    else if(nk(s.art)===nk(art))match=true;
+    else if(fu&&fu.artBox&&nk(s.art)===nk(fu.artBox))match=true;
     if(!match)return false;
     // Виключаємо порожні ящики
     var q=parseInt(s.qty)||0;
@@ -3485,6 +3492,7 @@ function openCombinedList(){
     ci.picked=ci.fromOrders.length>0&&ci.fromOrders.every(function(on){return pickedSet.has(on+'||'+ci.art);});
     if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
   });
+  combinedPickSel=new Set();combinedItems.forEach(function(ci){if(!ci.picked&&ci.location&&String(ci.location).trim())combinedPickSel.add(ci.art);});
   combinedAllItems=combinedItems.slice();
   combinedFilter=new Set();
   // дефолтне сортування — по категорії, потім по назві
@@ -3528,12 +3536,12 @@ function renderCombinedModal(){
     var cat=ci.category||'(без категорії)';
     var groupHeader='';
     if(combinedSort==='category'&&cat!==lastCat){
-      groupHeader='<tr class="cm-group-row"><td colspan="8">'+esc(cat)+'</td></tr>';
+      groupHeader='<tr class="cm-group-row"><td colspan="9">'+esc(cat)+'</td></tr>';
       lastCat=cat;
     }
     return groupHeader
       +'<tr class="cm-item-row" data-art="'+esc(ci.art)+'" data-nm="'+esc((ci.name||'').toLowerCase())+'" data-picked="'+(ci.picked?'1':'0')+'"'+(ci.picked?' style="background:#eef7ee;color:#9e9e9e"':(missing?' style="background:#fff8e1"':''))+'>'
-        +'<td style="text-align:center;color:var(--mu)">'+(i+1)+(ci.picked?'<div style="font-size:9px;color:#2e7d32;font-weight:700">✓</div>':'')+'</td>'
+        +'<td style="text-align:center"><input type="checkbox" class="cm-chk" data-art="'+esc(ci.art)+'" '+(combinedPickSel.has(ci.art)?'checked ':'')+(ci.picked?'disabled ':'')+'onchange="toggleCombinedPick(this)" style="width:16px;height:16px;cursor:pointer"></td>'+'<td style="text-align:center;color:var(--mu)">'+(i+1)+(ci.picked?'<div style="font-size:9px;color:#2e7d32;font-weight:700">✓</div>':'')+'</td>'
         +'<td style="font-family:var(--mono);font-weight:700;color:var(--gd);font-size:13px">'+esc(ci.art)+'</td>'
         +'<td><input class="cm-inp" data-i="'+i+'" data-f="name" value="'+esc(ci.name||'')+'" style="width:100%"></td>'
         +'<td style="text-align:center;font-weight:700">'+ci.qty+'</td>'
@@ -3545,7 +3553,7 @@ function renderCombinedModal(){
   }).join('');
   G('cmBody').innerHTML=chipsHtml+'<table class="dt" style="font-size:13px">'
     +'<thead><tr style="font-size:11px">'
-      +'<th style="width:30px">#</th>'
+      +'<th style="width:34px;text-align:center"><input type="checkbox" onchange="toggleAllCombined(this)" title="Вибрати всі" style="width:15px;height:15px;cursor:pointer"></th>'+'<th style="width:30px">#</th>'
       +'<th>Артикул</th>'
       +'<th>Назва</th>'
       +'<th style="text-align:center">К-сть</th>'
@@ -3569,6 +3577,7 @@ function renderCombinedModal(){
     });
   });
   filterCombinedRows();
+  updateSelCount();
 }
 
 function filterCombinedRows(){
@@ -3593,6 +3602,13 @@ function filterCombinedRows(){
   });
 }
 function clearCombinedFilters(){if(G('cmFilterArt'))G('cmFilterArt').value='';if(G('cmFilterLoc'))G('cmFilterLoc').value='';filterCombinedRows();}
+
+function updateSelCount(){var e=G('cmSelCount');if(e)e.textContent=combinedPickSel.size;}
+function toggleCombinedPick(el){var a=el.getAttribute('data-art');if(el.checked)combinedPickSel.add(a);else combinedPickSel.delete(a);updateSelCount();}
+function toggleAllCombined(el){combinedItems.forEach(function(ci){if(ci.picked)return;if(el.checked)combinedPickSel.add(ci.art);else combinedPickSel.delete(ci.art);});renderCombinedModal();}
+function selectWithLocation(){combinedPickSel=new Set();combinedItems.forEach(function(ci){if(!ci.picked&&ci.location&&String(ci.location).trim())combinedPickSel.add(ci.art);});renderCombinedModal();}
+function selectNotPicked(){combinedPickSel=new Set();combinedItems.forEach(function(ci){if(!ci.picked)combinedPickSel.add(ci.art);});renderCombinedModal();}
+function selectNoneCombined(){combinedPickSel=new Set();renderCombinedModal();}
 
 function closeCombinedModal(){G('combinedModal').style.display='none';}
 
@@ -3986,8 +4002,8 @@ function confirmDuplicatePrint(){
 
 // Спільна функція друку + збереження
 async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders){
-  var active=itemsCopy.filter(function(ci){return !ci.picked&&ci.location&&String(ci.location).trim();});
-  if(!active.length){toast('Немає позицій з розміщенням для друку (все або без розміщення, або вже відібране)','wa',3500);return;}
+  var active=itemsCopy.filter(function(ci){return !ci.picked&&combinedPickSel.has(ci.art);});
+  if(!active.length){toast('Нічого не вибрано для друку — постав галочки','wa',3500);return;}
   var activeArts={};active.forEach(function(ci){activeArts[ci.art]=1;});
   var listNum=null;
   if(SCRIPT_URL){
@@ -4070,7 +4086,7 @@ function stockLocData(art){
   var byLoc={};var total=0;
   stock.forEach(function(sx){
     if(!sx)return;
-    var ok=(artF&&sx.art===artF)||(sx.art===art)||(fu&&fu.artBox&&sx.art===fu.artBox);
+    var ok=(artF&&nk(sx.art)===nk(artF))||(nk(sx.art)===nk(art))||(fu&&fu.artBox&&nk(sx.art)===nk(fu.artBox));
     if(!ok)return;
     var q=parseInt(sx.qty)||0; if(q<=0)return;
     var loc=String(sx.location||'').trim(); if(!loc)return;
