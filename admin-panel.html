@@ -2435,6 +2435,13 @@ async function ttsGenerateAll(category){
       // Невелика пауза між запитами щоб не зловити rate limit
       await new Promise(function(r){setTimeout(r,300);});
     }catch(e){
+      // Обраний голос потребує платного тарифу ElevenLabs (library voice) — відкат на premade
+      if(/402|payment_required|paid_plan|library voices/i.test(e.message) && voiceId!==ELEVEN_DEFAULT_VOICE_ID){
+        ttsLog('⚠️ Обраний голос потребує платного тарифу ElevenLabs. Переходжу на стандартний premade-голос (Rachel) і повторюю.','err');
+        voiceId=ELEVEN_DEFAULT_VOICE_ID;
+        i--; // повторити цей самий елемент уже з premade-голосом
+        continue;
+      }
       failed++;
       ttsLog('✗ '+k+' — '+e.message,'err');
       // Якщо rate limit — більша пауза
