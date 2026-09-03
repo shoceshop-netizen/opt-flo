@@ -2947,6 +2947,12 @@ function parseItemDate(dateStr){
 // Логіка: вигрузка що найближча до ЗАРАЗ (але не в майбутньому)
 // Якщо немає дати — беремо перше незібране
 function findBestOrderForArt(art){
+  var c=findOrderCandidatesForArt(art);
+  return c.length?c[0]:null;
+}
+// Усі активні замовлення, де потрібен артикул і ще є місце — відсортовані за FIFO (найстаріше першим, майбутні в кінець).
+// [0] — найкраще (куди пишемо), решта — альтернативи для бекенду (alt), якщо перше виявиться повним.
+function findOrderCandidatesForArt(art){
   var now=new Date();
   var candidates=[];
 
@@ -2967,7 +2973,7 @@ function findBestOrderForArt(art){
     candidates.push({order:o,item:item,already:already,itemDate:itemDate,diffMs:diffMs,isFuture:isFuture});
   });
 
-  if(!candidates.length)return null;
+  if(!candidates.length)return [];
 
   // Сортуємо: спочатку не-майбутні, потім за найближчою датою до зараз
   candidates.sort(function(a,b){
@@ -2980,7 +2986,7 @@ function findBestOrderForArt(art){
     return ad-bd;
   });
 
-  return candidates[0];
+  return candidates;
 }
 // товар склад:
 // A=Артикул Флоріум (на ящику), B=Унікальний ID ящика, C=К-сть в ящику що приїхала
@@ -4699,8 +4705,9 @@ async function doScanRecord(art,barcode,packQty){
   // --- Звірка К-сті в упаковці з інфо фури (J->K ящик, M->N дрібний гурт) ---
   var packCheck=computePackCheck(art,packQty);
 
-  // --- Знаходимо найкраще замовлення по артикулу ---
-  var best=findBestOrderForArt(art);
+  // --- Знаходимо найкраще замовлення по артикулу (+ альтернативи за FIFO для бекенду) ---
+  var cands=findOrderCandidatesForArt(art);
+  var best=cands.length?cands[0]:null;
   var furyInfo=furyGet(art)||null;
   var itemName=best?best.item.name:(furyInfo?furyInfo.name:'');
 
@@ -4756,7 +4763,11 @@ async function doScanRecord(art,barcode,packQty){
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=(scanState[o.num][art]||0)+(furyPackOf(art)?packQty:1);
   // --- Сервер записує 1 ящик + унікальний штрихкод і повертає прогрес ---
-  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item)});
+  // альтернативи (до 5, FIFO): бек перекине ящик туди, якщо обране замовлення виявиться повним
+  var altC=cands.slice(1,6);
+  var altStr=altC.map(function(c){return c.order.num+':'+targetQty(art,c.item);}).join(',');
+  var altNamesStr=altC.map(function(c){return String(c.order.name||'').replace(/[|,]/g,' ');}).join('|');
+  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item),alt:altStr,altNames:altNamesStr});
 
   if(res&&res.duplicate){
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
@@ -4769,6 +4780,23 @@ async function doScanRecord(art,barcode,packQty){
     return;
   }
   if(!res||!res.ok){beep('error');fb.className='s-fb sf-er';fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');return;}
+
+  // --- Бек перекинув ящик на інше замовлення (обране виявилось повним) ---
+  var redirectNote='';
+  if(res.redirectedFrom&&res.orderNum&&String(res.orderNum)!==String(o.num)){
+    var fromNum=o.num;
+    // знімаємо оптимістичний інкремент зі старого замовлення
+    var contribL=furyPackOf(art)?packQty:1;
+    if(scanState[fromNum])scanState[fromNum][art]=Math.max(0,(scanState[fromNum][art]||0)-contribL);
+    var newNum=String(res.orderNum);
+    var newO=orders.find(function(x){return String(x.num)===newNum;})||{num:newNum,name:res.orderName||''};
+    var newIt=(items[newNum]||[]).find(function(it){return it.art===art;})||item;
+    var newC=cands.find(function(c){return String(c.order.num)===newNum;})||null;
+    o=newO;item=newIt;best=newC;
+    redirectNote='<br><span style="font-size:11px;color:var(--b);font-weight:700">&#8618; #'+esc(fromNum)+' повне &#8594; перекинуто в #'+esc(o.num)+' '+esc(o.name)+'</span>';
+    speakOrder(o.name,o.num);
+    toast('#'+fromNum+' повне → ящик записано в #'+o.num+' '+o.name,'in',3500);
+  }
 
   // Ціль позиції (треба): з бекенду (computeArtProgress) або локально (вигрузка × упаковка з фури).
   // ЗАХИСТ: якщо бек повернув needed=0/порожньо (не зматчив рядок вигрузки — IMPORTRANGE не прогрівся,
@@ -4791,7 +4819,7 @@ async function doScanRecord(art,barcode,packQty){
   if(scanStatus==='overflow'){
     beep('error');
     fb.className='s-fb sf-wa';
-    fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck);
+    fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck)+redirectNote;
     speakPhrase('phrase-exceeded');
     addScanLog(art,item.name,'wa');
     renderScanList();
@@ -4801,6 +4829,7 @@ async function doScanRecord(art,barcode,packQty){
 
   // НЕДОБІР / РІВНО
   renderScanOk(fb,art,item,o,best,received,needed,packCheck);
+  if(redirectNote)fb.innerHTML+=redirectNote;
   addScanLog(art,item.name,'ok');
   renderScanList();
   if(scanStatus==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
