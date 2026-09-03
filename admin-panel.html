@@ -4756,7 +4756,7 @@ async function doScanRecord(art,barcode,packQty){
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=(scanState[o.num][art]||0)+(furyPackOf(art)?packQty:1);
   // --- Сервер записує 1 ящик + унікальний штрихкод і повертає прогрес ---
-  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name});
+  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item)});
 
   if(res&&res.duplicate){
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
@@ -4770,15 +4770,25 @@ async function doScanRecord(art,barcode,packQty){
   }
   if(!res||!res.ok){beep('error');fb.className='s-fb sf-er';fb.innerHTML='&#10060; Помилка запису: '+esc((res&&res.error)||'?');return;}
 
-  var needed=(res.needed!=null)?res.needed:targetQty(art,item);
-  var received=(res.received!=null)?res.received:(((scanState[o.num]||{})[art]||0)+1);
+  // Ціль позиції (треба): з бекенду (computeArtProgress) або локально (вигрузка × упаковка з фури).
+  // ЗАХИСТ: якщо бек повернув needed=0/порожньо (не зматчив рядок вигрузки — IMPORTRANGE не прогрівся,
+  // невидимий символ в артикулі/номері тощо), а фронт позицію знайшов (best) — беремо локальну ціль.
+  // Інакше кожний ящик хибно стає «перебором» з «Треба: 0 шт» (кейс 700003604 / 44510029).
+  var localNeed=targetQty(art,item);
+  var needed=(res.needed!=null&&res.needed>0)?res.needed:localNeed;
+  if(res.needed!=null&&res.needed!==needed){console.warn('scan: бек needed='+res.needed+', беру локальну ціль '+needed+' (#'+o.num+' '+art+')');}
+  // оптимістичний інкремент уже додав цей ящик у scanState — без +1
+  var received=(res.received!=null)?res.received:((scanState[o.num]||{})[art]||0);
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=received;
   if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};
   pushIncomeLocal(art,barcode,packQty,item.name,o.num,o.name,'замовлення');
 
+  // Статус рахуємо від фактичних чисел (а не з res.status), щоб received==needed завжди було «рівно», а не «перебір»
+  var scanStatus=received>needed?'overflow':(received===needed?'exact':'shortfall');
+
   // ПЕРЕБІР — меню розподілу зайвих ящиків
-  if(res.status==='overflow'){
+  if(scanStatus==='overflow'){
     beep('error');
     fb.className='s-fb sf-wa';
     fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck);
@@ -4793,7 +4803,7 @@ async function doScanRecord(art,barcode,packQty){
   renderScanOk(fb,art,item,o,best,received,needed,packCheck);
   addScanLog(art,item.name,'ok');
   renderScanList();
-  if(res.status==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
+  if(scanStatus==='exact'){toast(art+' --- позиція зібрана --- #'+o.num,'ok',2500);}
   if(res.orderComplete||res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);speakPhrase('phrase-order-complete');loadAll();}
 }
 
