@@ -3096,6 +3096,26 @@ function renderRepackDash(){
     var d=parseUaDate(inc.date);if(d)incByKey[key].dates.push(d);
   });
   var now=new Date();
+  // === Перебір у приході: прийшло більше, ніж треба (замовлення+артикул) ===
+  var overRows=[];
+  orders.forEach(function(o){
+    var _k=sk(o.status);if(_k==='sent'||_k==='cancel'||_k==='ready'||_k==='verified')return; // лише активні
+    var its=items[o.num]||[];var byArt={};
+    its.forEach(function(it){if(!it.art)return;if(!byArt[it.art])byArt[it.art]={art:it.art,name:it.name,needed:0};byArt[it.art].needed+=targetQty(it.art,it);});
+    Object.keys(byArt).forEach(function(art){
+      var received=0;
+      (income||[]).forEach(function(inc){if(nk(inc.orderNum)!==nk(o.num))return;if(nk(inc.art)!==nk(art))return;if(inc.type==='на перефасовку')return;var pk=furyPackOf(inc.art);received+=pk?(inc.packQty||0):(inc.qty||1);});
+      var needed=byArt[art].needed;
+      if(needed>0&&received>needed)overRows.push({orderNum:o.num,client:o.name,art:art,name:byArt[art].name,needed:needed,received:received,excess:received-needed});
+    });
+  });
+  overRows.sort(function(a,b){return b.excess-a.excess;});
+  var overHtml='';
+  if(overRows.length){
+    overHtml='<div style="background:#fff5f5;border:1px solid #f5c2c2;border-radius:12px;padding:16px;margin-bottom:18px"><div style="font-size:16px;font-weight:700;color:var(--r);margin-bottom:10px">\u26A0\uFE0F Перебір у приході — '+overRows.length+' поз. (треба виправити)</div><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--mu)"><th style="text-align:left;padding:6px">Замовл.</th><th style="text-align:left;padding:6px">Клієнт</th><th style="text-align:left;padding:6px">Артикул</th><th style="text-align:left;padding:6px">Назва</th><th style="text-align:center;padding:6px">Треба</th><th style="text-align:center;padding:6px">Прийшло</th><th style="text-align:center;padding:6px">Зайве</th></tr></thead><tbody>';
+    overRows.forEach(function(r){overHtml+='<tr style="border-top:1px solid #f5d5d5"><td style="padding:6px">'+esc(r.orderNum)+'</td><td style="padding:6px">'+esc(r.client||"\u2014")+'</td><td style="padding:6px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:6px">'+esc(r.name||"\u2014")+'</td><td style="padding:6px;text-align:center">'+r.needed+'</td><td style="padding:6px;text-align:center;font-weight:600">'+r.received+'</td><td style="padding:6px;text-align:center;font-weight:700;color:var(--r)">+'+r.excess+'</td></tr>';});
+    overHtml+='</tbody></table></div><div style="margin-top:8px;font-size:12px;color:var(--mu)">Зайве = прийшло \u2212 треба. Виправ у приході: видали зайві ящики цього замовлення+артикулу або перепривʼяжи на інше замовлення.</div></div>';
+  }
   var all=lists.map(function(l){
     var key=nk(l.orderNum)+'||'+nk(l.art);
     var inc=incByKey[key]||{qty:0,dates:[]};
@@ -3119,6 +3139,7 @@ function renderRepackDash(){
   var doneN=all.filter(function(x){return x.status==='done';}).length;
   var oldN=all.filter(function(x){return x.status!=='done'&&x.daysW!=null&&x.daysW>=1;}).length;
   var h='<div style="max-width:1200px;margin:0 auto;padding:20px">';
+  h+=overHtml;
   h+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px">';
   h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--o)">'+pendN+'</div><div style="color:var(--mu);font-size:13px">ще не прийшло з відбору</div></div>';
   h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--g)">'+doneN+'</div><div style="color:var(--mu);font-size:13px">прийшло</div></div>';
