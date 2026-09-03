@@ -3230,6 +3230,8 @@ function renderDashOld(c){
 }
 
 // ===== ORDERS =====
+function orderDate(o){var its=items[o.num]||[];for(var i=0;i<its.length;i++){var d=parseItemDate(its[i].date);if(d)return d;}return null;}
+var orderClient='';var orderSortDate=false;
 function setFilter(f){
   filter=f;
   renderOrders();
@@ -3243,19 +3245,29 @@ function goVerify(){
 function renderFilters(){
   var c=getCounts();
   var fs=[{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel},{k:'all',l:'Всі',n:c.all}];
-  G('orFilters').innerHTML=fs.map(f=>`<span class="chip${filter===f.k?' on':''}" data-f="${f.k}">${f.l}${f.n?' ('+f.n+')':''}</span>`).join('');
-  G('orFilters').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{filter=c.dataset.f;renderOrders();}));
+  var chips=fs.map(f=>`<span class="chip${filter===f.k?' on':''}" data-f="${f.k}">${f.l}${f.n?' ('+f.n+')':''}</span>`).join('');
+  var cl={};orders.forEach(function(o){if(o.name)cl[o.name]=1;});
+  var clientList=Object.keys(cl).sort();
+  var sel='<select onchange="orderClient=this.value;renderOrders()" style="font-size:12px;padding:5px 8px;border:1px solid var(--bo);border-radius:7px;background:#fff;margin-left:4px;max-width:170px"><option value="">Усі клієнти</option>'+clientList.map(function(x){return '<option value="'+esc(x)+'"'+(orderClient===x?' selected':'')+'>'+esc(x)+'</option>';}).join('')+'</select>';
+  var sortBtn='<span class="chip'+(orderSortDate?' on':'')+'" onclick="orderSortDate=!orderSortDate;renderOrders()" style="margin-left:4px">📅 '+(orderSortDate?'дата ↑':'за датою')+'</span>';
+  G('orFilters').innerHTML=chips+sel+sortBtn;
+  G('orFilters').querySelectorAll('.chip[data-f]').forEach(c=>c.addEventListener('click',()=>{filter=c.dataset.f;renderOrders();}));
 }
 function renderOrders(){
   renderFilters();
   var q=(G('orSearch').value||'').toLowerCase().trim();
   var list=orders.filter(o=>{
     if(filter!=='all'&&sk(o.status)!==filter)return false;
+    if(orderClient&&o.name!==orderClient)return false;
     if(q&&!(o.name+o.num+o.comment).toLowerCase().includes(q))return false;
     return true;
   });
-  var PRIO={work:0,pack:1,new:2,partial:3,ready:4,verified:5,defer:6,sent:7,cancel:8};
-  list.sort(function(a,b){var pa=PRIO[sk(a.status)];if(pa===undefined)pa=9;var pb=PRIO[sk(b.status)];if(pb===undefined)pb=9;return pa-pb;});
+  if(orderSortDate){
+    list.sort(function(a,b){var da=orderDate(a),db=orderDate(b);var ta=da?da.getTime():8.64e15,tb=db?db.getTime():8.64e15;return ta-tb;});
+  } else {
+    var PRIO={work:0,pack:1,new:2,partial:3,ready:4,verified:5,defer:6,sent:7,cancel:8};
+    list.sort(function(a,b){var pa=PRIO[sk(a.status)];if(pa===undefined)pa=9;var pb=PRIO[sk(b.status)];if(pb===undefined)pb=9;return pa-pb;});
+  }
   G('orCnt').textContent=list.length;
   if(!list.length){G('orList').innerHTML='<div class="es"><div class="es-ic">🔍</div><div class="es-t">Нічого не знайдено</div></div>';return;}
   var html='';
