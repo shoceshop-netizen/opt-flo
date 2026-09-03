@@ -2871,6 +2871,7 @@ async function loadAll(skipCache){
     var res=await callScript('getAllData',{});
     if(!res||!res.ok)throw new Error(res&&res.msg?res.msg:(res&&res.error?res.error:'getAllData failed'));
     parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseIncome(res.income||[]);
+    scanState={};income.forEach(function(inc){if(!inc.orderNum||!inc.art)return;if(inc.type==='на перефасовку')return;var pk=furyPackOf(inc.art);var add=pk?(inc.packQty||0):(inc.qty||1);if(!scanState[inc.orderNum])scanState[inc.orderNum]={};scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+add;});
     pickedSet=new Set();(res.lists||[]).forEach(function(r,ri){if(ri===0)return;var on=String(r[2]||'').trim();var a=String(r[4]||'').trim();if(on&&a)pickedSet.add(on+'||'+a);});
     repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
     lists=(res.lists||[]).slice(1).map(function(r){return {listNum:r[0],date:(r[1]||'').toString().trim(),orderNum:(r[2]||'').toString().trim(),client:(r[3]||'').toString().trim(),art:(r[4]||'').toString().trim(),name:(r[5]||'').toString().trim(),qty:parseInt(r[6])||0};}).filter(function(x){return x.art;});
@@ -4730,6 +4731,9 @@ async function doScanRecord(art,barcode,packQty){
     return;
   }
 
+  // оптимістичний інкремент ДО відповіді сервера — щоб швидкі скани не переповнювали те саме замовлення
+  if(!scanState[o.num])scanState[o.num]={};
+  scanState[o.num][art]=(scanState[o.num][art]||0)+(furyPackOf(art)?packQty:1);
   // --- Сервер записує 1 ящик + унікальний штрихкод і повертає прогрес ---
   var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name});
 
@@ -4754,7 +4758,6 @@ async function doScanRecord(art,barcode,packQty){
 
   // ПЕРЕБІР — меню розподілу зайвих ящиків
   if(res.status==='overflow'){
-    if(fastReceive){renderScanOk(fb,art,item,o,best,received,needed,packCheck);addScanLog(art,item.name,'ok');renderScanList();if(res.orderComplete||res.complete){toast('Замовлення #'+o.num+' повністю зібрано!','ok',5000);speakPhrase('phrase-order-complete');loadAll();}return;}
     beep('error');
     fb.className='s-fb sf-wa';
     fb.innerHTML='&#9888; <strong>'+esc(art)+'</strong> --- '+esc(item.name)+'<br>&#128230; #'+esc(o.num)+' '+esc(o.name)+' --- <strong style="color:var(--o)">перебір '+received+'/'+needed+'</strong>'+packLine(packCheck);
