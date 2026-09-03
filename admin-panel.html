@@ -2704,6 +2704,8 @@ var multiMode=false,multiSel={};
 var combinedItems=[],combinedOrders=[];
 var pickedSet=new Set();
 var repack=[];
+var lists=[];
+var fasovkaFilter={status:'pending',client:'',search:''};
 var combinedPickSel=new Set();
 var combinedFilter=new Set(); // обрані категорії (порожньо = всі)
 var combinedAllItems=[]; // незмінений повний список для фільтрації
@@ -2867,6 +2869,7 @@ async function loadAll(skipCache){
     parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseIncome(res.income||[]);
     pickedSet=new Set();(res.lists||[]).forEach(function(r,ri){if(ri===0)return;var on=String(r[2]||'').trim();var a=String(r[4]||'').trim();if(on&&a)pickedSet.add(on+'||'+a);});
     repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
+    lists=(res.lists||[]).slice(1).map(function(r){return {listNum:r[0],date:(r[1]||'').toString().trim(),orderNum:(r[2]||'').toString().trim(),client:(r[3]||'').toString().trim(),art:(r[4]||'').toString().trim(),name:(r[5]||'').toString().trim(),qty:parseInt(r[6])||0};}).filter(function(x){return x.art;});
     // Зберегти в кеш
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
@@ -3073,53 +3076,75 @@ function renderAll(){
 
 // ===== DASHBOARD =====
 function parseUaDate(s){s=String(s||'').trim();if(!s)return null;var m=s.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})(?:[ T](\d{1,2}):(\d{2}))?/);if(m){var y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));}var d=new Date(s);return isNaN(d.getTime())?null:d;}
+function setFasovkaFilter(k,v){fasovkaFilter[k]=v;renderRepackDash();}
 function renderRepackDash(){
   var el=G('page-repack');if(!el)return;
-  var byArt={};
-  repack.forEach(function(r){
-    var k=nk(r.art);if(!k)return;
-    if(!byArt[k])byArt[k]={art:r.art,name:r.name,sent:0,dates:[]};
-    byArt[k].sent++;
-    var d=parseUaDate(r.date);if(d)byArt[k].dates.push(d);
-    if(r.name&&!byArt[k].name)byArt[k].name=r.name;
-  });
-  var backByArt={};
+  // прихід по (замовлення+артикул)
+  var incByKey={};
   (income||[]).forEach(function(inc){
     if(!inc||!inc.art)return;
-    if(inc.type==='на перефасовку')return;
-    var k=nk(inc.art);backByArt[k]=(backByArt[k]||0)+1;
+    var key=nk(inc.orderNum)+'||'+nk(inc.art);
+    if(!incByKey[key])incByKey[key]={qty:0,dates:[]};
+    incByKey[key].qty+=(inc.qty||0);
+    var d=parseUaDate(inc.date);if(d)incByKey[key].dates.push(d);
   });
   var now=new Date();
-  var rows=Object.keys(byArt).map(function(k){
-    var x=byArt[k];x.dates.sort(function(a,b){return a-b;});
-    var earliest=x.dates.length?x.dates[0]:null;
-    var daysAgo=earliest?Math.floor((now-earliest)/86400000):null;
-    var back=backByArt[k]||0;var done=back>=x.sent;
-    return {art:x.art,name:x.name,sent:x.sent,daysAgo:daysAgo,back:back,done:done};
+  var all=lists.map(function(l){
+    var key=nk(l.orderNum)+'||'+nk(l.art);
+    var inc=incByKey[key]||{qty:0,dates:[]};
+    var arrived=inc.qty;
+    var status=(arrived>=l.qty&&l.qty>0)?'done':(arrived>0?'partial':'pending');
+    var gd=parseUaDate(l.date);
+    var daysW=gd?Math.floor((now-gd)/86400000):null;
+    return {date:l.date,orderNum:l.orderNum,client:l.client,art:l.art,name:l.name,qty:l.qty,arrived:arrived,status:status,daysW:daysW};
   });
-  rows.sort(function(a,b){return (b.daysAgo||0)-(a.daysAgo||0);});
-  var totalSent=rows.reduce(function(a,r){return a+r.sent;},0);
-  var stillN=rows.filter(function(r){return !r.done;}).length;
-  var oldN=rows.filter(function(r){return r.daysAgo!=null&&r.daysAgo>=3&&!r.done;}).length;
-  var h='<div style="max-width:1100px;margin:0 auto;padding:20px">';
-  h+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px">';
-  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--blue)">'+totalSent+'</div><div style="color:var(--mu);font-size:13px">віддано на фасовку (ящиків)</div></div>';
-  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--o)">'+stillN+'</div><div style="color:var(--mu);font-size:13px">ще фасуються (артикулів)</div></div>';
-  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--r)">'+oldN+'</div><div style="color:var(--mu);font-size:13px">довго (3+ днів)</div></div>';
+  var clients={};all.forEach(function(x){if(x.client)clients[x.client]=1;});
+  var clientList=Object.keys(clients).sort();
+  var rows=all.filter(function(x){
+    if(fasovkaFilter.status==='pending'&&x.status==='done')return false;
+    if(fasovkaFilter.status==='done'&&x.status!=='done')return false;
+    if(fasovkaFilter.client&&x.client!==fasovkaFilter.client)return false;
+    if(fasovkaFilter.search){var q=fasovkaFilter.search.toLowerCase();if((x.art+' '+x.name+' '+x.client+' '+x.orderNum).toLowerCase().indexOf(q)<0)return false;}
+    return true;
+  });
+  rows.sort(function(a,b){var ao=a.status==='done'?1:0,bo=b.status==='done'?1:0;if(ao!==bo)return ao-bo;return (b.daysW||0)-(a.daysW||0);});
+  var pendN=all.filter(function(x){return x.status!=='done';}).length;
+  var doneN=all.filter(function(x){return x.status==='done';}).length;
+  var oldN=all.filter(function(x){return x.status!=='done'&&x.daysW!=null&&x.daysW>=1;}).length;
+  var h='<div style="max-width:1200px;margin:0 auto;padding:20px">';
+  h+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px">';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--o)">'+pendN+'</div><div style="color:var(--mu);font-size:13px">ще не прийшло з відбору</div></div>';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--g)">'+doneN+'</div><div style="color:var(--mu);font-size:13px">прийшло</div></div>';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--r)">'+oldN+'</div><div style="color:var(--mu);font-size:13px">висить від учора+</div></div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;background:#fff;border:1px solid var(--bo);border-radius:10px;padding:10px 12px">';
+  h+='<div style="display:flex;gap:6px">';
+  [['pending','Не прийшло'],['done','Прийшло'],['all','Всі']].forEach(function(o){
+    var on=fasovkaFilter.status===o[0];
+    h+='<button onclick="setFasovkaFilter(\''+'status'+'\',\''+o[0]+'\')" style="font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;border:1px solid '+(on?'var(--g)':'var(--bo)')+';background:'+(on?'var(--g)':'#fff')+';color:'+(on?'#fff':'var(--tx2)')+'">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<select onchange="setFasovkaFilter(\''+'client'+'\',this.value)" style="font-size:13px;padding:6px 10px;border:1px solid var(--bo);border-radius:7px;background:#fff"><option value="">Усі клієнти</option>';
+  clientList.forEach(function(c){h+='<option value="'+esc(c)+'"'+(fasovkaFilter.client===c?' selected':'')+'>'+esc(c)+'</option>';});
+  h+='</select>';
+  h+='<input data-fs="1" value="'+esc(fasovkaFilter.search)+'" oninput="fasovkaFilter.search=this.value;clearTimeout(window._fasD);window._fasD=setTimeout(renderRepackDash,250)" placeholder="Артикул / назва / замовлення..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border:1px solid var(--bo);border-radius:7px">';
   h+='</div>';
   if(!rows.length){
-    h+='<div style="padding:40px;text-align:center;color:var(--mu)">Немає товарів на фасовці. Коли віддаси ящик «&#8594; На Перефасовку» — він зʼявиться тут.</div>';
+    h+='<div style="padding:40px;text-align:center;color:var(--mu)">Нічого не знайдено за фільтром.</div>';
   } else {
-    h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--gray6);font-size:11px;text-transform:uppercase;color:var(--mu)"><th style="text-align:left;padding:10px">Артикул</th><th style="text-align:left;padding:10px">Назва</th><th style="text-align:center;padding:10px">Віддано</th><th style="text-align:center;padding:10px">Днів тому</th><th style="text-align:center;padding:10px">В приході</th><th style="text-align:center;padding:10px">Статус</th></tr></thead><tbody>';
+    h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--gray6);font-size:11px;text-transform:uppercase;color:var(--mu)"><th style="text-align:left;padding:9px">Дано (дата/час)</th><th style="text-align:center;padding:9px">Днів</th><th style="text-align:left;padding:9px">Замовл.</th><th style="text-align:left;padding:9px">Клієнт</th><th style="text-align:left;padding:9px">Артикул</th><th style="text-align:left;padding:9px">Назва</th><th style="text-align:center;padding:9px">Дано</th><th style="text-align:center;padding:9px">Прийшло</th><th style="text-align:center;padding:9px">Статус</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      var late=r.daysAgo!=null&&r.daysAgo>=3&&!r.done;
-      h+='<tr style="border-top:1px solid var(--gray6);'+(late?'background:#fff0f0':'')+'"><td style="padding:8px 10px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:8px 10px">'+esc(r.name||'—')+'</td><td style="padding:8px 10px;text-align:center;font-weight:600">'+r.sent+'</td><td style="padding:8px 10px;text-align:center;font-weight:700;color:'+(late?'var(--r)':'var(--tx2)')+'">'+(r.daysAgo!=null?r.daysAgo:'—')+'</td><td style="padding:8px 10px;text-align:center">'+r.back+'</td><td style="padding:8px 10px;text-align:center">'+(r.done?'<span style="color:var(--g);font-weight:600">&#10003; готово</span>':'<span style="color:var(--o);font-weight:600">фасується</span>')+'</td></tr>';
+      var late=r.status!=='done'&&r.daysW!=null&&r.daysW>=1;
+      var stColor=r.status==='done'?'var(--g)':r.status==='partial'?'var(--o)':'var(--r)';
+      var stText=r.status==='done'?'\u2713 прийшло':r.status==='partial'?'частково':'не прийшло';
+      h+='<tr style="border-top:1px solid var(--gray6);'+(late?'background:#fff5f5':'')+'"><td style="padding:7px 9px;white-space:nowrap">'+esc(r.date||'\u2014')+'</td><td style="padding:7px 9px;text-align:center;font-weight:700;color:'+(late?'var(--r)':'var(--tx4)')+'">'+(r.status!=='done'&&r.daysW!=null?r.daysW:'\u2014')+'</td><td style="padding:7px 9px">'+esc(r.orderNum||'\u2014')+'</td><td style="padding:7px 9px">'+esc(r.client||'\u2014')+'</td><td style="padding:7px 9px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:7px 9px">'+esc(r.name||'\u2014')+'</td><td style="padding:7px 9px;text-align:center;font-weight:600">'+r.qty+'</td><td style="padding:7px 9px;text-align:center;font-weight:600">'+r.arrived+'</td><td style="padding:7px 9px;text-align:center;font-weight:600;color:'+stColor+'">'+stText+'</td></tr>';
     });
     h+='</tbody></table></div>';
-    h+='<div style="margin-top:12px;font-size:12px;color:var(--mu)">«В приході» — скільки рядків цього артикулу вже є в приході (орієнтовно = повернулось із фасовки, зіставлення по артикулу). «Днів тому» — від найранішого віддання. Червоним — на фасовці 3+ днів і ще не повернулось.</div>';
+    h+='<div style="margin-top:10px;font-size:12px;color:var(--mu)">Показано '+rows.length+' із '+all.length+' позицій відбору. «Прийшло» — сума з приходу по цьому замовленню+артикулу. Червоним — висить від учора й ще не прийшло.</div>';
   }
   h+='</div>';
   el.innerHTML=h;
+  if(fasovkaFilter.search){var si=el.querySelector('input[data-fs]');if(si){si.focus();si.setSelectionRange(9999,9999);}}
 }
 function renderDash(c){
   var el=G('page-dash');if(!el)return;
