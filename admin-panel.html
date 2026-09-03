@@ -2970,11 +2970,13 @@ function findBestOrderForArt(art){
 
   // Сортуємо: спочатку не-майбутні, потім за найближчою датою до зараз
   candidates.sort(function(a,b){
-    // Не-майбутні мають пріоритет
+    // Майбутні (заплановані на потім) — в кінець, спершу поточні/старі
     if(a.isFuture&&!b.isFuture)return 1;
     if(!a.isFuture&&b.isFuture)return-1;
-    // Серед однакових — найближча дата до зараз
-    return a.diffMs-b.diffMs;
+    // Серед однакових — НАЙСТАРІШЕ замовлення першим (FIFO: хто раніше замовив, тому спершу)
+    var ad=a.itemDate?a.itemDate.getTime():8.64e15;
+    var bd=b.itemDate?b.itemDate.getTime():8.64e15;
+    return ad-bd;
   });
 
   return candidates[0];
