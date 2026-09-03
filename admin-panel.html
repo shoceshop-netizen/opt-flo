@@ -76,9 +76,10 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
   table.pt tbody{display:table-row-group;}
   table.pt tr{page-break-inside:avoid!important;break-inside:avoid!important;}
   /* єдиний стиль клітинок */
-  table.pt th,table.pt td{border:0.5px solid #c0c0c0;padding:11px 10px;font-size:13px;line-height:1.4;text-align:left;vertical-align:middle;color:#1a1a1a;}
+  table.pt th,table.pt td{border:0.5px solid #c0c0c0;padding:4px 6px;font-size:11px;line-height:1.25;text-align:left;vertical-align:top;color:#1a1a1a;word-break:break-word;overflow-wrap:anywhere;}
   /* заголовки колонок — дрібні, lowercase, сірі */
-  table.pt th{font-size:10px;font-weight:500!important;text-transform:uppercase;letter-spacing:.6px;color:#1a1a1a;padding:6px 10px 10px;border-bottom:1px solid #1a1a1a;}
+  table.pt th{font-size:9px;font-weight:500!important;text-transform:uppercase;letter-spacing:.4px;color:#1a1a1a;padding:4px 6px 5px;border-bottom:1px solid #1a1a1a;vertical-align:bottom;}
+  table.pt tr.pt-h th{font-size:14px;font-weight:600!important;text-transform:none;letter-spacing:0;text-align:left;padding:8px 8px 6px;border-bottom:1.5px solid #1a1a1a;color:#1a1a1a;}
   table.pt td.c{text-align:center;}
   table.pt td.m,table.pt td.big{font-weight:400!important;text-align:center;}
   /* без зебри — просто лінії */
@@ -688,6 +689,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
     <div class="ni" id="nav-reserve"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span><span class="ni-lbl">Запас</span><span class="nb nb-g" id="bReserve">0</span></div>
     <div class="ni" id="nav-voices"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></span><span class="ni-lbl">Голоси</span></div>
     <div class="ni" id="nav-ai"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span><span class="ni-lbl">Бот-помічник</span></div>
+    <div class="ni" id="nav-repack"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span class="ni-lbl">Фасовка</span></div>
     <div class="ni-div"></div>
     <div class="ni" id="nav-vygruzka"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"/></svg></span><span class="ni-lbl">Вигрузка</span></div>
   </div>
@@ -710,6 +712,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
 
   <!-- ORDERS -->
   <div class="page on" id="page-dash"></div>
+  <div class="page" id="page-repack"></div>
   <div class="page" id="page-orders">
     <div class="stats-row">
       <div class="stat-item" onclick="setFilter('new')"><div class="stat-num c-new" id="sNew">—</div><div class="stat-lbl">Нових</div></div>
@@ -2700,6 +2703,7 @@ var filter='all',selOr=null,selPk=null,selSc=null,curTTN='',curScanOrder=null;
 var multiMode=false,multiSel={};
 var combinedItems=[],combinedOrders=[];
 var pickedSet=new Set();
+var repack=[];
 var combinedPickSel=new Set();
 var combinedFilter=new Set(); // обрані категорії (порожньо = всі)
 var combinedAllItems=[]; // незмінений повний список для фільтрації
@@ -2728,7 +2732,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',ai:'Бот-помічник',vygruzka:'Вигрузка'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -2740,6 +2744,7 @@ function nav(p){
   if(p==='reserve'){setTimeout(initReservePage,100);}
   if(p==='ai'){setTimeout(initAiPage,100);}
   if(p==='dash'){renderDash(getCounts());}
+  if(p==='repack'){renderRepackDash();}
 }
 function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
@@ -2861,6 +2866,7 @@ async function loadAll(skipCache){
     if(!res||!res.ok)throw new Error(res&&res.msg?res.msg:(res&&res.error?res.error:'getAllData failed'));
     parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseIncome(res.income||[]);
     pickedSet=new Set();(res.lists||[]).forEach(function(r,ri){if(ri===0)return;var on=String(r[2]||'').trim();var a=String(r[4]||'').trim();if(on&&a)pickedSet.add(on+'||'+a);});
+    repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
     // Зберегти в кеш
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
@@ -3066,6 +3072,55 @@ function renderAll(){
 }
 
 // ===== DASHBOARD =====
+function parseUaDate(s){s=String(s||'').trim();if(!s)return null;var m=s.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})(?:[ T](\d{1,2}):(\d{2}))?/);if(m){var y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));}var d=new Date(s);return isNaN(d.getTime())?null:d;}
+function renderRepackDash(){
+  var el=G('page-repack');if(!el)return;
+  var byArt={};
+  repack.forEach(function(r){
+    var k=nk(r.art);if(!k)return;
+    if(!byArt[k])byArt[k]={art:r.art,name:r.name,sent:0,dates:[]};
+    byArt[k].sent++;
+    var d=parseUaDate(r.date);if(d)byArt[k].dates.push(d);
+    if(r.name&&!byArt[k].name)byArt[k].name=r.name;
+  });
+  var backByArt={};
+  (income||[]).forEach(function(inc){
+    if(!inc||!inc.art)return;
+    if(inc.type==='на перефасовку')return;
+    var k=nk(inc.art);backByArt[k]=(backByArt[k]||0)+1;
+  });
+  var now=new Date();
+  var rows=Object.keys(byArt).map(function(k){
+    var x=byArt[k];x.dates.sort(function(a,b){return a-b;});
+    var earliest=x.dates.length?x.dates[0]:null;
+    var daysAgo=earliest?Math.floor((now-earliest)/86400000):null;
+    var back=backByArt[k]||0;var done=back>=x.sent;
+    return {art:x.art,name:x.name,sent:x.sent,daysAgo:daysAgo,back:back,done:done};
+  });
+  rows.sort(function(a,b){return (b.daysAgo||0)-(a.daysAgo||0);});
+  var totalSent=rows.reduce(function(a,r){return a+r.sent;},0);
+  var stillN=rows.filter(function(r){return !r.done;}).length;
+  var oldN=rows.filter(function(r){return r.daysAgo!=null&&r.daysAgo>=3&&!r.done;}).length;
+  var h='<div style="max-width:1100px;margin:0 auto;padding:20px">';
+  h+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px">';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--blue)">'+totalSent+'</div><div style="color:var(--mu);font-size:13px">віддано на фасовку (ящиків)</div></div>';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--o)">'+stillN+'</div><div style="color:var(--mu);font-size:13px">ще фасуються (артикулів)</div></div>';
+  h+='<div style="flex:1;min-width:150px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:16px"><div style="font-size:28px;font-weight:700;color:var(--r)">'+oldN+'</div><div style="color:var(--mu);font-size:13px">довго (3+ днів)</div></div>';
+  h+='</div>';
+  if(!rows.length){
+    h+='<div style="padding:40px;text-align:center;color:var(--mu)">Немає товарів на фасовці. Коли віддаси ящик «&#8594; На Перефасовку» — він зʼявиться тут.</div>';
+  } else {
+    h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--gray6);font-size:11px;text-transform:uppercase;color:var(--mu)"><th style="text-align:left;padding:10px">Артикул</th><th style="text-align:left;padding:10px">Назва</th><th style="text-align:center;padding:10px">Віддано</th><th style="text-align:center;padding:10px">Днів тому</th><th style="text-align:center;padding:10px">В приході</th><th style="text-align:center;padding:10px">Статус</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var late=r.daysAgo!=null&&r.daysAgo>=3&&!r.done;
+      h+='<tr style="border-top:1px solid var(--gray6);'+(late?'background:#fff0f0':'')+'"><td style="padding:8px 10px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:8px 10px">'+esc(r.name||'—')+'</td><td style="padding:8px 10px;text-align:center;font-weight:600">'+r.sent+'</td><td style="padding:8px 10px;text-align:center;font-weight:700;color:'+(late?'var(--r)':'var(--tx2)')+'">'+(r.daysAgo!=null?r.daysAgo:'—')+'</td><td style="padding:8px 10px;text-align:center">'+r.back+'</td><td style="padding:8px 10px;text-align:center">'+(r.done?'<span style="color:var(--g);font-weight:600">&#10003; готово</span>':'<span style="color:var(--o);font-weight:600">фасується</span>')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div style="margin-top:12px;font-size:12px;color:var(--mu)">«В приході» — скільки рядків цього артикулу вже є в приході (орієнтовно = повернулось із фасовки, зіставлення по артикулу). «Днів тому» — від найранішого віддання. Червоним — на фасовці 3+ днів і ще не повернулось.</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
 function renderDash(c){
   var el=G('page-dash');if(!el)return;
   c=c||getCounts();
@@ -3632,6 +3687,7 @@ function openVerifyModal(o){
   verifyState.items=items[o.num]||[];
   verifyState.scanned={};
   verifyState.strangers=[];
+  verifyState.boxes={};
   G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:3px">#'+esc(o.num)+' · '+esc(o.name)+'</div>'
     +'<div style="font-size:12px;color:var(--tx4)">Скануй штрихкоди — система рахує автоматично. Можна ввести вручну і натиснути Enter.</div>';
   renderVerifyTable();
@@ -3730,9 +3786,21 @@ function renderVerifyTable(){
 
 async function verifyScanArt(){
   var input=G('vmInput');
-  var art=input.value.trim();
+  var raw=input.value.trim();
   var qty=parseInt(G('vmQty').value)||1;
-  if(!art){input.focus();return;}
+  if(!raw){input.focus();return;}
+  // Наліпка ящика "артикул*штрихкод*кількість" — парсимо так само, як у прийомі
+  var parts=raw.split(/[\s*;|,\/_-]+/).filter(function(x){return x;});
+  var art=parts[0]||raw;
+  var scanBarcode=parts.length>=2?parts[1]:'';
+  verifyState.boxes=verifyState.boxes||{};
+  // Захист: той самий ящик (унікальний штрихкод) не рахуємо двічі
+  if(scanBarcode&&verifyState.boxes[scanBarcode]){
+    showVerifyAlert('⛔ ЯЩИК УЖЕ СКАНОВАНО','Цей ящик (штрихкод '+scanBarcode+') уже сканували в цьому замовленні. Повторно не рахую.');
+    beepAlert();
+    input.value='';input.focus();
+    return;
+  }
   
   // Перевіряємо чи артикул у замовленні
   var itemMatch=verifyState.items.find(function(it){return it.art===art;});
@@ -3764,6 +3832,7 @@ async function verifyScanArt(){
     
     // Правильний скан
     verifyState.scanned[art]=got+qty;
+    if(scanBarcode)verifyState.boxes[scanBarcode]=art;
     var newGot=verifyState.scanned[art];
     if(newGot===needed){
       toast('✓ '+art+' — повністю!','ok',1500);
@@ -4164,11 +4233,9 @@ function doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum){
     +'<td class="c">'+(x.count||'—')+'</td>'+'<td style="font-size:10px;color:#8A5B00">'+esc(x.note||'')+'</td>'
     +'</tr>';}).join('');
   G('pz').innerHTML=''
-    +'<div class="ph"><div class="ph-l">'+esc(title)+' — за локацією · для вантажників</div><div class="ph-r">'+esc(sub)+'</div></div>'
-    +'<table class="pt"><thead><tr><th>Локація</th><th>Арт</th><th>Арт.Флоріум</th><th>Назва</th><th style="width:48px">Розмір</th><th style="width:38px">Од.</th><th style="width:50px">Взяти,од</th><th style="width:50px">В од,шт</th><th style="width:58px">Взяти,шт</th><th style="width:58px">На місці</th><th>Якщо немає — де ще</th></tr></thead><tbody>'+r1+'</tbody></table>'
+    +'<table class="pt"><thead><tr class="pt-h"><th colspan="20">'+esc(title)+' — за локацією · для вантажників &nbsp;·&nbsp; '+esc(sub)+'</th></tr><tr><th>Локація</th><th>Арт</th><th>Арт.Флоріум</th><th>Назва</th><th style="width:48px">Розмір</th><th style="width:38px">Од.</th><th style="width:50px">Взяти,од</th><th style="width:50px">В од,шт</th><th style="width:58px">Взяти,шт</th><th style="width:58px">На місці</th><th>Якщо немає — де ще</th></tr></thead><tbody>'+r1+'</tbody></table>'
     +'<div class="pbrk"></div>'
-    +'<div class="ph"><div class="ph-l">Зведена по артикулах · для бригадирів</div><div class="ph-r">'+esc(sub)+'</div></div>'
-    +'<table class="pt"><thead><tr><th>Арт</th><th>Арт.Флоріум</th><th style="width:38px">Од.</th><th style="width:48px">К-сть,од</th><th style="width:50px">В од,шт</th><th>Назва</th><th style="width:48px">Розмір</th><th style="width:66px">Цибулин всього</th><th style="width:58px">Локація</th><th style="width:66px">Запас всього</th><th style="width:50px">Локацій</th><th style="width:90px">Примітка</th></tr></thead><tbody>'+r2+'</tbody></table>';
+    +'<table class="pt"><thead><tr class="pt-h"><th colspan="20">Зведена по артикулах · для бригадирів &nbsp;·&nbsp; '+esc(sub)+'</th></tr><tr><th>Арт</th><th>Арт.Флоріум</th><th style="width:38px">Од.</th><th style="width:48px">К-сть,од</th><th style="width:50px">В од,шт</th><th>Назва</th><th style="width:48px">Розмір</th><th style="width:66px">Цибулин всього</th><th style="width:58px">Локація</th><th style="width:66px">Запас всього</th><th style="width:50px">Локацій</th><th style="width:90px">Примітка</th></tr></thead><tbody>'+r2+'</tbody></table>';
   window.print();
 }
 
