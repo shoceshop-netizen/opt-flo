@@ -3590,6 +3590,20 @@ function updateMultiCount(){
 function getSelectedOrders(){
   return orders.filter(function(o){return multiSel[o.id];});
 }
+// Скільки пакетів/ящиків по (замовлення, артикул) уже ПРИЙНЯТО на прийомі (прихід → scanState). В упаковках, не в стеблах.
+function receivedBoxesFor(orderNum,art){
+  var got=(scanState[orderNum]&&scanState[orderNum][art])||0;
+  var pk=furyPackOf(art);
+  return pk?Math.floor(got/pk):got;
+}
+// Скільки ще ТРЕБА ВІДІБРАТИ по позиції: вигрузка − прийнято (не менше 0). Пара, що вже є в «списки», — 0 (вже видана вантажнику).
+// Раніше в накладну йшла ПОВНА к-сть з вигрузки по всіх вибраних замовленнях, включно з уже виданими/прийнятими —
+// вантажник відбирав повторно, і зайве осідало в «запас».
+function toPickQty(orderNum,it){
+  if(pickedSet.has(orderNum+'||'+it.art))return 0;
+  return Math.max(0,(parseInt(it.qty)||0)-receivedBoxesFor(orderNum,it.art));
+}
+
 function openCombinedList(ordersOverride){
   var sel=(ordersOverride&&ordersOverride.length)?ordersOverride:getSelectedOrders();
   if(!sel.length){toast('Спочатку виберіть замовлення','wa');return;}
@@ -3603,11 +3617,15 @@ function openCombinedList(ordersOverride){
         merged[key]={
           art:it.art,
           name:it.name,
-          qty:0,
+          qty:0,        // скільки відібрати ЗАРАЗ (це друкується вантажнику)
+          qtyTotal:0,   // усього по вигрузці (довідково)
+          recv:0,       // уже прийнято на прийомі (довідково)
           fromOrders:[]
         };
       }
-      merged[key].qty+=it.qty;
+      merged[key].qtyTotal+=(parseInt(it.qty)||0);
+      merged[key].recv+=receivedBoxesFor(o.num,it.art);
+      merged[key].qty+=toPickQty(o.num,it);
       merged[key].fromOrders.push(o.num);
     });
   });
@@ -3624,7 +3642,7 @@ function openCombinedList(ordersOverride){
     var allLocs=findAllStockLocations(ci.art);
     ci.location=allLocs||(st&&st.location?st.location:'');
     ci.category=st&&st.category?st.category:'';
-    ci.picked=ci.fromOrders.length>0&&ci.fromOrders.every(function(on){return pickedSet.has(on+'||'+ci.art);});
+    ci.picked=ci.qty<=0; // нічого відбирати: усе вже в списках або вже прийнято
     if(!ci.name||ci.name==='—'){ci.name=fu?fu.name:(st?st.name:'');}
   });
   combinedPickSel=new Set();combinedItems.forEach(function(ci){if(!ci.picked&&ci.location&&String(ci.location).trim())combinedPickSel.add(ci.art);});
@@ -3679,7 +3697,7 @@ function renderCombinedModal(){
         +'<td style="text-align:center"><input type="checkbox" class="cm-chk" data-art="'+esc(ci.art)+'" '+(combinedPickSel.has(ci.art)?'checked ':'')+(ci.picked?'disabled ':'')+'onchange="toggleCombinedPick(this)" style="width:16px;height:16px;cursor:pointer"></td>'+'<td style="text-align:center;color:var(--mu)">'+(i+1)+(ci.picked?'<div style="font-size:9px;color:#2e7d32;font-weight:700">✓</div>':'')+'</td>'
         +'<td style="font-family:var(--mono);font-weight:700;color:var(--gd);font-size:13px">'+esc(ci.art)+'</td>'
         +'<td><input class="cm-inp" data-i="'+i+'" data-f="name" value="'+esc(ci.name||'')+'" style="width:100%"></td>'+'<td style="text-align:center;font-size:12px;color:var(--tx2)">'+esc(ci.size||'—')+'</td>'
-        +'<td style="text-align:center;font-weight:700">'+ci.qty+'</td>'
+        +'<td style="text-align:center;font-weight:700">'+ci.qty+((ci.qtyTotal||0)>ci.qty?'<div style="font-size:9px;color:var(--mu);font-weight:400;white-space:nowrap">з '+ci.qtyTotal+(ci.recv?' · є '+ci.recv:'')+'</div>':'')+'</td>'
         +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="packQty" value="'+esc(ci.packQty||'')+'"></td>'
         +'<td style="text-align:center;color:var(--gd);font-weight:700">'+(totalPcs||'—')+'</td>'
         +'<td><input class="cm-inp cm-num" data-i="'+i+'" data-f="artFlorium" value="'+esc(ci.artFlorium||'')+'" style="font-family:var(--mono);color:#7b1fa2"></td>'
@@ -4166,7 +4184,8 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders,noPrint){
       var its=items[o.num]||[];
       its.forEach(function(it){
         if(!activeArts[it.art])return;
-        if(pickedSet.has(o.num+'||'+it.art))return;
+        var toPick=toPickQty(o.num,it);   // вигрузка − прийнято; 0 якщо пара вже в «списки»
+        if(toPick<=0)return;
         var fu=furyGet(it.art)||null;
         var st=findStockForItem(it.art);
         var artFlorium=fu?fu.artFlorium:'';
@@ -4180,13 +4199,13 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders,noPrint){
           if(edited.location)location=edited.location;
         }
         var packNum=parseInt(packQty)||0;
-        var totalPcs=packNum>0?(it.qty*packNum):0;
+        var totalPcs=packNum>0?(toPick*packNum):0;
         itemsForSave.push({
           orderNum:o.num,
           orderName:o.name,
           art:it.art,
           name:it.name||(fu?fu.name:''),
-          qty:it.qty,
+          qty:toPick,
           packQty:packNum,
           totalPcs:totalPcs,
           artFlorium:artFlorium,
