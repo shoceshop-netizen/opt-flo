@@ -3412,7 +3412,7 @@ function selectOrder(id){
       if(iss)issueCount++;
       var rowBg=iss?'#f4f4f4':(full?'var(--green-l)':(partial?'var(--orange-l)':(noStock?'#fff0ef':'')));
       var collCell=iss?issueBadge(iss,true)+(got?'<div style="font-size:10px;color:var(--mu)">у приході '+got+'</div>':''):(full?'<span style="color:var(--green-d);font-weight:700">✓ '+got+'/'+tgt+'</span>':(partial?'<span style="color:var(--orange);font-weight:600">'+got+'/'+tgt+'</span>':'<span style="color:var(--tx4)">0/'+tgt+'</span>'));
-      var issCell='<td style="text-align:center">'+issueBtn(o.num,o.name,it.art,it.name,it.qty,'function(){selectOrder(selOr)}')+'</td>';
+      collCell+='<div style="margin-top:3px">'+issueBtn(o.num,o.name,it.art,it.name,it.qty,'function(){selectOrder(selOr)}')+'</div>';
       return '<tr'+(rowBg?' style="background:'+rowBg+(iss?';color:#8a8a8a':'')+'"':'')+'>'
         +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
         +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
@@ -3424,7 +3424,6 @@ function selectOrder(id){
         +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:11px;color:var(--purple)">'+esc(artF)+'</td>'
         +'<td><span style="background:var(--gray6);padding:2px 7px;border-radius:5px;font-size:11px;color:var(--tx3);white-space:nowrap">'+esc(loc)+'</span></td>'
         +'<td style="text-align:center">'+stockBadge+'</td>'
-        +issCell
         +'</tr>';
     }).join('');
     body+='<div style="overflow:auto;border:1px solid var(--bo);border-radius:10px;background:#fff">'
@@ -3434,13 +3433,12 @@ function selectOrder(id){
         +'<th>Артикул</th>'
         +'<th>Назва</th>'
         +'<th style="text-align:center">К-сть</th>'
-        +'<th style="text-align:center;color:var(--green-d)">Зібрано</th>'
+        +'<th style="text-align:center;color:var(--green-d)" title="⚠ — позначити позицію: немає / погана якість / інше (не їде клієнту)">Зібрано / ⚠ не їде</th>'
         +'<th style="text-align:center;color:var(--blue)">В уп.</th>'
         +'<th style="text-align:center;color:var(--green-d)">Всього шт</th>'
         +'<th style="color:var(--purple)">Арт.Флоріум</th>'
         +'<th>Розміщення</th>'
         +'<th style="text-align:center">Склад</th>'
-        +'<th style="text-align:center" title="Позначити позицію: немає / погана якість / інше">Не їде</th>'
       +'</tr></thead>'
       +'<tbody>'+rowsHtml+'</tbody>'
       +'</table></div>';
