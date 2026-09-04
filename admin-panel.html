@@ -3808,24 +3808,33 @@ function openVerifyModal(o){
   // Скидаємо попередній таймер дебаунсу
   if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
   var inp=G('vmInput');
-  // Enter — миттєвий скан
+  // --- Розумний прийом сканера (ТА САМА логіка, що на прийомі) ---
+  // Сканер між частинами наліпки "артикул · штрихкод · к-сть" шле Tab/Enter. Якщо події йдуть швидкою чергою (<100 мс) —
+  // це сканер: Tab/Enter трактуємо як роздільник, склеюємо частини і обробляємо як ОДИН скан.
+  // Без цього наліпка розліталась на три скани: артикул → ок, штрихкод → «невідомий», к-сть (100) → «чужий артикул».
+  var vLastT=0;
+  function vProcess(){if(window._verifyDebounce)clearTimeout(window._verifyDebounce);window._verifyDebounce=null;verifyScanArt();}
   inp.onkeydown=function(e){
     if(e.key==='Enter'||e.key==='Tab'){
+      var dt=Date.now()-vLastT;
       e.preventDefault();
-      if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
-      verifyScanArt();
+      if(dt<100){
+        // роздільник усередині швидкого скану → склеюємо частини
+        if(inp.value&&!/\s$/.test(inp.value))inp.value+=' ';
+        vLastT=Date.now();
+        if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
+        window._verifyDebounce=setTimeout(vProcess,160);
+      } else if(e.key==='Enter'){
+        vProcess();   // повільний ручний Enter — миттєво
+      }
     }
   };
-  // Дебаунс — автоскан лише якщо немає вводу 10 секунд (щоб встигнути набрати вручну).
-  // Сканери шлють Enter (миттєвий скан вище); це лише запасний варіант для сканерів без Enter.
+  // Швидка черга символів = сканер (обробити невдовзі після завершення); повільно = ручне (довга пауза 10 с)
   inp.oninput=function(){
+    var now=Date.now();var dt=now-vLastT;vLastT=now;
     if(window._verifyDebounce)clearTimeout(window._verifyDebounce);
-    var v=inp.value.trim();
-    if(v.length>=3){
-      window._verifyDebounce=setTimeout(function(){
-        verifyScanArt();
-      },10000);
-    }
+    if(inp.value.trim().length<1)return;
+    window._verifyDebounce=setTimeout(vProcess, dt<100?160:10000);
   };
 }
 
