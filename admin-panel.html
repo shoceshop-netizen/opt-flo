@@ -3381,7 +3381,7 @@ function selectOrder(id){
   var body='';
   var _col=checkOrderCollected(o.num,its);
   var _pct=(_col&&_col.neededQty)?Math.round(_col.scannedQty/_col.neededQty*100):((k==='ready'||k==='verified'||k==='sent')?100:0);
-  if(its.length)body+='<div class="od-prog"><div class="od-prog-top"><span>Зібрано</span><span class="od-prog-n">'+((_col&&_col.scannedQty)||0)+' / '+((_col&&_col.neededQty)||0)+' шт</span></div><div class="od-prog-bar"><i style="width:'+_pct+'%"></i></div></div>';
+  if(its.length)body+='<div class="od-prog"><div class="od-prog-top"><span>Зібрано</span><span class="od-prog-n">'+((_col&&_col.scannedQty)||0)+' / '+((_col&&_col.neededQty)||0)+' шт'+((_col&&_col.issued)?' <span style="color:var(--o);font-weight:600">· не їде: '+_col.issued+'</span>':'')+'</span></div><div class="od-prog-bar"><i style="width:'+_pct+'%"></i></div></div>';
   if(k==='cancel')body+='<div class="canc-c">❌ Замовлення відмовлено</div>';
   if(its.length){
     body+='<div class="sec-t">📦 ПОЗИЦІЇ ЗАМОВЛЕННЯ</div>';
@@ -3875,8 +3875,7 @@ function renderVerifyTable(){
       +btn
       +'</tr>';
   }).join('');
-  // якщо всі позиції позначені «не їде» — підтверджувати нема що
-  if(its.length&&its.every(function(it){return issueOf(onum,it.art);}))allDone=false;
+  // усі позиції позначені «не їде» — підтвердити можна (клієнту нічого не їде, але етап закриваємо)
 
   G('vmStats').innerHTML='<strong>'+totalScanned+'</strong> / <strong>'+totalNeed+'</strong> шт · ящиків відскановано: <strong>'+Object.keys(verifyState.boxes||{}).length+'</strong>'
     +(verifyState.last?'<div style="margin-top:6px;font-size:12px">Останній: '+verifyState.last+'</div>':'');
@@ -4523,9 +4522,9 @@ function checkOrderCollected(orderNum,its){
       if(a)scanned[a]=(scanned[a]||0)+(parseInt(r.qty)||0);
     }
   });
-  var neededQty=0,scannedQty=0,missing=[];
+  var neededQty=0,scannedQty=0,missing=[],issued=0;
   its.forEach(function(it){
-    if(issueOf(orderNum,it.art))return;   // не їде клієнту — не рахуємо
+    if(issueOf(orderNum,it.art)){issued++;return;}   // не їде клієнту — не рахуємо, але позиція «закрита»
     var need=parseInt(it.qty)||0;
     var got=scanned[it.art]||0;
     neededQty+=need;
@@ -4534,7 +4533,8 @@ function checkOrderCollected(orderNum,its){
       missing.push({art:it.art,name:it.name,need:need,got:got});
     }
   });
-  return {allDone:missing.length===0&&neededQty>0,scannedQty:scannedQty,neededQty:neededQty,missing:missing};
+  // готово, якщо нічого не бракує і є хоч одна позиція (зібрана або позначена «не їде»)
+  return {allDone:missing.length===0&&(neededQty>0||issued>0),scannedQty:scannedQty,neededQty:neededQty,missing:missing,issued:issued};
 }
 function doPrint(o,its){
   // єдина логіка з зведеним списком: відкриваємо той самий модал з одним замовленням
