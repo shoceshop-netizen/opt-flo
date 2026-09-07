@@ -691,6 +691,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
     <div class="nav-sec">Окремо</div>
     <div class="ni" id="nav-stock"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/><path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/><path d="M5 21h14"/></svg></span><span class="ni-lbl">Товари</span></div>
     <div class="ni" id="nav-reserve"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span><span class="ni-lbl">Запас</span><span class="nb nb-g" id="bReserve">0</span></div>
+    <div class="ni" id="nav-issues" onclick="nav('issues')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span class="ni-lbl">Не поїхало</span><span class="nb nb-g" id="bIssues" style="background:#fff3e0;color:var(--o)">0</span></div>
     <div class="ni" id="nav-voices"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></span><span class="ni-lbl">Голоси</span></div>
     <div class="ni" id="nav-ai"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span><span class="ni-lbl">Бот-помічник</span></div>
     <div class="ni" id="nav-repack"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span class="ni-lbl">Фасовка</span></div>
@@ -748,6 +749,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
           </div>
         </div>
         <div class="stages" id="odSt"></div>
+        <div id="odTop" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 24px;border-bottom:1px solid var(--bo);background:var(--card)"></div>
         <div class="db" id="odB"></div>
         <div class="df">
           <button class="btn sm" id="odTTN" style="display:none">📋 ТТН</button>
@@ -847,6 +849,26 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
   </div>
 
   <!-- RESERVE PAGE -->
+  <div class="page" id="page-issues">
+    <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">⚠ Не поїхало клієнтам</h2>
+          <div style="font-size:13px;color:var(--mu);margin-top:4px">Позиції, позначені як «немає / погана якість / інше». Коли довезеш пізніше — не дублюй, просто зміни статус на «довезено».</div>
+        </div>
+        <button class="btn sm" onclick="loadAll(true)">↻ Оновити</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <select id="issFClient" onchange="renderIssuesPage()" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-width:200px"><option value="">Усі клієнти</option></select>
+        <select id="issFStatus" onchange="renderIssuesPage()" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px">
+          <option value="open">Відкриті (ще не довезено)</option><option value="">Усі</option><option value="немає">немає</option><option value="погана якість">погана якість</option><option value="інше">інше</option><option value="довезено">довезено</option>
+        </select>
+        <input id="issFText" oninput="renderIssuesPage()" placeholder="пошук: артикул / назва / коментар" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-width:240px">
+        <span id="issCount" style="font-size:12px;color:var(--mu);margin-left:auto"></span>
+      </div>
+      <div id="issBody" style="overflow:auto;border:1px solid var(--bo);border-radius:10px;background:#fff"></div>
+    </div>
+  </div>
   <div class="page" id="page-reserve">
     <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
@@ -2692,13 +2714,38 @@ var SM={new:{l:'Нове',p:'p-new'},work:{l:'В роботі',p:'p-work'},pack:
 var STATUSES_LIST=['Нове','В роботі','Фасується','Готове','Перевірено','Відкладжено','Відправлено','відправлено частинами','Відмова'];
 function pillH(s,big){var k=sk(s);var m=SM[k]||SM.new;return`<span class="pill${big?' lg':''} ${m.p}">${esc(s||m.l)}</span>`;}
 var STAGES=[{k:'new',l:'Нове'},{k:'work',l:'В роботі'},{k:'pack',l:'Фасується'},{k:'ready',l:'Готове'},{k:'verified',l:'Перевірено'},{k:'sent',l:'Відправлено'}];
-function stagesH(status){
+function stagesH(status,clickable){
   var k=sk(status);var order=['new','work','pack','ready','verified','sent'];var si=order.indexOf(k);
   return STAGES.map((st,i)=>{
     var cls=k==='cancel'?(i===0?'canc':''):(i<si?'done':i===si?'curr':'');
     var ic=cls==='done'?'✓':cls==='curr'?'●':cls==='canc'?'✕':'';
-    return `<div class="st ${cls}"><div class="sd">${ic}</div><div class="sn">${st.l}</div></div>`+(i<STAGES.length-1?`<div class="sl${i<si&&k!=='cancel'?' done':''}"></div>`:'');
+    // у картці замовлення кожен етап клікабельний — можна перевести і вперед, і НАЗАД
+    var click=clickable?` onclick="stageClick('${st.l}')" style="cursor:pointer" title="Перевести в «${st.l}»"`:'';
+    return `<div class="st ${cls}"${click}><div class="sd">${ic}</div><div class="sn">${st.l}</div></div>`+(i<STAGES.length-1?`<div class="sl${i<si&&k!=='cancel'?' done':''}"></div>`:'');
   }).join('');
+}
+// Клік по етапу в картці замовлення: назад — з підтвердженням; вперед через етап — з підтвердженням; «Готове» перевіряє changeStatus
+function stageClick(label){
+  var o=orders.find(function(x){return x.id===selOr;});if(!o)return;
+  if(sk(label)===sk(o.status))return;
+  var order=['new','work','pack','ready','verified','sent'];
+  var from=order.indexOf(sk(o.status)),to=order.indexOf(sk(label));
+  if(to<from){ if(!confirm('Повернути замовлення #'+o.num+' назад у «'+label+'»?'))return; }
+  else if(to>from+1){ if(!confirm('Перевести #'+o.num+' одразу в «'+label+'» (пропускаючи етапи)?'))return; }
+  changeStatus(o.num,o.name,label);
+}
+// Верхня панель дій у картці: ◀ назад · 🔍 перевірити · ▶ далі — дублює нижні кнопки, щоб не гортати
+function renderOdTop(o){
+  var top=G('odTop');if(!top)return;
+  var order=['new','work','pack','ready','verified','sent'];var k=sk(o.status);var i=order.indexOf(k);
+  var labels={new:'Нове',work:'В роботі',pack:'Фасується',ready:'Готове',verified:'Перевірено',sent:'Відправлено'};
+  var h='';
+  if(i>0&&SCRIPT_URL){var prev=labels[order[i-1]];h+='<button class="btn sm" onclick="stageClick(\''+prev+'\')" title="Повернути на попередній етап">◀ '+prev+'</button>';}
+  var v=G('odVerify');
+  if(v&&v.style.display!=='none')h+='<button class="btn next" style="background:var(--purple);border-color:var(--purple)" onclick="G(\'odVerify\').onclick()">🔍 Перевірити перед відправкою</button>';
+  var n=G('odNext');
+  if(n&&n.style.display!=='none'){var dis=n.style.opacity==='.5';h+='<button class="btn next" style="margin-left:auto'+(dis?';opacity:.5;cursor:not-allowed':'')+'" title="'+esc(n.title||'')+'" onclick="G(\'odNext\').onclick()">'+esc(n.textContent||'▶ Далі')+'</button>';}
+  top.innerHTML=h;top.style.display=h?'flex':'none';
 }
 
 // ===== STATE =====
@@ -2738,7 +2785,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -2748,6 +2795,7 @@ function nav(p){
   if(p==='scan'){setTimeout(()=>{initScanPage();G('scInp')?.focus();},100);}
   if(p==='voices'){setTimeout(initVoicesPage,100);}
   if(p==='reserve'){setTimeout(initReservePage,100);}
+  if(p==='issues'){renderIssuesPage();}
   if(p==='ai'){setTimeout(initAiPage,100);}
   if(p==='dash'){renderDash(getCounts());}
   if(p==='repack'){renderRepackDash();}
@@ -3331,7 +3379,7 @@ function selectOrder(id){
   G('orList').querySelectorAll('.pk-card').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
   var dv=G('orDetail');if(dv)dv.style.display='block';var mv=G('ordModalOv');if(mv){mv.classList.add('show');mv.scrollTop=0;}
   G('odN').textContent='#'+(o.num||'—');G('odC').textContent=o.name||'—';G('odS').textContent=o.comment||'';
-  G('odP').innerHTML=pillH(o.status,true);G('odSt').innerHTML=stagesH(o.status);
+  G('odP').innerHTML=pillH(o.status,true);G('odSt').innerHTML=stagesH(o.status,true);
   var k2=sk(o.status);
   if(G('odPicker')){G('odPicker').style.display=(k2==='work'||k2==='pack')?'':'none';G('odPicker').onclick=function(){nav('picker');selectPicker(id);};}
   if(G('odStatus')){G('odStatus').style.display=SCRIPT_URL?'':'none';G('odStatus').onclick=function(){openStatusModal(o);};}
@@ -3366,6 +3414,7 @@ function selectOrder(id){
       }
     }
   }
+  renderOdTop(o);
   curTTN=o.ttn;
   G('odTTN').style.display=o.ttn?'':'none';
   G('odTTN').onclick=()=>{navigator.clipboard.writeText(o.ttn);toast('ТТН скопійовано','ok',2000);};
@@ -4984,21 +5033,25 @@ function renderScanOk(fb,art,item,o,best,received,needed,packCheck){
 //  Прихід не чіпаємо — усе, що просканували, лишається в обліку.
 // ============================================================
 var issues={};   // 'замовлення||артикул' -> {status,note,qty,date,operator}
-var ISSUE_STATUSES=['немає','погана якість','інше'];
+var ISSUE_STATUSES=['немає','погана якість','інше','довезено'];   // «довезено» — закрито: відправили пізніше окремо
 function parseIssues(rows){
   issues={};
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
     var o=nk(r[1]),a=nk(r[3]),st=String(r[5]||'').trim();
     if(!o||!a||!st)continue;
-    issues[o+'||'+a]={status:st,note:String(r[6]||'').trim(),qty:parseInt(r[7])||0,date:String(r[0]||'').trim(),operator:String(r[8]||'').trim()};
+    issues[o+'||'+a]={status:st,note:String(r[6]||'').trim(),qty:parseInt(r[7])||0,date:String(r[0]||'').trim(),operator:String(r[8]||'').trim(),orderNum:o,client:String(r[2]||'').trim(),art:a,name:String(r[4]||'').trim()};
   }
+  var openN=Object.keys(issues).filter(function(k){return issues[k].status!=='довезено';}).length;
+  var b=G('bIssues');if(b){b.textContent=openN;b.style.display=openN?'':'none';}
+  if(G('page-issues')&&G('page-issues').classList.contains('on'))renderIssuesPage();
 }
 function issueOf(orderNum,art){return issues[nk(orderNum)+'||'+nk(art)]||null;}
 function issueBadge(iss,small){
   if(!iss)return '';
-  var col=iss.status==='погана якість'?'var(--o)':(iss.status==='немає'?'var(--r)':'var(--mu)');
-  return '<span title="'+esc(iss.note||'')+'" style="display:inline-block;padding:1px 7px;border-radius:6px;background:#f3f3f3;color:'+col+';font-weight:700;font-size:'+(small?'10':'11')+'px;white-space:nowrap">&#9888; не їде: '+esc(iss.status)+(iss.note?' — '+esc(iss.note):'')+'</span>';
+  var col=iss.status==='погана якість'?'var(--o)':(iss.status==='немає'?'var(--r)':(iss.status==='довезено'?'var(--g)':'var(--mu)'));
+  var lbl=iss.status==='довезено'?'&#10003; довезено пізніше':'&#9888; не їде: '+esc(iss.status);
+  return '<span title="'+esc(iss.note||'')+'" style="display:inline-block;padding:1px 7px;border-radius:6px;background:#f3f3f3;color:'+col+';font-weight:700;font-size:'+(small?'10':'11')+'px;white-space:nowrap">'+lbl+(iss.note?' — '+esc(iss.note):'')+'</span>';
 }
 // Кнопка «⚠» біля позиції — відкриває діалог статусу. onDoneFn — назва глобальної функції для перемалювання після збереження.
 function issueBtn(orderNum,orderName,art,name,qty,onDoneFn){
@@ -5045,7 +5098,9 @@ async function saveIssue(forceStatus){
   if(forceStatus===null&&!status){toast('Вибери статус','wa');return;}
   if(status==='інше'&&!note){toast('Для «інше» напиши коментар','wa');return;}
   var key=nk(c.orderNum)+'||'+nk(c.art);
-  if(status)issues[key]={status:status,note:note,qty:c.qty||0,date:'',operator:'Адмін'};else delete issues[key];
+  if(status)issues[key]={status:status,note:note,qty:c.qty||0,date:'',operator:'Адмін',orderNum:nk(c.orderNum),client:c.orderName||'',art:nk(c.art),name:c.name||''};else delete issues[key];
+  var openN=Object.keys(issues).filter(function(k){return issues[k].status!=='довезено';}).length;var bb=G('bIssues');if(bb){bb.textContent=openN;bb.style.display=openN?'':'none';}
+  if(G('page-issues')&&G('page-issues').classList.contains('on'))renderIssuesPage();
   closeIssueDialog();
   toast(status?('⚠ '+c.art+' — не їде: '+status):('Позначку знято: '+c.art),status?'wa':'ok',2500);
   if(SCRIPT_URL){
@@ -5055,6 +5110,67 @@ async function saveIssue(forceStatus){
     }catch(e){toast('Помилка запису статусу позиції','er',3000);}
   }
   if(typeof c.onDone==='function')c.onDone();
+}
+
+// ---------- Сторінка «Не поїхало клієнтам» ----------
+function renderIssuesPage(){
+  var body=G('issBody');if(!body)return;
+  var list=Object.keys(issues).map(function(k){return issues[k];});
+  // клієнт: з запису або з замовлення
+  list.forEach(function(x){
+    if(!x.client){var o=orders.find(function(oo){return String(oo.num)===String(x.orderNum);});if(o)x.client=o.name||'';}
+    if(!x.name){var it=(items[x.orderNum]||[]).find(function(i){return i.art===x.art;});if(it)x.name=it.name||'';}
+  });
+  // фільтр клієнтів
+  var sel=G('issFClient');var curC=sel.value;
+  var clients=Array.from(new Set(list.map(function(x){return x.client||'—';}))).sort(function(a,b){return a.localeCompare(b,'uk');});
+  sel.innerHTML='<option value="">Усі клієнти</option>'+clients.map(function(c){return '<option value="'+esc(c)+'"'+(c===curC?' selected':'')+'>'+esc(c)+'</option>';}).join('');
+  var fS=G('issFStatus').value, fT=(G('issFText').value||'').trim().toLowerCase();
+  var rows=list.filter(function(x){
+    if(curC&&(x.client||'—')!==curC)return false;
+    if(fS==='open'&&x.status==='довезено')return false;
+    if(fS&&fS!=='open'&&x.status!==fS)return false;
+    if(fT&&!((x.art+' '+x.name+' '+x.note+' '+x.orderNum).toLowerCase().indexOf(fT)>=0))return false;
+    return true;
+  });
+  rows.sort(function(a,b){return (a.client||'').localeCompare(b.client||'','uk')||String(a.orderNum).localeCompare(String(b.orderNum));});
+  G('issCount').textContent=rows.length+' з '+list.length;
+  if(!rows.length){body.innerHTML='<div style="padding:30px;text-align:center;color:var(--mu)">Нічого не знайдено</div>';return;}
+  var lastClient=null;
+  body.innerHTML='<table class="dt" style="width:100%"><thead><tr><th>Клієнт</th><th>Замовлення</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th><th>Статус</th><th>Коментар</th><th>Коли</th><th></th></tr></thead><tbody>'
+    +rows.map(function(x){
+      var o=orders.find(function(oo){return String(oo.num)===String(x.orderNum);});
+      var st=x.status;var col=st==='погана якість'?'var(--o)':(st==='немає'?'var(--r)':(st==='довезено'?'var(--g)':'var(--tx2)'));
+      var selH='<select onchange="issueQuickStatus(\''+esc(x.orderNum)+'\',\''+esc(x.art)+'\',this.value)" style="padding:5px 8px;border:1.5px solid var(--bo2);border-radius:7px;font-family:inherit;font-size:12px;font-weight:700;color:'+col+'">'
+        +ISSUE_STATUSES.map(function(s2){return '<option value="'+esc(s2)+'"'+(s2===st?' selected':'')+'>'+esc(s2)+'</option>';}).join('')+'</select>';
+      var bg=st==='довезено'?'background:#f4fbf4;color:#7a9a7a':'';
+      var same=x.client===lastClient;lastClient=x.client;
+      return '<tr style="'+bg+'">'
+        +'<td style="font-weight:'+(same?'400;color:var(--mu)':'700')+'">'+(same?'':esc(x.client||'—'))+'</td>'
+        +'<td><a href="#" onclick="nav(\'orders\');selectOrder(\''+(o?esc(o.id):'')+'\');return false;" style="color:var(--blue);font-weight:600;text-decoration:none">#'+esc(x.orderNum)+'</a>'+(o?'<div style="font-size:10px;color:var(--mu)">'+esc(o.status||'')+'</div>':'')+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:12px;color:var(--blue);font-weight:600">'+esc(x.art)+'</td>'
+        +'<td style="font-size:13px">'+esc(x.name||'')+'</td>'
+        +'<td style="text-align:center;font-weight:600">'+(x.qty||'')+'</td>'
+        +'<td>'+selH+'</td>'
+        +'<td style="font-size:12px;max-width:260px">'+esc(x.note||'')+'</td>'
+        +'<td style="font-size:11px;color:var(--mu);white-space:nowrap">'+esc((x.date||'').slice(0,16))+(x.operator?'<br>'+esc(x.operator):'')+'</td>'
+        +'<td style="white-space:nowrap">'+issueBtn(x.orderNum,x.client,x.art,x.name,x.qty,'renderIssuesPage')+' <button class="btn sm" title="Зняти позначку (видалити запис)" onclick="issueQuickStatus(\''+esc(x.orderNum)+'\',\''+esc(x.art)+'\',\'\')" style="padding:2px 7px;font-size:12px">✕</button></td>'
+      +'</tr>';
+    }).join('')+'</tbody></table>';
+}
+// швидка зміна статусу зі сторінки (коментар зберігаємо)
+async function issueQuickStatus(orderNum,art,status){
+  var key=nk(orderNum)+'||'+nk(art);var cur=issues[key]||{};
+  if(!status&&!confirm('Зняти позначку з '+art+' у #'+orderNum+'? Запис буде видалено.'))return renderIssuesPage();
+  if(status)issues[key]=Object.assign({},cur,{status:status});else delete issues[key];
+  renderIssuesPage();
+  var openN=Object.keys(issues).filter(function(k){return issues[k].status!=='довезено';}).length;var bb=G('bIssues');if(bb){bb.textContent=openN;bb.style.display=openN?'':'none';}
+  if(SCRIPT_URL){
+    try{
+      var res=await callScript('setItemIssue',{orderNum:orderNum,orderName:cur.client||'',art:art,name:cur.name||'',qty:cur.qty||0,status:status,note:cur.note||'',operator:'Адмін'});
+      if(!res||!res.ok)toast('Не записалось: '+((res&&res.error)||'?'),'er',4000);else toast(status?(art+' → '+status):('Позначку знято: '+art),'ok',2000);
+    }catch(e){toast('Помилка запису','er',3000);}
+  }
 }
 
 function openOverflowModal(order,art,name,needed,boxes){
