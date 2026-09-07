@@ -3007,11 +3007,14 @@ function findOrderCandidatesForArt(art){
 
   orders.forEach(function(o){
     var k=sk(o.status);
-    if(k==='sent'||k==='cancel'||k==='ready'||k==='verified'||k==='defer')return; // усі активні (вкл. нові та відкладені), крім готових/відправлених/відмов
+    var iss=issueOf(o.num,art);
+    var dovezti=iss&&iss.status==='довезти';   // довезення: замовлення могло вже поїхати — позицію все одно приймаємо
+    if(k==='cancel')return;
+    if((k==='sent'||k==='ready'||k==='verified'||k==='defer')&&!dovezti)return; // усі активні (вкл. нові та відкладені), крім готових/відправлених/відмов
     var its=items[o.num]||[];
     var item=its.find(function(it){return it.art===art;});
     if(!item)return;
-    if(issueOf(o.num,art))return; // позиція позначена «немає/погана якість/інше» — цьому замовленню вже не їде
+    if(iss&&!dovezti)return; // позиція позначена «немає/погана якість/інше/довезено» — цьому замовленню вже не їде
     if(!scanState[o.num])scanState[o.num]={};
     var already=scanState[o.num][art]||0;
     if(already>=targetQty(art,item))return; // вже зібрано
@@ -3172,14 +3175,27 @@ function renderRepackDash(){
     overRows.forEach(function(r){overHtml+='<tr style="border-top:1px solid #f5d5d5"><td style="padding:6px">'+esc(r.orderNum)+'</td><td style="padding:6px">'+esc(r.client||"\u2014")+'</td><td style="padding:6px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:6px">'+esc(r.name||"\u2014")+'</td><td style="padding:6px;text-align:center">'+r.needed+'</td><td style="padding:6px;text-align:center;font-weight:600">'+r.received+'</td><td style="padding:6px;text-align:center;font-weight:700;color:var(--r)">+'+r.excess+'</td></tr>';});
     overHtml+='</tbody></table></div><div style="margin-top:8px;font-size:12px;color:var(--mu)">Зайве = прийшло \u2212 треба. Виправ у приході: видали зайві ящики цього замовлення+артикулу або перепривʼяжи на інше замовлення.</div></div>';
   }
-  var all=lists.map(function(l){
+  var all=lists.filter(function(l){return !issueBlocks(l.orderNum,l.art);}).map(function(l){   // «немає/погана якість/інше/довезено» — не їде, у фасовці не показуємо
     var key=nk(l.orderNum)+'||'+nk(l.art);
     var inc=incByKey[key]||{qty:0,dates:[]};
     var arrived=inc.qty;
     var status=(arrived>=l.qty&&l.qty>0)?'done':(arrived>0?'partial':'pending');
     var gd=parseUaDate(l.date);
     var daysW=gd?Math.floor((now-gd)/86400000):null;
-    return {date:l.date,orderNum:l.orderNum,client:l.client,art:l.art,name:l.name,qty:l.qty,arrived:arrived,status:status,daysW:daysW};
+    var iss=issueOf(l.orderNum,l.art);
+    return {date:l.date,orderNum:l.orderNum,client:l.client,art:l.art,name:l.name,qty:l.qty,arrived:arrived,status:status,daysW:daysW,dovezti:!!(iss&&iss.status==='довезти')};
+  });
+  // «довезти», яких нема в списках (списку ще не робили) — додаємо як окремі рядки з позначкою довезення
+  var listKeys={};lists.forEach(function(l){listKeys[nk(l.orderNum)+'||'+nk(l.art)]=1;});
+  Object.keys(issues).forEach(function(k){
+    var x=issues[k];if(x.status!=='довезти'||listKeys[k])return;
+    var o=orders.find(function(oo){return String(oo.num)===String(x.orderNum);});
+    var it=(items[x.orderNum]||[]).find(function(i){return i.art===x.art;});
+    var q=x.qty||(it?it.qty:0)||0;
+    var inc=incByKey[k]||{qty:0,dates:[]};
+    var status=(inc.qty>=q&&q>0)?'done':(inc.qty>0?'partial':'pending');
+    var gd=parseUaDate(x.date);
+    all.push({date:x.date||'',orderNum:x.orderNum,client:x.client||(o?o.name:''),art:x.art,name:x.name||(it?it.name:''),qty:q,arrived:inc.qty,status:status,daysW:gd?Math.floor((now-gd)/86400000):null,dovezti:true,noList:true});
   });
   var clients={};all.forEach(function(x){if(x.client)clients[x.client]=1;});
   var clientList=Object.keys(clients).sort();
@@ -3221,6 +3237,7 @@ function renderRepackDash(){
       var late=r.status!=='done'&&r.daysW!=null&&r.daysW>=1;
       var stColor=r.status==='done'?'var(--g)':r.status==='partial'?'var(--o)':'var(--r)';
       var stText=r.status==='done'?'\u2713 прийшло':r.status==='partial'?'частково':'не прийшло';
+      if(r.dovezti)stText+=' <span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;background:#e8f0fe;color:var(--blue);font-size:10px;font-weight:700;white-space:nowrap">&#8617; довезення з попереднього'+(r.noList?' · без списку':'')+'</span>';
       h+='<tr style="border-top:1px solid var(--gray6);'+(late?'background:#fff5f5':'')+'"><td style="padding:7px 9px;white-space:nowrap">'+esc(r.date||'\u2014')+'</td><td style="padding:7px 9px;text-align:center;font-weight:700;color:'+(late?'var(--r)':'var(--tx4)')+'">'+(r.status!=='done'&&r.daysW!=null?r.daysW:'\u2014')+'</td><td style="padding:7px 9px">'+esc(r.orderNum||'\u2014')+'</td><td style="padding:7px 9px">'+esc(r.client||'\u2014')+'</td><td style="padding:7px 9px;font-family:monospace;font-weight:600;color:var(--blue)">'+esc(r.art)+'</td><td style="padding:7px 9px">'+esc(r.name||'\u2014')+'</td><td style="padding:7px 9px;text-align:center;font-weight:600">'+r.qty+'</td><td style="padding:7px 9px;text-align:center;font-weight:600">'+r.arrived+'</td><td style="padding:7px 9px;text-align:center;font-weight:600;color:'+stColor+'">'+stText+'</td></tr>';
     });
     h+='</tbody></table></div>';
@@ -3352,7 +3369,7 @@ function renderOrders(){
   list.forEach(function(o){
     var its=items[o.num]||[];
     var totalPos=its.length;
-    var donePos=its.filter(function(it){return issueOf(o.num,it.art)||((scanState[o.num]&&scanState[o.num][it.art])||0)>=((typeof targetQty==='function'?targetQty(it.art,it):it.qty)||it.qty||1);}).length;
+    var donePos=its.filter(function(it){return issueBlocks(o.num,it.art)||((scanState[o.num]&&scanState[o.num][it.art])||0)>=((typeof targetQty==='function'?targetQty(it.art,it):it.qty)||it.qty||1);}).length;
     var k=sk(o.status);
     var doneStatus=(k==='ready'||k==='verified'||k==='sent'||k==='defer');
     var pct=k==='cancel'?100:(doneStatus?100:(k==='new'?0:(totalPos?Math.round(donePos/totalPos*100):0)));
@@ -3457,10 +3474,12 @@ function selectOrder(id){
       var got=(scanState[o.num]&&scanState[o.num][it.art])||0;
       var tgt=(typeof targetQty==='function'?targetQty(it.art,it):it.qty)||it.qty||0;
       var full=tgt>0&&got>=tgt;var partial=got>0&&got<tgt;
-      var iss=issueOf(o.num,it.art);
+      var issAny=issueOf(o.num,it.art);
+      var iss=issueBlocks(o.num,it.art);
       if(iss)issueCount++;
       var rowBg=iss?'#f4f4f4':(full?'var(--green-l)':(partial?'var(--orange-l)':(noStock?'#fff0ef':'')));
       var collCell=iss?issueBadge(iss,true)+(got?'<div style="font-size:10px;color:var(--mu)">у приході '+got+'</div>':''):(full?'<span style="color:var(--green-d);font-weight:700">✓ '+got+'/'+tgt+'</span>':(partial?'<span style="color:var(--orange);font-weight:600">'+got+'/'+tgt+'</span>':'<span style="color:var(--tx4)">0/'+tgt+'</span>'));
+      if(issAny&&!iss)collCell+='<div style="margin-top:2px">'+issueBadge(issAny,true)+'</div>';
       collCell+='<div style="margin-top:3px">'+issueBtn(o.num,o.name,it.art,it.name,it.qty,'function(){selectOrder(selOr)}')+'</div>';
       return '<tr'+(rowBg?' style="background:'+rowBg+(iss?';color:#8a8a8a':'')+'"':'')+'>'
         +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
@@ -3500,7 +3519,7 @@ function selectOrder(id){
       +(issueCount>0?'<div class="sum-tag" style="background:#fff3e0;color:var(--o)"><span class="sum-l" style="color:var(--o)">⚠ Не їде клієнту</span><span class="sum-v" style="color:var(--o)">'+issueCount+'</span></div>':'')
       +'</div>';
     if(issueCount>0){
-      body+='<div style="margin-top:8px;font-size:12px;color:var(--tx2)">'+its.filter(function(it){return issueOf(o.num,it.art);}).map(function(it){var iss=issueOf(o.num,it.art);return '<div>&#9888; <b>'+esc(it.art)+'</b> '+esc(it.name)+' — '+esc(iss.status)+(iss.note?': '+esc(iss.note):'')+'</div>';}).join('')+'</div>';
+      body+='<div style="margin-top:8px;font-size:12px;color:var(--tx2)">'+its.filter(function(it){return issueBlocks(o.num,it.art);}).map(function(it){var iss=issueOf(o.num,it.art);return '<div>&#9888; <b>'+esc(it.art)+'</b> '+esc(it.name)+' — '+esc(iss.status)+(iss.note?': '+esc(iss.note):'')+'</div>';}).join('')+'</div>';
     }
   } else {
     body+='<div style="padding:32px;text-align:center;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px">Немає позицій</div><div style="font-size:12px;margin-top:4px">Додайте дані в аркуш «вигрузка»</div></div>';
@@ -3602,7 +3621,7 @@ function renderPicker(){
     var isSel=!!multiSel[o.id];
     var isCur=selPk===o.id;
     var cls='pk-card'+(isCur&&!multiMode?' on':'')+(isSel?' sel':'');
-    var k=sk(o.status),pk=0,tt=0;its.forEach(function(it){if(issueOf(o.num,it.art))return;var tgt=(typeof targetQty==='function'?targetQty(it.art,it):0)||it.qty||0;tt+=tgt;var got=(scanState[o.num]&&scanState[o.num][it.art])||0;pk+=Math.min(got,tgt);});var pct=tt?Math.round(pk/tt*100):0;
+    var k=sk(o.status),pk=0,tt=0;its.forEach(function(it){if(issueBlocks(o.num,it.art))return;var tgt=(typeof targetQty==='function'?targetQty(it.art,it):0)||it.qty||0;tt+=tgt;var got=(scanState[o.num]&&scanState[o.num][it.art])||0;pk+=Math.min(got,tgt);});var pct=tt?Math.round(pk/tt*100):0;
     var st=pct>0?(' style="--f-col:var(--fill-'+k+');--f-pct:'+pct+'%"'):'';
     return '<div class="'+cls+'" data-id="'+o.id+'"'+st+'>'
       +'<div class="pk-card-cb">'+(isSel?'✓':'')+'</div>'
@@ -3659,7 +3678,7 @@ function receivedBoxesFor(orderNum,art){
 // Раніше в накладну йшла ПОВНА к-сть з вигрузки по всіх вибраних замовленнях, включно з уже виданими/прийнятими —
 // вантажник відбирав повторно, і зайве осідало в «запас».
 function toPickQty(orderNum,it){
-  if(issueOf(orderNum,it.art))return 0;            // не їде клієнту — не відбираємо
+  if(issueBlocks(orderNum,it.art))return 0;        // не їде клієнту — не відбираємо («довезти» — відбираємо)
   if(pickedSet.has(orderNum+'||'+it.art))return 0;
   return Math.max(0,(parseInt(it.qty)||0)-receivedBoxesFor(orderNum,it.art));
 }
@@ -3902,7 +3921,8 @@ function renderVerifyTable(){
     var pack=furyPackOf(it.art);
     var need=targetQty(it.art,it)||it.qty||0;           // у тих же одиницях, що прийомка
     var got=verifyState.scanned[it.art]||0;
-    var iss=issueOf(onum,it.art);
+    var issAny=issueOf(onum,it.art);
+    var iss=issueBlocks(onum,it.art);
     var btn='<td style="text-align:center">'+issueBtn(onum,oname,it.art,it.name,it.qty,'renderVerifyTable')+'</td>';
     if(iss){
       // не їде клієнту — не вимагаємо і не блокуємо підтвердження
@@ -3926,7 +3946,7 @@ function renderVerifyTable(){
     return '<tr style="'+bg+'">'
       +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
       +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
-      +'<td style="font-size:13px">'+esc(it.name)+'</td>'
+      +'<td style="font-size:13px">'+esc(it.name)+(issAny?'<div>'+issueBadge(issAny,true)+'</div>':'')+'</td>'
       +'<td style="text-align:center;font-weight:600">'+needTxt+'</td>'
       +'<td style="text-align:center;font-weight:700;font-size:15px;color:'+(done?'var(--green-d)':partial?'var(--orange)':'var(--tx4)')+'">'+gotTxt+'</td>'
       +'<td style="text-align:center">'+(done?'<span style="color:var(--green);font-size:18px">✓</span>':partial?'<span style="color:var(--orange);font-weight:700">'+leftTxt+'</span>':'<span style="color:var(--tx4)">—</span>')+'</td>'
@@ -4015,7 +4035,7 @@ async function verifyScanArt(){
   }
 
   // --- Позиція позначена «не їде» (немає / погана якість / інше) — не пакувати ---
-  var issV=issueOf(verifyState.order.num,art);
+  var issV=issueBlocks(verifyState.order.num,art);
   if(issV){
     showVerifyAlert('⛔ ПОЗИЦІЯ НЕ ЇДЕ','Артикул '+art+' ('+item.name+') позначено: '+issV.status+(issV.note?' — '+issV.note:'')+'. НЕ кидати в пакет. Якщо товар таки є — зніми позначку (⚠ у рядку).');
     beepAlert();speakPhrase('phrase-already-packed');input.value='';input.focus();return;
@@ -4582,7 +4602,7 @@ function checkOrderCollected(orderNum,its){
   });
   var neededQty=0,scannedQty=0,missing=[],issued=0;
   its.forEach(function(it){
-    if(issueOf(orderNum,it.art)){issued++;return;}   // не їде клієнту — не рахуємо, але позиція «закрита»
+    if(issueBlocks(orderNum,it.art)){issued++;return;}   // не їде клієнту — не рахуємо, але позиція «закрита» («довезти» — рахуємо як звичайну)
     var need=parseInt(it.qty)||0;
     var got=scanned[it.art]||0;
     neededQty+=need;
@@ -5018,7 +5038,7 @@ function renderScanOk(fb,art,item,o,best,received,needed,packCheck){
     if(o2.num===o.num)return;
     var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready'||k==='verified'||k==='defer')return;
     var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
-    if(it2&&!issueOf(o2.num,art)&&((scanState[o2.num]||{})[art]||0)<targetQty(art,it2))others.push(o2);
+    if(it2&&!issueBlocks(o2.num,art)&&((scanState[o2.num]||{})[art]||0)<targetQty(art,it2))others.push(o2);
   });
   if(others.length){
     fb.innerHTML+='<br><span style="font-size:11px;color:var(--b)">Також потрібен: '+others.map(function(o2){return '#'+esc(o2.num)+' '+esc(o2.name);}).join(', ')+'</span>';
@@ -5033,7 +5053,11 @@ function renderScanOk(fb,art,item,o,best,received,needed,packCheck){
 //  Прихід не чіпаємо — усе, що просканували, лишається в обліку.
 // ============================================================
 var issues={};   // 'замовлення||артикул' -> {status,note,qty,date,operator}
-var ISSUE_STATUSES=['немає','погана якість','інше','довезено'];   // «довезено» — закрито: відправили пізніше окремо
+var ISSUE_STATUSES=['немає','погана якість','інше','довезти','довезено'];
+// немає / погана якість / інше — позиція НЕ їде (закрита для цього замовлення).
+// довезти — треба довезти пізніше: позиція ЗНОВУ активна (фасовка, списки, скан, перевірка) з позначкою «довезення».
+// довезено — закрито: довезли окремо.
+function issueBlocks(orderNum,art){var i=issueOf(orderNum,art);return (i&&i.status!=='довезти')?i:null;}
 function parseIssues(rows){
   issues={};
   for(var i=1;i<rows.length;i++){
@@ -5049,8 +5073,8 @@ function parseIssues(rows){
 function issueOf(orderNum,art){return issues[nk(orderNum)+'||'+nk(art)]||null;}
 function issueBadge(iss,small){
   if(!iss)return '';
-  var col=iss.status==='погана якість'?'var(--o)':(iss.status==='немає'?'var(--r)':(iss.status==='довезено'?'var(--g)':'var(--mu)'));
-  var lbl=iss.status==='довезено'?'&#10003; довезено пізніше':'&#9888; не їде: '+esc(iss.status);
+  var col=iss.status==='погана якість'?'var(--o)':(iss.status==='немає'?'var(--r)':(iss.status==='довезено'?'var(--g)':(iss.status==='довезти'?'var(--blue)':'var(--mu)')));
+  var lbl=iss.status==='довезено'?'&#10003; довезено пізніше':(iss.status==='довезти'?'&#8617; довезення з попереднього замовлення':'&#9888; не їде: '+esc(iss.status));
   return '<span title="'+esc(iss.note||'')+'" style="display:inline-block;padding:1px 7px;border-radius:6px;background:#f3f3f3;color:'+col+';font-weight:700;font-size:'+(small?'10':'11')+'px;white-space:nowrap">'+lbl+(iss.note?' — '+esc(iss.note):'')+'</span>';
 }
 // Кнопка «⚠» біля позиції — відкриває діалог статусу. onDoneFn — назва глобальної функції для перемалювання після збереження.
@@ -5181,7 +5205,7 @@ function openOverflowModal(order,art,name,needed,boxes){
     if(o2.num===order.num)return;
     var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready'||k==='verified'||k==='defer')return;
     var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
-    if(!it2||issueOf(o2.num,art))return;
+    if(!it2||issueBlocks(o2.num,art))return;
     var have=(scanState[o2.num]||{})[art]||0;
     var tgt=targetQty(art,it2);
     if(have<tgt)others.push({num:o2.num,name:o2.name,room:tgt-have});
@@ -5309,7 +5333,7 @@ function showScannedBoxes(orderNum,art,name){
     if(String(o2.num)===String(orderNum))return;
     var k=sk(o2.status);if(k==='sent'||k==='cancel'||k==='ready'||k==='verified'||k==='defer')return;
     var it2=(items[o2.num]||[]).find(function(it){return it.art===art;});
-    if(!it2||issueOf(o2.num,art))return;
+    if(!it2||issueBlocks(o2.num,art))return;
     var have=(scanState[o2.num]||{})[art]||0;
     var tgt=targetQty(art,it2);
     if(have<tgt)others.push({num:o2.num,name:o2.name,room:tgt-have});
