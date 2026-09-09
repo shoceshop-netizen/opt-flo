@@ -2239,6 +2239,7 @@ var TTS_PHRASES={
   'phrase-order-verified':'Замовлення перевірено перед відправкою',
   'phrase-not-in-order':'Цього артикула немає в замовленні',
   'phrase-already-packed':'Цей товар вже запакований, постав в запас',
+  'phrase-dup-box':'Повторний скан, цей ящик уже прийнято',
   'phrase-unknown':'Невідомий артикул',
   'phrase-scan-ok':'Скан правильний',
   'phrase-scan-error':'Помилка сканування',
@@ -4620,7 +4621,7 @@ function doPrint(o,its){
 }
 
 // ===== SCAN - прийом по артикулу =====
-var scanTimer=null;var scanLastT=0;
+var scanTimer=null;var scanLastT=0;var lastScanBc='';var lastScanBcT=0; // останній прийнятий штрихкод — для тихого ігнорування подвійного зчитування
 
 function pkChkToggle(el){
   el.classList.toggle('on');
@@ -4837,11 +4838,19 @@ async function doScanRecord(art,barcode,packQty){
   // --- Локальна дедуплікація по унікальному штрихкоду ---
   if(barcode&&scannedBarcodes[barcode]){
     var ex=scannedBarcodes[barcode];
+    // Той самий ящик за останні 4 с — сканер спрацював двічі (подвійне зчитування). Ящик уже прийнято і голос уже сказав «правильно»:
+    // нічого не озвучуємо і не лякаємо «постав в запас» — лише тихий напис.
+    if(lastScanBc===barcode&&Date.now()-lastScanBcT<4000){
+      fb.className='s-fb sf-wa';
+      fb.innerHTML='&#8635; Повторне зчитування ящика <strong>'+esc(barcode)+'</strong> — уже прийнято'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum):'')+'. Нічого робити не треба.';
+      addScanLog(art,'повторне зчитування','wa');
+      return;
+    }
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
     fb.className='s-fb sf-er';
-    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum):'');
-    speakPhrase('phrase-already-packed');
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано раніше'+(ex.orderNum?' &#8594; #'+esc(ex.orderNum):'')+' — це дубль, не приймай ще раз';
+    speakPhrase('phrase-dup-box');
     addScanLog(art,'дубль ящика','er');
     return;
   }
@@ -4880,7 +4889,7 @@ async function doScanRecord(art,barcode,packQty){
     addScanLog(art,itemName,'er');
     if(SCRIPT_URL){
       try{
-        var resG=await callScript('scan',{art:art,barcode:barcode,name:itemName,qty:1,packQty:packQty,orderNum:'',orderName:''});
+        var resG=await callScriptPost('scan',{art:art,barcode:barcode,name:itemName,qty:1,packQty:packQty,orderNum:'',orderName:''});
         if(resG&&resG.duplicate){fb.className='s-fb sf-er';fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано';}
         else{if(barcode)scannedBarcodes[barcode]={orderNum:'',art:art,qty:1,name:itemName};pushIncomeLocal(art,barcode,packQty,itemName,'','','загальний');}
       }catch(e){}
@@ -4911,15 +4920,35 @@ async function doScanRecord(art,barcode,packQty){
   var altC=cands.slice(1,6);
   var altStr=altC.map(function(c){return c.order.num+':'+targetQty(art,c.item);}).join(',');
   var altNamesStr=altC.map(function(c){return String(c.order.name||'').replace(/[|,]/g,' ');}).join('|');
-  var res=await callScript('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item),alt:altStr,altNames:altNamesStr});
+  // POST, а не GET: браузер може непомітно повторити GET (обрив з'єднання, keep-alive), і другий запит натикається на дубль штрихкоду
+  var res=await callScriptPost('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item),alt:altStr,altNames:altNamesStr});
 
   if(res&&res.duplicate){
+    // Локально цього штрихкоду ми НЕ знали (інакше зупинились би вище), а в приході він уже є.
+    // Найчастіше — повторений мережею наш власний запит або скан з іншого пристрою. Ящик у приході Є — не панікуємо.
+    if(barcode)scannedBarcodes[barcode]={orderNum:res.existingOrder||'',art:res.art||art,qty:1,name:res.name||''};
+    var exO=String(res.existingOrder||'');
+    if(exO&&exO===String(o.num)){
+      // лежить саме там, куди й цілились — це успішний скан, просто відповідь прийшла двічі
+      var recvD=(res.received!=null)?res.received:((scanState[o.num]||{})[art]||0);
+      var needD=(res.needed!=null&&res.needed>0)?res.needed:targetQty(art,item);
+      scanState[o.num][art]=recvD;
+      lastScanBc=barcode;lastScanBcT=Date.now();
+      if(!income.some(function(x){return x.barcode===String(barcode);}))pushIncomeLocal(art,barcode,packQty,item.name,o.num,o.name,'замовлення');
+      renderScanOk(fb,art,item,o,best,recvD,needD,packCheck);
+      fb.innerHTML+='<br><span style="font-size:11px;color:var(--mu)">запис уже був у приході (запит повторився) — рахуємо один раз</span>';
+      addScanLog(art,item.name,'ok');renderScanList();
+      return;
+    }
+    // ящик уже прийнято на ІНШЕ замовлення (або без замовлення) — знімаємо оптимістичний інкремент, кажемо спокійно
+    var contribD=furyPackOf(art)?packQty:1;
+    if(scanState[o.num])scanState[o.num][art]=Math.max(0,(scanState[o.num][art]||0)-contribD);
+    var exOrd=orders.find(function(x){return String(x.num)===exO;});
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
     fb.className='s-fb sf-er';
-    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано'+(res.existingOrder?' &#8594; #'+esc(res.existingOrder):'');
-    if(barcode)scannedBarcodes[barcode]={orderNum:res.existingOrder||'',art:res.art||art,qty:1,name:res.name||''};
-    speakPhrase('phrase-already-packed');
+    fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> уже є в приході'+(exO?' &#8594; #'+esc(exO)+(exOrd?' '+esc(exOrd.name):''):' (без замовлення)')+'. Повторно не рахую — перевір, чи це справді той ящик.';
+    speakPhrase('phrase-dup-box');
     addScanLog(art,'дубль ящика','er');
     return;
   }
@@ -4953,7 +4982,7 @@ async function doScanRecord(art,barcode,packQty){
   var received=(res.received!=null)?res.received:((scanState[o.num]||{})[art]||0);
   if(!scanState[o.num])scanState[o.num]={};
   scanState[o.num][art]=received;
-  if(barcode)scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};
+  if(barcode){scannedBarcodes[barcode]={orderNum:o.num,art:art,qty:1,name:item.name};lastScanBc=barcode;lastScanBcT=Date.now();}
   pushIncomeLocal(art,barcode,packQty,item.name,o.num,o.name,'замовлення');
 
   // Статус рахуємо від фактичних чисел (а не з res.status), щоб received==needed завжди було «рівно», а не «перебір»
