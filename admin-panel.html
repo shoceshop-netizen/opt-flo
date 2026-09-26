@@ -3526,7 +3526,7 @@ function selectOrder(id){
         +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;font-size:12px;color:var(--blue)">'+esc(it.art)+'</td>'
         +'<td style="font-size:13px">'+esc(it.name)+issueHintHtml(it.art,o.num,true)+'</td>'
         +'<td style="text-align:center;font-weight:600">'+it.qty+'</td>'
-        +'<td style="text-align:center"><input type="text" inputmode="decimal" value="'+(priceOf(it.art,it,o.num)||'')+'" placeholder="—" onchange="savePrice(\''+esc(it.art)+'\',this.value,\''+esc(String(it.name||'').replace(/[\'\\]/g,''))+'\',this,\''+esc(o.num)+'\')" title="Ціна за упаковку, грн, для цього замовлення. Зберігається в аркуш «ціни»" style="width:64px;padding:3px 5px;border:1.5px solid var(--bo2);border-radius:7px;font-family:inherit;font-size:12px;text-align:center;'+(priceOf(it.art,it,o.num)?'background:#e8fdf0':'')+'"></td>'
+        +'<td style="text-align:center"><input type="text" inputmode="decimal" value="'+(priceOf(it.art,it,o.num)||'')+'" placeholder="—" onchange="savePrice(\''+esc(it.art)+'\',this.value,\''+esc(String(it.name||'').replace(/[\'\\]/g,''))+'\',this,\''+esc(o.num)+'\')" title="Ціна за упаковку, €, для цього замовлення. Зберігається в аркуш «ціни»" style="width:64px;padding:3px 5px;border:1.5px solid var(--bo2);border-radius:7px;font-family:inherit;font-size:12px;text-align:center;'+(priceOf(it.art,it,o.num)?'background:#e8fdf0':'')+'"></td>'
         +'<td style="text-align:center">'+collCell+'</td>'
         +'<td style="text-align:center;color:var(--blue);font-weight:500">'+(packQ||'—')+'</td>'
         +'<td style="text-align:center;color:var(--green-d);font-weight:600">'+(totalPcs||'—')+'</td>'
@@ -3542,7 +3542,7 @@ function selectOrder(id){
         +'<th>Артикул</th>'
         +'<th>Назва</th>'
         +'<th style="text-align:center">К-сть</th>'
-        +'<th style="text-align:center" title="Ціна за упаковку, грн — для накладної відвантаження">Ціна, грн</th>'
+        +'<th style="text-align:center" title="Ціна за упаковку, € — для накладної відвантаження">Ціна, €</th>'
         +'<th style="text-align:center;color:var(--green-d)" title="⚠ — позначити позицію: немає / погана якість / інше (не їде клієнту)">Зібрано / ⚠ не їде</th>'
         +'<th style="text-align:center;color:var(--blue)">В уп.</th>'
         +'<th style="text-align:center;color:var(--green-d)">Всього шт</th>'
@@ -3559,7 +3559,7 @@ function selectOrder(id){
       +'<div class="sum-tag"><span class="sum-l">Всього шт</span><span class="sum-v" style="color:var(--green-d)">'+(grandTotalPcs||'?')+'</span></div>'
       +(missingStock>0?'<div class="sum-tag" style="background:var(--red-l);color:var(--red)"><span class="sum-l" style="color:var(--red)">⚠️ Немає в наявності</span><span class="sum-v" style="color:var(--red)">'+missingStock+'</span></div>':'')
       +(issueCount>0?'<div class="sum-tag" style="background:#fff3e0;color:var(--o)"><span class="sum-l" style="color:var(--o)">⚠ Не їде клієнту</span><span class="sum-v" style="color:var(--o)">'+issueCount+'</span></div>':'')
-      +(function(){var sum=0,noP=0;its.forEach(function(it){var p=priceOf(it.art,it,o.num);if(p)sum+=p*(parseInt(it.qty)||0);else noP++;});return sum?'<div class="sum-tag" title="за цінами × замовлено уп"><span class="sum-l">Сума, грн</span><span class="sum-v">'+(Math.round(sum*100)/100).toLocaleString('uk-UA')+'</span></div>'+(noP?'<div class="sum-tag" style="background:#fff3e0;color:var(--o)"><span class="sum-l" style="color:var(--o)">без ціни</span><span class="sum-v" style="color:var(--o)">'+noP+'</span></div>':''):'';})()
+      +(function(){var sum=0,noP=0;its.forEach(function(it){var p=priceOf(it.art,it,o.num);if(p)sum+=p*(parseInt(it.qty)||0);else noP++;});return sum?'<div class="sum-tag" title="за цінами × замовлено уп"><span class="sum-l">Сума, €</span><span class="sum-v">'+(Math.round(sum*100)/100).toLocaleString('uk-UA')+'</span></div>'+(noP?'<div class="sum-tag" style="background:#fff3e0;color:var(--o)"><span class="sum-l" style="color:var(--o)">без ціни</span><span class="sum-v" style="color:var(--o)">'+noP+'</span></div>':''):'';})()
       +'</div>';
     if(issueCount>0){
       body+='<div style="margin-top:8px;font-size:12px;color:var(--tx2)">'+its.filter(function(it){return issueBlocks(o.num,it.art);}).map(function(it){var iss=issueOf(o.num,it.art);return '<div>&#9888; <b>'+esc(it.art)+'</b> '+esc(it.name)+' — '+esc(iss.status)+(iss.note?': '+esc(iss.note):'')+'</div>';}).join('')+'</div>';
@@ -4548,68 +4548,183 @@ function doPrintCombinedFromCopy(itemsCopy,ordersCopy,listNum){
   window.print();
 }
 
-// ===== НАКЛАДНА ВІДВАНТАЖЕННЯ — тільки те, що поїхало, з цінами (вигрузка J) =====
-var _uah=function(x){return (Math.round((x||0)*100)/100).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2});};
-async function printShipmentInvoice(o){
+// ===== НАКЛАДНА ВІДВАНТАЖЕННЯ — тільки те, що поїхало, з цінами в € (дизайн «Флоріум»).
+//  Можна обʼєднати кілька замовлень одного клієнта в одну загальну накладну (буває, що 2–3 замовлення їдуть разом).
+var INV_CUR='€';
+function _n2(x){return (Math.round((x||0)*100)/100).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _eur(x){return _n2(x)+'\u00a0'+INV_CUR;}
+function _clNorm(n){return String(n||'').toLowerCase().replace(/\s+/g,' ').trim();}
+// Клік «🧾 Накладна відвантаження»: якщо в клієнта є інші замовлення (фасується/готове/перевірено/відправлено) — вибрати, які їдуть разом
+function printShipmentInvoice(o){
+  var key=_clNorm(o.name);
+  var okSt={pack:1,partial:1,ready:1,verified:1,sent:1};
+  var same=orders.filter(function(x){return String(x.num)===String(o.num)||(key&&_clNorm(x.name)===key&&okSt[sk(x.status)]);});
+  if(same.length<=1){doPrintInvoice([o.num]);return;}
+  openInvoicePicker(o,same);
+}
+function openInvoicePicker(o,same){
+  closeInvoicePicker();
+  var rank={verified:0,ready:1,pack:2,partial:3,sent:4};
+  same=same.slice().sort(function(a,b){
+    if(String(a.num)===String(o.num))return -1;if(String(b.num)===String(o.num))return 1;
+    return ((rank[sk(a.status)]||0)-(rank[sk(b.status)]||0))||((parseInt(b.num)||0)-(parseInt(a.num)||0));
+  });
+  var sentN=0;
+  same=same.filter(function(x){if(sk(x.status)!=='sent'||String(x.num)===String(o.num))return true;return ++sentN<=10;});   // з відправлених — 10 найновіших
+  var rows=same.map(function(x){
+    var its=items[x.num]||[];var dt=its.length?String(its[0].date||'').slice(0,10):'';
+    var cur=String(x.num)===String(o.num);
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--bo2);border-radius:10px;cursor:pointer;min-height:44px;box-sizing:border-box">'
+      +'<input type="checkbox" class="invPickCb" value="'+esc(x.num)+'"'+(cur?' checked':'')+' style="width:18px;height:18px;flex:none">'
+      +'<span style="font-family:\'SF Mono\',Menlo,monospace;font-weight:700">#'+esc(x.num)+'</span>'
+      +pillH(x.status)
+      +'<span style="color:var(--mu);font-size:12px;margin-left:auto;white-space:nowrap">'+its.length+' поз'+(dt?' · '+esc(dt):'')+(cur?' · поточне':'')+'</span>'
+      +'</label>';
+  }).join('');
+  var ov=document.createElement('div');ov.id='invPick';
+  ov.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(20,30,25,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="padding:16px 18px;border-bottom:1px solid var(--bo2)"><div style="font-size:16px;font-weight:800">🧾 Накладна відвантаження</div>'
+    +'<div style="font-size:13px;color:var(--tx2);margin-top:3px"><b>'+esc(o.name||'')+'</b> — познач замовлення, які їдуть разом. Буде одна загальна накладна.</div></div>'
+    +'<div style="padding:12px 18px;display:flex;flex-direction:column;gap:8px;overflow:auto">'+rows+'</div>'
+    +'<div style="padding:14px 18px;border-top:1px solid var(--bo2);display:flex;gap:10px;justify-content:flex-end">'
+      +'<button class="btn" type="button" onclick="closeInvoicePicker()">Скасувати</button>'
+      +'<button class="btn pr" type="button" id="invPickGo" onclick="invoicePickGo()">🧾 Друкувати (1)</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('change',function(){var n=ov.querySelectorAll('.invPickCb:checked').length;var b=G('invPickGo');if(b){b.textContent='🧾 Друкувати ('+n+')';b.disabled=!n;}});
+  ov.addEventListener('click',function(e){if(e.target===ov)closeInvoicePicker();});
+}
+function closeInvoicePicker(){var ov=G('invPick');if(ov)ov.remove();}
+function invoicePickGo(){
+  var ov=G('invPick');if(!ov)return;
+  var nums=[].map.call(ov.querySelectorAll('.invPickCb:checked'),function(cb){return cb.value;});
+  if(!nums.length)return;
+  closeInvoicePicker();doPrintInvoice(nums);
+}
+async function doPrintInvoice(nums){
   toast('Готую накладну…','in',1500);
-  var res=null;
-  try{res=await callScript('shipment',{orderNum:o.num});}catch(e){}
-  if(!res||!res.ok){toast('Не вдалося отримати дані: '+((res&&res.error)||'бек не відповів'),'er',4000);return;}
-  var head=res.order||{};var verifiedAny=!!res.verifiedAny;
-  // діагностика цін: якщо жодна позиція не має ціни — кажемо, звідки вони мали б узятись
-  if((res.positions||[]).length&&!(res.positions||[]).some(function(p){return p.price>0;})){
-    var why=(res.itemCols!=null&&res.itemCols<10)?'у «вигрузці» лише '+res.itemCols+' колонок — ціни (колонка J) не імпортуються':'колонка J у вигрузці порожня';
-    if(!res.priceListRows)why+='; аркуша «ціни» (артикул → ціна) теж нема';
+  var res=null,list=null;
+  try{res=await callScript('shipment',{orderNum:nums[0],orderNums:nums.join(',')});}catch(e){}
+  if(!res||!res.ok){toast('Не вдалося отримати дані: '+((res&&(res.error||res.msg))||'бек не відповів'),'er',4000);return;}
+  if(res.orders&&res.orders.length)list=res.orders;
+  else if(nums.length===1)list=[{order:res.order,verifiedAny:res.verifiedAny,positions:res.positions}];
+  else{
+    // старий бек (без orderNums) — по запиту на кожне замовлення
+    var rs=[];try{rs=await Promise.all(nums.map(function(n){return callScript('shipment',{orderNum:n});}));}catch(e){}
+    if(!rs.length||rs.some(function(r){return !r||!r.ok;})){toast('Не вдалося отримати дані по всіх замовленнях','er',4000);return;}
+    list=rs.map(function(r){return {order:r.order,verifiedAny:r.verifiedAny,positions:r.positions};});
+  }
+  var inv=buildInvoice(list);
+  if(!inv.lines.length){toast('По вибраних замовленнях нічого не відвантажено (нема прийнятих/перевірених позицій)','wa',5000);return;}
+  if(!inv.anyPrice){
+    var why=(res.itemCols!=null&&res.itemCols<10)?'у «вигрузці» лише '+res.itemCols+' колонок — ціни (J) не імпортуються':'колонка J у вигрузці порожня';
+    if(!res.priceListRows)why+='; в аркуші «ціни» теж порожньо';
     toast('⚠ Цін нема: '+why,'wa',7000);
   }
-  var shipped=[],notShipped=[],noPrice=0,sumQty=0,sumUah=0;
-  (res.positions||[]).forEach(function(p){
-    var pack=p.pack||0;
-    var toPacks=function(stems){return pack?Math.floor(stems/pack):stems;};
-    var blocked=p.issue&&p.issue.status!=='довезти';
-    var sent=0,reason='';
-    if(blocked){sent=0;reason=p.issue.status+(p.issue.note?' — '+p.issue.note:'');}
-    else{
-      sent=verifiedAny?toPacks(p.verified):Math.min(p.qty,toPacks(p.received));
-      if(sent>p.qty)sent=p.qty;
-      if(sent<p.qty)reason=sent===0?(verifiedAny?'не відскановано в перевірці':'не прийшло'):'недобір ('+(p.qty-sent)+' уп)';
-    }
-    var price=p.price||0;
-    if(sent>0){
-      if(!price)noPrice++;
-      var sum=sent*price;sumQty+=sent;sumUah+=sum;
-      shipped.push({art:p.art,name:p.name,qty:p.qty,sent:sent,pack:pack,price:price,sum:sum,partial:sent<p.qty,reason:reason});
-    }
-    if(sent<p.qty)notShipped.push({art:p.art,name:p.name,qty:p.qty,sent:sent,reason:reason});
-  });
-  var today=new Date().toLocaleDateString('uk-UA');
-  var rows=shipped.map(function(x,i){return '<tr'+(x.partial?' style="background:#fff8e6"':'')+'>'
-    +'<td class="c">'+(i+1)+'</td>'
-    +'<td class="m">'+esc(x.art)+'</td>'
-    +'<td>'+esc(x.name)+(x.partial?'<div style="font-size:10px;color:#8A5B00">замовлено '+x.qty+', '+esc(x.reason)+'</div>':'')+'</td>'
-    +'<td class="big">'+x.sent+'</td>'
-    +'<td class="c">'+(x.pack?x.pack:'—')+'</td>'
-    +'<td class="c">'+(x.pack?(x.sent*x.pack):'—')+'</td>'
-    +'<td class="c" style="'+(x.price?'':'color:#b00000;font-weight:700')+'">'+(x.price?_uah(x.price):'нема ціни')+'</td>'
-    +'<td class="big">'+(x.price?_uah(x.sum):'—')+'</td>'
-    +'</tr>';}).join('');
-  var ns=notShipped.length?'<table class="pt" style="margin-top:14px"><thead><tr class="pt-h"><th colspan="5">Не поїхало у цій відправці</th></tr><tr><th>Арт</th><th>Назва</th><th style="width:70px">Замовлено</th><th style="width:70px">Поїхало</th><th>Причина</th></tr></thead><tbody>'
-    +notShipped.map(function(x){return '<tr><td class="m">'+esc(x.art)+'</td><td>'+esc(x.name)+'</td><td class="c">'+x.qty+'</td><td class="c">'+x.sent+'</td><td style="font-size:11px">'+esc(x.reason||'')+'</td></tr>';}).join('')+'</tbody></table>':'';
-  var meta=[['Клієнт',head.client||o.name||''],['Дата відвантаження',today],['ТТН',head.ttn||o.ttn||'—'],['Адреса',head.address||'—'],['ФОП відправки',head.fop||'—'],['Основа',verifiedAny?'скани перевірки перед відправкою':'прийом (перевірка не проводилась)']]
-    .map(function(p){return '<div style="display:flex;gap:8px;font-size:12px"><span style="color:#666;min-width:150px">'+esc(p[0])+':</span><span style="font-weight:600">'+esc(p[1])+'</span></div>';}).join('');
-  G('pz').innerHTML=''
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-      +'<div><div style="font-size:20px;font-weight:700">Накладна відвантаження № '+esc(o.num)+'</div><div style="font-size:12px;color:#666">Florium · тільки те, що фактично відправлено</div></div>'
-      +'<div style="text-align:right;font-size:12px;color:#666">Сформовано '+esc(new Date().toLocaleString('uk-UA'))+'</div>'
-    +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px">'+meta+'</div>'
-    +'<table class="pt"><thead><tr class="pt-h"><th colspan="8">Відвантажено &nbsp;·&nbsp; '+shipped.length+' поз · '+sumQty+' уп · '+_uah(sumUah)+' грн'+(noPrice?' &nbsp;·&nbsp; <span style="color:#b00000">без ціни: '+noPrice+' поз.</span>':'')+'</th></tr>'
-      +'<tr><th style="width:28px">№</th><th style="width:80px">Арт</th><th>Назва</th><th style="width:60px">К-сть, уп</th><th style="width:56px">В уп, шт</th><th style="width:64px">Всього, шт</th><th style="width:80px">Ціна за уп</th><th style="width:90px">Сума, грн</th></tr></thead>'
-      +'<tbody>'+rows+'</tbody>'
-      +'<tfoot><tr style="font-weight:700;border-top:2px solid #1a1a1a"><td colspan="3" style="text-align:right;padding:8px">Разом:</td><td class="big">'+sumQty+'</td><td></td><td></td><td></td><td class="big">'+_uah(sumUah)+'</td></tr></tfoot></table>'
-    +ns
-    +'<div style="display:flex;justify-content:space-between;margin-top:36px;font-size:12px"><div>Відвантажив: ____________________</div><div>Отримав: ____________________</div></div>';
+  if(inv.noVerify.length)toast('Без перевірки перед відправкою: #'+inv.noVerify.join(', #')+' — пораховано за прийомом','in',5000);
+  if(inv.noPrice&&!confirm(inv.noPrice+' поз. без ціни — у накладній буде «—». Друкувати все одно?'))return;
+  G('pz').innerHTML=inv.html;
+  var clean=function(){var st=G('invPageSt');if(st)st.remove();window.removeEventListener('afterprint',clean);};
+  window.addEventListener('afterprint',clean);
   window.print();
+}
+// Складає накладну з відповіді бекенду (одне або кілька замовлень). Однакові артикули з однаковою ціною — одним рядком.
+function buildInvoice(list){
+  var lines=[],byKey={},perOrder=[],anyPrice=false,noVerify=[],clientName='';
+  list.forEach(function(so){
+    var head=so.order||{};var num=String(head.num||'');
+    var lo=orders.find(function(x){return String(x.num)===num;});
+    var li=items[num]||[];
+    var cn=String(head.clientItems||(li[0]&&li[0].client)||head.client||(lo&&lo.name)||'').trim();   // замовник — з вигрузки
+    if(cn.length>clientName.length)clientName=cn;
+    if(!so.verifiedAny)noVerify.push(num);
+    var sub=0,subQ=0;
+    (so.positions||[]).forEach(function(p){
+      if(p.price>0)anyPrice=true;
+      if(p.issue&&p.issue.status!=='довезти')return;           // не поїхало — у накладну не йде
+      var pack=p.pack||0;
+      var toPacks=function(v){return pack?Math.floor(v/pack):v;};
+      var sent=so.verifiedAny?toPacks(p.verified||0):Math.min(p.qty,toPacks(p.received||0));
+      if(sent>p.qty)sent=p.qty;
+      if(sent<=0)return;
+      var price=p.price||0;var k=nk(p.art)+'|'+price;
+      var ln=byKey[k];
+      if(!ln){ln=byKey[k]={art:p.art,name:p.name||'',pack:pack,price:price,qty:0};lines.push(ln);}
+      ln.qty+=sent;sub+=sent*price;subQ+=sent;
+    });
+    perOrder.push({num:num,sum:sub,qty:subQ});
+  });
+  var totQ=0,totPcs=0,totSum=0,noPrice=0;
+  lines.forEach(function(l){totQ+=l.qty;if(l.pack)totPcs+=l.qty*l.pack;totSum+=l.qty*l.price;if(!l.price)noPrice++;});
+  var multi=perOrder.length>1;
+  var now=new Date();
+  var dLong=now.toLocaleDateString('uk-UA',{day:'numeric',month:'long',year:'numeric'});
+  var dNow=now.toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var A='#2f5233';
+  var css='<style id="invPageSt">@page{size:A4 portrait;margin:12mm;}</style><style>'
+    +'#pz .inv,#pz .inv *{font-family:"Geist","Segoe UI",Helvetica,Arial,sans-serif!important;box-sizing:border-box}'
+    +'#pz .inv .mono,#pz .inv .mono *{font-family:"Geist Mono","SF Mono",Menlo,Consolas,monospace!important}'
+    +'#pz .inv b,#pz .inv .b,#pz .inv th{font-weight:700!important}#pz .inv .sb{font-weight:600!important}'
+    +'.inv{color:#141413;font-size:12.5px;line-height:1.4}'
+    +'.inv-head{background:'+A+';color:#fff;border-radius:10px;padding:20px 24px 16px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}'
+    +'.inv-kick{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;opacity:.85}'
+    +'.inv-title{font-size:24px;letter-spacing:-.3px;margin-top:4px}'
+    +'.inv-no{font-size:20px;text-align:right}.inv-no.multi{font-size:13.5px;line-height:1.5;max-width:330px;margin-left:auto}'
+    +'.inv-date{font-size:11.5px;opacity:.88;text-align:right;margin-top:3px}'
+    +'.inv-card{background:#f4f6f2;border-radius:10px;padding:11px 14px;margin:14px 0 16px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px}'
+    +'.inv-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:#4b5a4d}'
+    +'.inv-val{font-size:16px;margin-top:2px}'
+    +'.inv-t{width:100%;border-collapse:separate;border-spacing:0}'
+    +'.inv-t thead{display:table-header-group}'
+    +'.inv-t th{background:'+A+';color:#fff;padding:8px 9px;font-size:11.5px;text-align:left}'
+    +'.inv-t th:first-child{border-radius:8px 0 0 0}.inv-t th:last-child{border-radius:0 8px 0 0}'
+    +'.inv-t td{padding:7px 9px;border-bottom:1px solid #d9ded8;vertical-align:top}'
+    +'.inv-t tbody tr:nth-child(even) td{background:#fafbf9}'
+    +'.inv-t tr{break-inside:avoid;page-break-inside:avoid}'
+    +'.inv .r{text-align:right}.inv .c{text-align:center}.inv .mu{color:#4b5a4d}'
+    +'.inv-bot{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-top:14px;break-inside:avoid;page-break-inside:avoid}'
+    +'.inv-po{flex:1;background:#f4f6f2;border-radius:10px;padding:10px 14px;font-size:12px}'
+    +'.inv-po .it{display:flex;justify-content:space-between;gap:12px;padding:2px 0}'
+    +'.inv-sum{width:270px;margin-left:auto;border:2px solid '+A+';border-radius:10px;padding:10px 14px}'
+    +'.inv-sum .rw{display:flex;justify-content:space-between;color:#4b5a4d;padding:2px 0}'
+    +'.inv-sum .tt{border-top:1px solid #d9ded8;margin-top:6px;padding-top:7px;display:flex;justify-content:space-between;align-items:baseline;color:#141413}'
+    +'.inv-sum .tt .v{font-size:20px;color:'+A+'}'
+    +'.inv-sign{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px;font-size:11.5px;color:#4b5a4d;break-inside:avoid;page-break-inside:avoid}'
+    +'.inv-sign .ln{border-bottom:1px solid #141413;height:26px}'
+    +'.inv-foot{margin-top:18px;background:#f4f6f2;border-radius:8px;padding:8px 14px;font-size:10.5px;color:#4b5a4d;display:flex;justify-content:space-between}'
+    +'</style>';
+  var nums=perOrder.map(function(x){return x.num;});
+  var headR=multi?'<div class="inv-no multi mono sb">№ '+nums.map(esc).join(' · ')+'</div>':'<div class="inv-no mono sb">№ '+esc(nums[0])+'</div>';
+  var rowsH=lines.map(function(l,i){return '<tr>'
+    +'<td class="c mu">'+(i+1)+'</td>'
+    +'<td class="mono">'+esc(l.art)+'</td>'
+    +'<td class="sb">'+esc(l.name)+'</td>'
+    +'<td class="r mono">'+l.qty+'</td>'
+    +'<td class="r mono mu">'+(l.pack||'—')+'</td>'
+    +'<td class="r mono">'+(l.price?_n2(l.price):'—')+'</td>'
+    +'<td class="r mono b">'+(l.price?_n2(l.qty*l.price):'—')+'</td>'
+    +'</tr>';}).join('');
+  var html=css+'<div class="inv">'
+    +'<div class="inv-head"><div><div class="inv-kick">Florium · оптовий склад</div><div class="inv-title b">Накладна відвантаження</div></div>'
+      +'<div>'+headR+'<div class="inv-date">'+esc(dLong)+'</div></div></div>'
+    +'<div class="inv-card"><div><div class="inv-lbl">Замовник</div><div class="inv-val b">'+esc(clientName||'—')+'</div></div>'
+      +(multi?'<div class="mu" style="font-size:12px;text-align:right">'+perOrder.length+' замовлення в одній відправці</div>':'')+'</div>'
+    +'<table class="inv-t"><thead><tr><th class="c" style="width:30px">№</th><th style="width:92px">Артикул</th><th>Назва</th><th class="r" style="width:48px">Уп</th><th class="r" style="width:76px;white-space:nowrap">В уп, шт</th><th class="r" style="width:78px">Ціна, '+INV_CUR+'</th><th class="r" style="width:92px">Сума, '+INV_CUR+'</th></tr></thead>'
+    +'<tbody>'+rowsH+'</tbody></table>'
+    +'<div class="inv-bot">'
+      +(multi?'<div class="inv-po"><div class="inv-lbl" style="margin-bottom:4px">За замовленнями</div>'+perOrder.map(function(x){return '<div class="it"><span class="mono">№ '+esc(x.num)+'</span><span>'+x.qty+' уп · <b class="mono">'+_eur(x.sum)+'</b></span></div>';}).join('')+'</div>':'')
+      +'<div class="inv-sum">'
+        +'<div class="rw"><span>Позицій</span><span class="mono">'+lines.length+'</span></div>'
+        +'<div class="rw"><span>Упаковок</span><span class="mono">'+totQ+'</span></div>'
+        +(totPcs?'<div class="rw"><span>Цибулин</span><span class="mono">'+totPcs+'</span></div>':'')
+        +'<div class="tt"><span class="b">Разом</span><span class="v mono sb">'+_eur(totSum)+'</span></div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="inv-sign"><div><div>Відвантажив</div><div class="ln"></div></div><div><div>Отримав</div><div class="ln"></div></div></div>'
+    +'<div class="inv-foot"><span>Сформовано '+esc(dNow)+'</span><span>florium.ua · опт</span></div>'
+  +'</div>';
+  return {html:html,lines:lines,anyPrice:anyPrice,noPrice:noPrice,noVerify:noVerify,total:totSum,perOrder:perOrder,clientName:clientName};
 }
 
 // ===== Ручне редагування параметрів перед друком для вантажника =====
@@ -5252,7 +5367,7 @@ async function savePrice(art,val,name,inp,orderNum){
   try{
     var res=await callScriptPost('setPrice',{art:art,price:p,name:name||'',orderNum:orderNum||'',operator:'Адмін'});
     if(!res||!res.ok){toast('Ціна не збереглась: '+((res&&res.error)||'?'),'er',4000);if(inp)inp.style.background='#fff0f0';}
-    else toast(p?(art+' — '+p+' грн/уп'):('Ціну знято: '+art),'ok',1800);
+    else toast(p?(art+' — '+p+' €/уп'):('Ціну знято: '+art),'ok',1800);
   }catch(e){toast('Помилка збереження ціни','er',3000);}
 }
 
