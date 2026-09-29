@@ -3521,8 +3521,19 @@ function selectOrder(id){
       if(iss)issueCount++;
       if(issAny&&!iss&&issueShip(issAny))partialCount++;
       var rowBg=iss?'#f4f4f4':(full?'var(--green-l)':(partial?'var(--orange-l)':(noStock?'#fff0ef':'')));
-      var collCell=iss?issueBadge(iss,true)+(got?'<div style="font-size:10px;color:var(--mu)">у приході '+got+'</div>':''):(full?'<span style="color:var(--green-d);font-weight:700">✓ '+got+'/'+tgt+'</span>':(partial?'<span style="color:var(--orange);font-weight:600">'+got+'/'+tgt+'</span>':'<span style="color:var(--tx4)">0/'+tgt+'</span>'));
-      if(issAny&&!iss)collCell+='<div style="margin-top:2px">'+issueBadge(issAny,true)+'</div>';
+      var shR=(issAny&&!iss)?issueShip(issAny):0;
+      var collCell;
+      if(shR){
+        // часткова відправка: лічильник проти ПОВНОЇ кількості, а поруч — скільки зафіксовано до відправки
+        var fullT=targetQtyFull(it.art,it);var okP=got>=tgt;
+        rowBg=okP?'var(--green-l)':'var(--orange-l)';
+        collCell='<span style="color:'+(okP?'var(--green-d)':'var(--orange)')+';font-weight:700">'+(okP?'✓ ':'')+got+'/'+fullT+'</span>'
+          +'<div style="font-size:10px;color:var(--orange);font-weight:700;white-space:nowrap">поїде '+tgt+' шт · '+shR+' уп з '+it.qty+'</div>'
+          +'<div style="margin-top:2px">'+issueBadge(issAny,true)+'</div>';
+      } else {
+        collCell=iss?issueBadge(iss,true)+(got?'<div style="font-size:10px;color:var(--mu)">у приході '+got+'</div>':''):(full?'<span style="color:var(--green-d);font-weight:700">✓ '+got+'/'+tgt+'</span>':(partial?'<span style="color:var(--orange);font-weight:600">'+got+'/'+tgt+'</span>':'<span style="color:var(--tx4)">0/'+tgt+'</span>'));
+        if(issAny&&!iss)collCell+='<div style="margin-top:2px">'+issueBadge(issAny,true)+'</div>';
+      }
       collCell+='<div style="margin-top:3px">'+issueBtn(o.num,o.name,it.art,it.name,it.qty,'function(){selectOrder(selOr)}')+'</div>';
       return '<tr'+(rowBg?' style="background:'+rowBg+(iss?';color:#8a8a8a':'')+'"':'')+'>'
         +'<td style="text-align:center;color:var(--tx4);width:28px">'+(i+1)+'</td>'
@@ -4016,7 +4027,10 @@ function renderVerifyTable(){
     if(!done)allDone=false;
     var bg=done?'background:#e8fdf0':partial?'background:#fff8e1':'';
     // показ: упаковки (як у вигрузці) + стебла дрібним, якщо упаковка відома
-    var needTxt=pack?(it.qty+'<div style="font-size:10px;color:var(--mu);font-weight:400">'+need+' шт</div>'):String(need);
+    var shV=issAny?issueShip(issAny):0;
+    var needTxt=shV
+      ?(shV+'<span style="color:var(--mu);font-weight:400"> з '+it.qty+'</span><div style="font-size:10px;color:var(--orange);font-weight:600">поїде '+need+(pack?' шт':'')+' з '+targetQtyFull(it.art,it)+'</div>')
+      :(pack?(it.qty+'<div style="font-size:10px;color:var(--mu);font-weight:400">'+need+' шт</div>'):String(need));
     var gotTxt=pack?((Math.round(got/pack*10)/10)+'<div style="font-size:10px;color:var(--mu);font-weight:400">'+got+' шт</div>'):String(got);
     var leftTxt=pack?(Math.round((need-got)/pack*10)/10)+'<div style="font-size:10px;font-weight:400">'+(need-got)+' шт</div>':String(need-got);
     return '<tr style="'+bg+'">'
@@ -5497,6 +5511,8 @@ function getPackQtyRaw(art){
 }
 function furyPackOf(art){return parseInt(getPackQtyRaw(art),10)||0;}
 // Ціль позиції у СТЕБЛАХ: к-сть ящиків (вигрузка) × упаковка. Якщо упаковки нема в фурі — лишаємо як ящики.
+// повна ціль позиції (замовлено × упаковка), без урахування часткової відправки
+function targetQtyFull(art,item){var pack=furyPackOf(art);var boxes=parseInt(item.qty,10)||0;return pack?boxes*pack:boxes;}
 function targetQty(art,item){
   var pack=furyPackOf(art);
   var boxes=parseInt(item.qty,10)||0;
@@ -5625,7 +5641,7 @@ function issueBadge(iss,small){
   var col=iss.status==='погана якість'?'var(--o)':(iss.status==='немає'?'var(--r)':(iss.status==='довезено'?'var(--g)':(iss.status==='довезти'?'var(--blue)':'var(--mu)')));
   var shB=issueShip(iss);
   if(shB)col='var(--o)';
-  var lbl=shB?('&#9888; поїде '+shB+' з '+(iss.qty||'?')+' уп · '+esc(iss.status)):(iss.status==='довезено'?'&#10003; довезено пізніше':(iss.status==='довезти'?'&#8617; довезення з попереднього замовлення':'&#9888; не їде: '+esc(iss.status)));
+  var lbl=shB?('&#9888; частково · '+esc(iss.status)):(iss.status==='довезено'?'&#10003; довезено пізніше':(iss.status==='довезти'?'&#8617; довезення з попереднього замовлення':'&#9888; не їде: '+esc(iss.status)));
   return '<span title="'+esc(iss.note||'')+'" style="display:inline-block;padding:1px 7px;border-radius:6px;background:#f3f3f3;color:'+col+';font-weight:700;font-size:'+(small?'10':'11')+'px;white-space:nowrap">'+lbl+(iss.note?' — '+esc(iss.note):'')+'</span>';
 }
 // Кнопка «⚠» біля позиції — відкриває діалог статусу. onDoneFn — назва глобальної функції для перемалювання після збереження.
