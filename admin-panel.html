@@ -989,7 +989,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px;">
           <div>
             <h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">🤖 Бот-помічник</h2>
-            <div style="font-size:13px;color:var(--mu);margin-top:4px">Запитай про замовлення, прихід, залишки, запас — асистент аналізує дані таблиць і відповідає.</div>
+            <div style="font-size:13px;color:var(--mu);margin-top:4px">Питай про замовлення, клієнтів, артикули, прихід, склад, запас, проблемні позиції — асистент сам дістає потрібне з усіх аркушів таблиці й відповідає.</div>
             <div id="aiKeyBar" style="margin-top:6px;font-size:12px;color:var(--mu);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span id="aiKeyStatus">Перевірка ключа…</span></div>
           </div>
           <div style="display:flex;gap:8px;">
@@ -2865,9 +2865,16 @@ function renderAiMessages(){
       return '<div style="align-self:flex-end;max-width:85%;background:var(--g);color:#fff;padding:10px 14px;border-radius:14px 14px 4px 14px;font-size:14px;white-space:pre-wrap;word-break:break-word;">'+esc(m.content)+'</div>';
     if(m.role==='typing')
       return '<div style="align-self:flex-start;color:var(--mu);font-size:13px;padding:8px 4px;">Аналізую дані…</div>';
-    return '<div style="align-self:flex-start;max-width:92%;background:var(--card);border:1px solid var(--bo);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:14px;line-height:1.55;word-break:break-word;">'+aiFormat(m.content)+'</div>';
+    return '<div style="align-self:flex-start;max-width:92%;background:var(--card);border:1px solid var(--bo);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:14px;line-height:1.55;word-break:break-word;">'+aiFormat(m.content)+aiTraceHtml(m.trace)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
+}
+// що саме асистент дивився в таблиці — дрібним під відповіддю
+function aiTraceHtml(tr){
+  if(!tr||!tr.length)return '';
+  var lbl={get_order:function(a){return 'замовлення #'+(a.order_num||'');},get_article:function(a){return 'артикул '+(a.art||'');},find_orders:function(a){return 'замовлення'+(a.client?' клієнта «'+a.client+'»':'')+(a.status?' зі статусом «'+a.status+'»':'');},search_articles:function(a){return 'пошук «'+(a.text||'')+'»';},get_summary:function(a){var k={statuses:'статуси',orders:'готовність замовлень',not_arrived:'що не прийшло',issues:'проблемні позиції',reserve:'запас',repack:'перефасовка',income_today:'прихід за сьогодні',income_by_art:'прихід по артикулах',lists:'списки відбору',prices:'ціни'};return 'зведення: '+(k[a.kind]||a.kind);},search_rows:function(a){return '«'+(a.sheet||'')+'»: '+(a.text||'');}};
+  var parts=tr.map(function(t){var a=t.args||{};try{return (lbl[t.tool]||function(){return t.tool;})(a);}catch(e){return t.tool;}});
+  return '<div style="font-size:11px;color:var(--mu);margin-top:8px;border-top:1px dashed var(--bo);padding-top:5px">🔎 Дивився: '+esc(parts.join(' · '))+'</div>';
 }
 async function sendAiQuestion(){
   if(aiBusy)return;
@@ -2884,7 +2891,7 @@ async function sendAiQuestion(){
       .map(function(m){return {role:m.role,content:String(m.content).slice(0,800)};});
     var res=await callScript('aiQuery',{question:q,history:JSON.stringify(hist)});
     aiHistory=aiHistory.filter(function(m){return m.role!=='typing';});
-    if(res&&res.ok){aiHistory.push({role:'assistant',content:res.answer||'(порожня відповідь)'});}
+    if(res&&res.ok){aiHistory.push({role:'assistant',content:res.answer||'(порожня відповідь)',trace:res.trace||[]});}
     else{aiHistory.push({role:'assistant',content:'⚠️ '+((res&&res.error)||'Помилка запиту')});}
   }catch(e){
     aiHistory=aiHistory.filter(function(m){return m.role!=='typing';});
