@@ -697,6 +697,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
     <div class="ni" id="nav-stock"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/><path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/><path d="M5 21h14"/></svg></span><span class="ni-lbl">Товари</span></div>
     <div class="ni" id="nav-reserve"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span><span class="ni-lbl">Запас</span><span class="nb nb-g" id="bReserve">0</span></div>
     <div class="ni" id="nav-issues" onclick="nav('issues')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span class="ni-lbl">Не поїхало</span><span class="nb nb-g" id="bIssues" style="background:#fff3e0;color:var(--o)">0</span></div>
+    <div class="ni" id="nav-ref" onclick="nav('ref')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg></span><span class="ni-lbl">Довідник</span><span class="nb nb-g" id="bRef" style="background:#fff3e0;color:var(--o);display:none">0</span></div>
     <div class="ni" id="nav-voices"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></span><span class="ni-lbl">Голоси</span></div>
     <div class="ni" id="nav-ai"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span><span class="ni-lbl">Бот-помічник</span></div>
     <div class="ni" id="nav-repack"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span class="ni-lbl">Фасовка</span></div>
@@ -856,6 +857,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
   </div>
 
   <!-- RESERVE PAGE -->
+  <div class="page" id="page-ref"><div style="padding:24px;max-width:1400px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1" id="refBody"></div></div>
   <div class="page" id="page-find"><div style="padding:20px 24px;max-width:1400px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1" id="findBody"></div></div>
   <div class="page" id="page-issues">
     <div style="padding:24px;max-width:1200px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1">
@@ -866,6 +868,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
         </div>
         <button class="btn sm" onclick="loadAll(true)">↻ Оновити</button>
       </div>
+      <div id="anomSec" style="margin-bottom:14px"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
         <select id="issFClient" onchange="renderIssuesPage()" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-width:200px"><option value="">Усі клієнти</option></select>
         <select id="issFStatus" onchange="renderIssuesPage()" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px">
@@ -2805,7 +2808,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
@@ -2817,6 +2820,7 @@ function nav(p){
   if(p==='reserve'){setTimeout(initReservePage,100);}
   if(p==='issues'){renderIssuesPage();}
   if(p==='find'){renderFind();}
+  if(p==='ref'){renderRefPage();}
   if(p==='ai'){setTimeout(initAiPage,100);}
   if(p==='dash'){renderDash(getCounts());}
   if(p==='repack'){renderRepackDash();}
@@ -2956,12 +2960,13 @@ async function loadAll(skipCache){
     // Один запит getAllData замість 6 окремих (захищено токеном)
     var res=await callScript('getAllData',{});
     if(!res||!res.ok)throw new Error(res&&res.msg?res.msg:(res&&res.error?res.error:'getAllData failed'));
-    parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseIncome(res.income||[]);
-    scanState={};income.forEach(function(inc){if(!inc.orderNum||!inc.art)return;if(inc.type==='на перефасовку')return;var pk=furyPackOf(inc.art);var add=pk?(inc.packQty||0):(inc.qty||1);if(!scanState[inc.orderNum])scanState[inc.orderNum]={};scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+add;});
+    parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseRef(res.ref||[]);parseIncome(res.income||[]);
+    scanState={};income.forEach(function(inc){if(!inc.orderNum||!inc.art)return;if(inc.type==='на перефасовку')return;var pk=furyPackOf(inc.art);var add=pk?(inc.packQty||pk):(inc.qty||1);/* без к-сті на наліпці → упаковка з фури */if(!scanState[inc.orderNum])scanState[inc.orderNum]={};scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+add;});
     pickedSet=new Set();(res.lists||[]).forEach(function(r,ri){if(ri===0)return;var on=String(r[2]||'').trim();var a=String(r[4]||'').trim();if(on&&a)pickedSet.add(on+'||'+a);});
     parseIssues(res.issues||[]);
     parsePrices(res.prices||[]);
     parseVerified(res.verified||[]);
+    (function(){var m=refMissing().length;var b=G('bRef');if(b){b.textContent=m;b.style.display=m?'':'none';}if(G('page-ref')&&G('page-ref').classList.contains('on'))renderRefPage();})();
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
     repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
     lists=(res.lists||[]).slice(1).map(function(r){return {listNum:r[0],date:(r[1]||'').toString().trim(),orderNum:(r[2]||'').toString().trim(),client:(r[3]||'').toString().trim(),art:(r[4]||'').toString().trim(),name:(r[5]||'').toString().trim(),qty:parseInt(r[6])||0};}).filter(function(x){return x.art;});
@@ -3119,8 +3124,8 @@ function setManualFlor(art,val){val=nk(val||'');if(val)manualFlor[nk(art)]=val;e
 function findStockForItem(art){
   var fu=furyGet(art)||null;
   var st=null;
-  var afl=florOf(art,fu);
-  if(afl)st=stock.find(function(s){return nk(s.art)===nk(afl);});
+  var fl=florListOf(art,fu);
+  for(var fi=0;fi<fl.length&&!st;fi++){var f0=fl[fi];st=stock.find(function(s){return nk(s.art)===f0;});}
   if(!st)st=stock.find(function(s){return nk(s.art)===nk(art);});
   if(!st&&fu&&fu.artBox)st=stock.find(function(s){return nk(s.art)===nk(fu.artBox);});
   return st;
@@ -3130,15 +3135,11 @@ function findStockForItem(art){
 // Виключає ящики з нульовим залишком
 function findAllStockLocations(art){
   var fu=furyGet(art)||null;
-  var artFlorium=florOf(art,fu);
-  // Збираємо всі stock записи що підходять (за артФлоріум або за самим art)
+  var KS=stockKeysOf(art);   // фура + довідник (для міксів — кілька Арт.Флоріум)
   var matches=stock.filter(function(s){
     if(!s)return false;
-    var match=false;
-    if(artFlorium&&nk(s.art)===nk(artFlorium))match=true;
-    else if(nk(s.art)===nk(art))match=true;
-    else if(fu&&fu.artBox&&nk(s.art)===nk(fu.artBox))match=true;
-    if(!match)return false;
+    if(!KS[nk(s.art)])return false;
+    if((s.boxStatus||'')==='Ящик пустий')return false;
     // Виключаємо порожні ящики
     var q=parseInt(s.qty)||0;
     if(q<=0)return false;
@@ -3363,6 +3364,7 @@ function renderDash(c){
       +kpi(readyN,'готові до збору',pctS(readyN,actBase)+' від активних','var(--g)',"nav('picker')")
       +kpi(waitN,'чекають товару',pctS(waitN,actBase)+' від активних','var(--r)',"nav('scan')")
       +kpi(c.sent,'відправлено',pctS(c.sent,total)+' від усіх','var(--p)',"nav('orders');setFilter('sent')")
+      +(function(){var an=anomaliesAll();var pos=an.reduce(function(t,x){return t+x.list.length;},0);return kpi(an.length,'потребує уваги',an.length?pos+' неузгоджен. без позначки':'усе пояснено',an.length?'var(--r)':'var(--g)',"nav('issues');setTimeout(function(){var e=G('anomSec');if(e)e.scrollIntoView();},80)");})()
     +'</div>'
     +'<div class="dgrid2">'
       +'<div class="dsh-card"><div class="dsh-h">📊 Замовлення за статусами</div><div class="donut-wrap"><div class="donut" style="background:'+donut+'"><div class="donut-c"><b>'+total+'</b><span>замовлень</span></div></div><div class="legs">'+legend+'</div></div></div>'
@@ -3455,7 +3457,7 @@ function renderOrders(){
     html+='<div class="pk-card oc'+(selOr===o.id?' on':'')+'" data-id="'+o.id+'"'+st+'>'
       +'<div class="ocount'+(isDone?' done':'')+'"><span class="on">'+badgeDone+'/'+totalPos+'</span><span class="ou">поз</span></div>'
       +'<div class="oinfo">'
-        +'<div class="oname">'+esc(o.name)+'</div><div class="onum">№ '+esc(o.num)+'</div>'
+        +'<div class="oname">'+esc(o.name)+(orderAnomalies(o).length?' <span title="Є неузгодженості — відкрий картку" style="display:inline-block;background:var(--r);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">⚠ '+orderAnomalies(o).length+'</span>':'')+'</div><div class="onum">№ '+esc(o.num)+'</div>'
         +'<div class="oitem">'+(first?('<span class="osku">'+esc(first.art)+'</span>'+esc(first.name)):'—')+(more>0?'<span class="omore">+'+more+' позиц.</span>':'')+'</div>'
       +'</div>'
       +pillH(o.status)
@@ -3527,6 +3529,7 @@ function selectOrder(id){
   var _pct=(_col&&_col.neededQty)?Math.round(_col.scannedQty/_col.neededQty*100):((k==='ready'||k==='verified'||k==='sent')?100:0);
   if(its.length)body+='<div class="od-prog"><div class="od-prog-top"><span>Зібрано</span><span class="od-prog-n">'+((_col&&_col.scannedQty)||0)+' / '+((_col&&_col.neededQty)||0)+' шт'+((_col&&_col.issued)?' <span style="color:var(--o);font-weight:600">· не їде: '+_col.issued+'</span>':'')+'</span></div><div class="od-prog-bar"><i style="width:'+_pct+'%"></i></div></div>';
   if(k==='cancel')body+='<div class="canc-c">❌ Замовлення відмовлено</div>';
+  body+=anomalyPanelHtml(o,orderAnomalies(o));
   if(its.length){
     body+='<div class="sec-t">📦 ПОЗИЦІЇ ЗАМОВЛЕННЯ</div>';
     // підрахунок загальних метрик
@@ -3630,18 +3633,22 @@ function selectOrder(id){
   var orderHistory=income.filter(function(r){return r.orderNum===o.num;});
   if(orderHistory.length){
     body+='<div class="sec-t">📥 Історія приходу</div>';
-    body+='<div style="overflow:auto"><table class="dt" style="font-size:13px"><thead><tr><th>Дата</th><th>Артикул</th><th>Назва</th><th style="text-align:center">К-сть</th><th>Оператор</th></tr></thead><tbody>';
+    body+='<div style="overflow:auto"><table class="dt" style="font-size:13px"><thead><tr><th>Дата</th><th>Штрихкод</th><th>Артикул</th><th>Назва</th><th style="text-align:center">Ящ.</th><th style="text-align:center" title="К-сть цибулин у ящику з наліпки">Цибулин</th><th>Оператор</th></tr></thead><tbody>';
+    var totalBoxes=0,totalBulbs=0,noQtyN=0;
     orderHistory.forEach(function(r){
-      body+='<tr><td style="font-size:11px;color:var(--mu)">'+esc(r.date)+'</td>'
+      var pk=furyPackOf(r.art);var bulbs=r.packQty>0?r.packQty:(pk||0);var fromFury=!(r.packQty>0)&&pk>0;if(fromFury)noQtyN++;
+      totalBoxes+=r.qty||1;totalBulbs+=bulbs*(r.qty||1);
+      body+='<tr'+(fromFury?' style="background:#fff8ec"':'')+'><td style="font-size:11px;color:var(--mu);white-space:nowrap">'+esc(r.date)+'</td>'
+        +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:11px;color:var(--mu)">'+esc(r.barcode||'—')+'</td>'
         +'<td class="art">'+esc(r.art)+'</td>'
         +'<td style="font-size:13px">'+esc(r.name)+'</td>'
         +'<td style="text-align:center;font-weight:700">'+r.qty+'</td>'
+        +'<td style="text-align:center;font-weight:700;'+(fromFury?'color:var(--o)':'')+'">'+(bulbs||'—')+(fromFury?'<div style="font-size:10px;font-weight:600">за фурою</div>':'')+'</td>'
         +'<td style="font-size:11px;color:var(--mu)">'+esc(r.operator)+'</td>'
         +'</tr>';
     });
     body+='</tbody></table></div>';
-    var totalScanned=orderHistory.reduce(function(s,r){return s+r.qty;},0);
-    body+='<div class="tbl-total">Всього отримано: '+totalScanned+' шт</div>';
+    body+='<div class="tbl-total">Всього отримано: '+totalBoxes+' ящ. · '+totalBulbs.toLocaleString('uk-UA')+' цибулин'+(noQtyN?' · <span style="color:var(--o)">'+noQtyN+' ящ. без к-сті на наліпці — рахуємо за фурою</span>':'')+'</div>';
   }
 
   G('odB').innerHTML=body;odFilter(odCurF||'all');
@@ -3687,6 +3694,11 @@ async function changeStatus(num,name,newStatus){
         return;
       }
     }
+  }
+  if(newStatus==='Відправлено'||newStatus==='Перевірено'){
+    var oA=orders.find(function(x){return String(x.num).trim()===String(num).trim();});
+    if(oA){var probe=Object.assign({},oA,{status:newStatus});var an=orderAnomalies(probe).filter(function(a){return a.type==='unfilled';});
+      if(an.length&&!confirm('⚠ '+an.length+' позиц. не зібрано і без позначки:\n'+an.slice(0,5).map(function(a){return '• '+a.art+' '+a.name+' — '+a.got+' з '+a.target+' уп';}).join('\n')+(an.length>5?'\n…':'')+'\n\nКраще спершу позначити, що з ними (⚠ у рядку). Все одно перевести в «'+newStatus+'»?'))return;}
   }
   toast('Змінюємо статус...','in',2000);
   var res=await callScript('setStatus',{orderNum:num,orderName:name,status:newStatus});
@@ -3902,11 +3914,14 @@ function renderCombinedModal(){
         var cell=inp.closest('tr').children[5];
         if(cell)cell.textContent=totalPcs||'—';
         updateShortHint(inp.closest('tr'),ci);
+        refAutoFromList(ci.art,'pack',inp.value);
       }
       if(f==='artFlorium'){
         // вписали Арт.Флоріум вручну — запам'ятовуємо і одразу підтягуємо розміщення зі складу
         var ci2=combinedItems[i];
         setManualFlor(ci2.art,inp.value);
+        refAutoFromList(ci2.art,'flor',inp.value);
+        if(!furyHasOwn(ci2.art,'flor')){var flv=String(inp.value||'').split(/[,;\s]+/).map(nk).filter(Boolean);if(flv.length){var fuX=furyGet(ci2.art);if(fuX)fuX.florList=flv;else{refItems[nk(ci2.art)]=Object.assign(refItems[nk(ci2.art)]||{art:nk(ci2.art),name:ci2.name||'',pack:0,type:'',note:'',override:false},{flor:flv});applyRef();}}}
         var locs=findAllStockLocations(ci2.art);
         var st2=findStockForItem(ci2.art);
         ci2.location=locs||(st2&&st2.location?st2.location:'');
@@ -4504,12 +4519,12 @@ async function doPrintAndSave(itemsCopy,ordersCopy,skipOrders,noPrint){
 // === Дані по локаціях складу для артикулу (для накладної відбору) ===
 function stockLocData(art){
   var fu=furyGet(art)||null;
-  var artF=florOf(art,fu);
+  var KS=stockKeysOf(art);
   var byLoc={};var total=0;
   stock.forEach(function(sx){
     if(!sx)return;
-    var ok=(artF&&nk(sx.art)===nk(artF))||(nk(sx.art)===nk(art))||(fu&&fu.artBox&&nk(sx.art)===nk(fu.artBox));
-    if(!ok)return;
+    if(!KS[nk(sx.art)])return;
+    if((sx.boxStatus||'')==='Ящик пустий')return;
     var q=parseInt(sx.qty)||0; if(q<=0)return;
     var loc=String(sx.location||'').trim(); if(!loc)return;
     byLoc[loc]=(byLoc[loc]||0)+q; total+=q;
@@ -4522,11 +4537,11 @@ function stockLocData(art){
 // Ящики на складі бувають меншими за «упаковку» з інфо фури — тоді «взяти 3 уп» дає менше цибулин, ніж треба.
 // Беремо ящики з основної локації (маршрут), більші спершу, доки не набереться потрібна кількість.
 function pickPlan(art,totalPcs){
-  var fu=furyGet(art)||null;var afl=florOf(art,fu);
+  var KS=stockKeysOf(art);
   var boxes=stock.filter(function(sx){
     if(!sx)return false;
-    var ok=(afl&&nk(sx.art)===nk(afl))||(nk(sx.art)===nk(art))||(fu&&fu.artBox&&nk(sx.art)===nk(fu.artBox));
-    if(!ok)return false;
+    if(!KS[nk(sx.art)])return false;
+    if((sx.boxStatus||'')==='Ящик пустий')return false;
     var q=parseInt(sx.qty)||0;if(q<=0)return false;
     return !!(sx.location&&String(sx.location).trim());
   }).map(function(sx){return {loc:String(sx.location).trim(),qty:parseInt(sx.qty)||0};});
@@ -5333,6 +5348,8 @@ async function processIncomingScan(){
   if(!art)return;
   var barcode=parts.length>=2?parts[1]:'';
   var packQty=parts.length>=3?(parseInt(parts[2],10)||0):0;
+  var opNote='';
+  if(!packQty&&parts.length>=2&&furyPackOf(art)){packQty=furyPackOf(art);opNote='Система · к-сть за фурою';}   // наліпка без к-сті — беремо упаковку з фури й помічаємо
 
   // --- ВАЛІДАЦІЯ: сканер дав ЛИШЕ артикул (без штрихкоду й кількості) ---
   // відкриваємо вікно, де вручну вводимо кількість; у прихід пишемо артикул + кількість, без штрихкоду.
@@ -5342,7 +5359,7 @@ async function processIncomingScan(){
     return;
   }
   // Прийшли артикул + штрихкод + кількість — пишемо як раніше.
-  doScanRecord(art,barcode,packQty);
+  doScanRecord(art,barcode,packQty,opNote);
 }
 
 // Оптимістично додаємо щойно відсканований ящик у локальний income,
@@ -5357,7 +5374,7 @@ function pushIncomeLocal(art,barcode,packQty,name,orderNum,client,type){
 }
 
 // Запис відсканованого ящика в прихід (спільна логіка: звичайний скан + ручне введення кількості).
-async function doScanRecord(art,barcode,packQty){
+async function doScanRecord(art,barcode,packQty,opNote){
   var inp=G('scInp');
   var fb=G('scFb');
 
@@ -5415,7 +5432,7 @@ async function doScanRecord(art,barcode,packQty){
     addScanLog(art,itemName,'er');
     if(SCRIPT_URL){
       try{
-        var resG=await callScriptPost('scan',{art:art,barcode:barcode,name:itemName,qty:1,packQty:packQty,orderNum:'',orderName:''});
+        var resG=await callScriptPost('scan',{art:art,barcode:barcode,name:itemName,qty:1,packQty:packQty,orderNum:'',orderName:'',operator:opNote||'Система'});
         if(resG&&resG.duplicate){fb.className='s-fb sf-er';fb.innerHTML='&#9940; Ящик <strong>'+esc(barcode)+'</strong> вже відскановано';}
         else{if(barcode)scannedBarcodes[barcode]={orderNum:'',art:art,qty:1,name:itemName};pushIncomeLocal(art,barcode,packQty,itemName,'','','загальний');}
       }catch(e){}
@@ -5447,7 +5464,7 @@ async function doScanRecord(art,barcode,packQty){
   var altStr=altC.map(function(c){return c.order.num+':'+targetQty(art,c.item);}).join(',');
   var altNamesStr=altC.map(function(c){return String(c.order.name||'').replace(/[|,]/g,' ');}).join('|');
   // POST, а не GET: браузер може непомітно повторити GET (обрив з'єднання, keep-alive), і другий запит натикається на дубль штрихкоду
-  var res=await callScriptPost('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item),alt:altStr,altNames:altNamesStr});
+  var res=await callScriptPost('scan',{art:art,barcode:barcode,name:item.name,qty:1,packQty:packQty,orderNum:o.num,orderName:o.name,needHint:targetQty(art,item),alt:altStr,altNames:altNamesStr,operator:opNote||'Система'});
 
   if(res&&res.duplicate){
     // Локально цього штрихкоду ми НЕ знали (інакше зупинились би вище), а в приході він уже є.
@@ -5651,7 +5668,7 @@ function artNameOf(art){
 }
 // Залишок на складі по артикулу (усі ключі: наш, ящик, Флоріум), без «пустих» ящиків
 function stockAvailFor(art){
-  var a=nk(art);var fu=furyGet(a);var keys={};keys[a]=1;var fl=florOf(a,fu);if(fl)keys[nk(fl)]=1;if(fu&&fu.artBox)keys[nk(fu.artBox)]=1;if(fu&&fu.artRetail)keys[nk(fu.artRetail)]=1;
+  var a=nk(art);var keys=stockKeysOf(a);
   var rows=stock.filter(function(s2){if(!keys[nk(s2.art)])return false;if((s2.boxStatus||'')==='Ящик пустий')return false;return ((s2.bulbs||s2.qty)||0)>0;})
     .map(function(s2){return {loc:(s2.location||'').trim()||'—',box:s2.boxId,bulbs:s2.bulbs||s2.qty||0,status:s2.boxStatus||''};});
   rows.sort(function(x,y){return (florLocKeyS(x.loc)-florLocKeyS(y.loc))||(y.bulbs-x.bulbs);});
@@ -5835,6 +5852,160 @@ function fcCount(){var n=document.querySelectorAll('#findBody .fcCb:checked').le
 function fcInvoice(){var nums=[].map.call(document.querySelectorAll('#findBody .fcCb:checked'),function(cb){return cb.value;});if(!nums.length){toast('Познач хоча б одне замовлення','wa');return;}doPrintInvoice(nums);}
 
 // ============================================================
+//  РЕЗЕРВНИЙ ДОВІДНИК (аркуш «довідник ручний»)
+//  Якщо артикула нема в «інфо фури» або там бракує упаковки / Арт.Флоріум — дані беруться звідси.
+//  Заміни й мікси: кілька Арт.Флоріум через кому → розміщення й план відбору беруться з усіх.
+//  «Перекрити фуру = так» — брати звідси, навіть якщо у фурі значення є.
+// ============================================================
+var refItems={};var _furyRows=[];
+var REF_TYPES=['','заміна','мікс','інше'];
+function parseRef(rows){
+  refItems={};
+  for(var i=1;i<(rows||[]).length;i++){var r=rows[i]||[];var a=nk(r[0]);if(!a)continue;
+    refItems[a]={art:a,name:String(r[1]||'').trim(),pack:parseInt(r[2])||0,flor:String(r[3]||'').split(/[,;\s]+/).map(nk).filter(Boolean),type:String(r[4]||'').trim(),note:String(r[5]||'').trim(),override:/^(так|\+|1|yes|true|x)$/i.test(String(r[6]||'').trim()),at:String(r[7]||'').trim(),op:String(r[8]||'').trim()};}
+  applyRef();
+}
+// Вливаємо довідник у fury: чого нема — додаємо, чого бракує — доповнюємо, «перекрити» — замінюємо
+function applyRef(){
+  Object.keys(refItems).forEach(function(a){
+    var r=refItems[a];var fu=furyGet(a);
+    if(!fu){
+      fu={name:r.name,size:'',supplier:'',note:r.note,artBox:'',packBoxQty:'',boughtBox:'',artRetail:a,packQty:'',boughtRetail:'',artFlorium:'',stockQty:'',_synthetic:true,_hadPack:false,_hadFlor:false};
+      fury[a]=fu;
+    } else {
+      if(fu._hadPack===undefined)fu._hadPack=!!getPackQtyRaw(a);
+      if(fu._hadFlor===undefined)fu._hadFlor=!!fu.artFlorium;
+    }
+    if(r.pack&&(r.override||!getPackQtyRaw(a))){if(a.charAt(0)==='3')fu.packBoxQty=String(r.pack);else fu.packQty=String(r.pack);fu._refPack=true;}
+    if(r.flor.length&&(r.override||!fu.artFlorium)){fu.artFlorium=r.flor[0];fu._refFlor=true;}
+    if(r.flor.length)fu.florList=r.flor.slice();
+    if(!fu.name&&r.name)fu.name=r.name;
+    fu.ref=r;
+  });
+}
+function refRebuild(){parseFury(_furyRows);applyRef();}
+// усі Арт.Флоріум артикула (фура + довідник + ручне з браузера)
+function florListOf(art,fu){
+  fu=fu===undefined?furyGet(art):fu;var out=[];var add=function(x){x=nk(x);if(x&&out.indexOf(x)<0)out.push(x);};
+  if(fu&&fu.artFlorium)add(fu.artFlorium);if(fu&&fu.florList)fu.florList.forEach(add);
+  var r=refItems[nk(art)];if(r)r.flor.forEach(add);if(manualFlor[nk(art)])add(manualFlor[nk(art)]);
+  return out;
+}
+// ключі, за якими шукаємо ящики в «товар склад»
+function stockKeysOf(art){
+  var a=nk(art);var fu=furyGet(a);var k={};k[a]=1;
+  if(fu&&fu.artBox)k[nk(fu.artBox)]=1;if(fu&&fu.artRetail)k[nk(fu.artRetail)]=1;
+  florListOf(a,fu).forEach(function(f){k[f]=1;});
+  return k;
+}
+// чи є значення в самій фурі (а не з довідника)
+function furyHasOwn(art,field){var fu=furyGet(art);if(!fu||fu._synthetic)return false;if(field==='pack')return fu._hadPack!==undefined?fu._hadPack:!!getPackQtyRaw(art);return fu._hadFlor!==undefined?fu._hadFlor:!!fu.artFlorium;}
+async function refSave(rec,silent){
+  var a=nk(rec.art);if(!a)return false;
+  var cur=refItems[a]||{art:a,name:'',pack:0,flor:[],type:'',note:'',override:false};
+  var nx={art:a,name:rec.name!=null?String(rec.name).trim():cur.name,pack:rec.pack!=null?(parseInt(rec.pack)||0):cur.pack,flor:rec.flor!=null?(Array.isArray(rec.flor)?rec.flor:String(rec.flor).split(/[,;\s]+/)).map(nk).filter(Boolean):cur.flor,type:rec.type!=null?rec.type:cur.type,note:rec.note!=null?String(rec.note).trim():cur.note,override:rec.override!=null?!!rec.override:cur.override};
+  if(!nx.name)nx.name=artNameOf(a)||'';
+  refItems[a]=nx;refRebuild();
+  if(!SCRIPT_URL)return true;
+  try{
+    var res=await callScriptPost('setRefItem',{art:a,name:nx.name,pack:nx.pack||'',flor:nx.flor.join(', '),type:nx.type,note:nx.note,override:nx.override,operator:'Адмін'});
+    if(!res||!res.ok){toast('Довідник не зберігся: '+((res&&res.error)||'?'),'er',4000);return false;}
+    if(!silent)toast('📒 '+a+' збережено в довідник','ok',1800);
+    return true;
+  }catch(e){toast('Помилка збереження довідника','er',3000);return false;}
+}
+async function refDelete(art){
+  var a=nk(art);if(!confirm('Видалити '+a+' з довідника?'))return;
+  delete refItems[a];refRebuild();renderRefPage();
+  if(SCRIPT_URL){try{var res=await callScriptPost('setRefItem',{art:a,'delete':true});if(!res||!res.ok)toast('Не видалилось: '+((res&&res.error)||'?'),'er',4000);else toast('Видалено з довідника','ok',1500);}catch(e){}}
+}
+// автозбереження з модалки списку вантажнику — лише коли у фурі цього значення нема
+var _refAutoT={};
+function refAutoFromList(art,field,val){
+  var a=nk(art);if(!a)return;if(furyHasOwn(a,field))return;
+  clearTimeout(_refAutoT[a+field]);
+  _refAutoT[a+field]=setTimeout(function(){
+    var rec={art:a};if(field==='pack'){var p=parseInt(val)||0;if(!p)return;rec.pack=p;}else{var fl=String(val||'').split(/[,;\s]+/).map(nk).filter(Boolean);if(!fl.length)return;rec.flor=fl;}
+    refSave(rec,true).then(function(ok){if(ok)toast('📒 '+a+': '+(field==='pack'?'упаковку':'Арт.Флоріум')+' записано в довідник — наступного разу підтягнеться само','ok',2600);});
+  },900);
+}
+// ---------- сторінка «Довідник» ----------
+var refQ='';
+function refMissing(){
+  var need={};
+  orders.forEach(function(o){var k=sk(o.status);if(k==='sent'||k==='cancel')return;(items[o.num]||[]).forEach(function(it){var a=nk(it.art);if(issueBlocks(o.num,a))return;var noPack=!furyPackOf(a),noFlor=!florListOf(a).length;if(!noPack&&!noFlor)return;if(!need[a])need[a]={art:a,name:it.name||artNameOf(a),orders:[],noPack:noPack,noFlor:noFlor};if(need[a].orders.indexOf(o.num)<0)need[a].orders.push(o.num);});});
+  return Object.keys(need).map(function(a){return need[a];}).sort(function(x,y){return y.orders.length-x.orders.length||x.art.localeCompare(y.art);});
+}
+function refRowInputs(id,r,miss){
+  var I=function(f,val,ph,w,extra){return '<input id="rf-'+f+'-'+id+'" value="'+esc(val==null?'':val)+'" placeholder="'+esc(ph)+'" '+(extra||'')+' style="width:'+w+';padding:6px 8px;border:1.5px solid '+((miss&&((f==='pack'&&miss.noPack)||(f==='flor'&&miss.noFlor)))?'var(--o)':'var(--bo2)')+';border-radius:8px;font-family:inherit;font-size:12.5px;box-sizing:border-box;min-height:34px">';};
+  return '<td>'+I('pack',r.pack||'','шт','70px','inputmode="numeric" aria-label="В упаковці, шт"')+'</td>'
+    +'<td>'+I('flor',(r.flor||[]).join(', '),'220247 або кілька через кому','100%','aria-label="Арт.Флоріум"')+'</td>'
+    +'<td><select id="rf-type-'+id+'" aria-label="Тип" style="padding:6px 6px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px;min-height:34px">'+REF_TYPES.map(function(t){return '<option value="'+esc(t)+'"'+(t===(r.type||'')?' selected':'')+'>'+(t||'—')+'</option>';}).join('')+'</select></td>'
+    +'<td>'+I('note',r.note||'','напр. замість Purple Flag','100%','aria-label="Коментар"')+'</td>'
+    +'<td style="text-align:center"><input id="rf-ov-'+id+'" type="checkbox"'+(r.override?' checked':'')+' aria-label="Перекрити фуру" title="Брати з довідника, навіть якщо у фурі значення є" style="width:17px;height:17px"></td>';
+}
+function refCollect(id,art){return {art:art,name:(G('rf-name-'+id)||{}).value,pack:(G('rf-pack-'+id)||{}).value,flor:(G('rf-flor-'+id)||{}).value,type:(G('rf-type-'+id)||{}).value,note:(G('rf-note-'+id)||{}).value,override:(G('rf-ov-'+id)||{}).checked};}
+async function refSaveRow(id,art){var rec=refCollect(id,art);if(!parseInt(rec.pack)&&!String(rec.flor||'').trim()&&!String(rec.note||'').trim()){toast('Впиши хоча б упаковку або Арт.Флоріум','wa');return;}await refSave(rec);renderRefPage();}
+async function refAddNew(){var a=nk((G('rf-art-new')||{}).value);if(!a){toast('Впиши артикул','wa');return;}var rec=refCollect('new',a);await refSave(rec);['art','name','pack','flor','note'].forEach(function(f){var el=G('rf-'+f+'-new');if(el)el.value='';});renderRefPage();}
+function refArtLookup(){var a=nk((G('rf-art-new')||{}).value);var nm=G('rf-name-new');if(a&&nm&&!nm.value)nm.value=artNameOf(a)||'';var fu=furyGet(a);var pk=G('rf-pack-new');if(pk&&!pk.value&&furyPackOf(a))pk.placeholder='у фурі: '+furyPackOf(a);var fl=G('rf-flor-new');if(fl&&!fl.value&&fu&&fu.artFlorium)fl.placeholder='у фурі: '+fu.artFlorium;}
+function renderRefPage(){
+  var el=G('refBody');if(!el)return;
+  var miss=refMissing();
+  var list=Object.keys(refItems).map(function(a){return refItems[a];}).filter(function(r){if(!refQ)return true;var q=refQ.toLowerCase();return (r.art+' '+r.name+' '+r.flor.join(' ')+' '+r.type+' '+r.note).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return a.art.localeCompare(b.art);});
+  var head='<thead><tr><th style="width:100px">Артикул</th><th>Назва</th><th style="width:84px">В уп, шт</th><th style="min-width:200px">Арт.Флоріум (склад)</th><th style="width:100px">Тип</th><th style="min-width:160px">Коментар</th><th style="width:66px" title="Брати з довідника, навіть якщо у фурі значення є">Перекр.</th><th style="width:120px"></th></tr></thead>';
+  var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px"><div><h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">📒 Довідник (ручний)</h2>'
+    +'<div style="font-size:13px;color:var(--mu);margin-top:4px;max-width:820px">Резерв для «інфо фури». Якщо артикула там нема або бракує упаковки / Арт.Флоріум — панель бере дані звідси: у прийомі, списках вантажнику, розміщенні, перевірці й накладній. Для замін і міксів впиши кілька Арт.Флоріум через кому — розміщення й план відбору підтягнуться з усіх. Аркуш у таблиці: «довідник ручний».</div></div>'
+    +'<button class="btn sm" type="button" onclick="loadAll(true)">↻ Оновити</button></div>';
+  // бракує даних
+  h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px;margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><div style="font-weight:700">'+(miss.length?'⚠ Бракує даних в активних замовленнях · '+miss.length:'✓ В активних замовленнях усім артикулам вистачає даних')+'</div>'+(miss.length?'<div style="font-size:11.5px;color:var(--mu)">Без упаковки позиція рахується в ящиках, без Арт.Флоріум — не знаходиться на складі.</div>':'')+'</div>';
+  if(miss.length){h+='<div style="overflow:auto;margin-top:8px"><table class="dt" style="width:100%;font-size:12.5px">'+head.replace('Назва','Назва · де бракує')+'<tbody>'
+    +miss.map(function(m,i){var r=refItems[m.art]||{};var id='m'+i;return '<tr><td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;color:var(--blue)"><a href="#" onclick="findShow(\'art\',\''+esc(m.art)+'\');return false;" style="color:inherit;text-decoration:none">'+esc(m.art)+'</a></td><td><input id="rf-name-'+id+'" value="'+esc(r.name||m.name||'')+'" style="width:100%;padding:6px 8px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px;box-sizing:border-box;min-height:34px"><div style="font-size:10.5px;color:var(--o);margin-top:2px">'+(m.noPack?'нема упаковки':'')+(m.noPack&&m.noFlor?' · ':'')+(m.noFlor?'нема Арт.Флоріум':'')+' · '+m.orders.length+' замовл.: #'+m.orders.slice(0,3).join(', #')+(m.orders.length>3?' …':'')+'</div></td>'+refRowInputs(id,r,m)+'<td><button class="btn pr sm" type="button" onclick="refSaveRow(\''+id+'\',\''+esc(m.art)+'\')">Зберегти</button></td></tr>';}).join('')
+    +'</tbody></table></div>';}
+  h+='</div>';
+  // записи довідника
+  h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><div style="font-weight:700">Записи довідника · '+Object.keys(refItems).length+'</div><input type="search" placeholder="пошук: артикул / назва / коментар" value="'+esc(refQ)+'" oninput="refQ=this.value;renderRefPage();var e=this;setTimeout(function(){var n=document.querySelector(\'#refBody input[type=search]\');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0)" style="padding:8px 10px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-width:240px"></div>'
+    +'<div style="overflow:auto"><table class="dt" style="width:100%;font-size:12.5px">'+head+'<tbody>'
+    +'<tr style="background:#f4f6f2"><td><input id="rf-art-new" placeholder="артикул" onchange="refArtLookup()" style="width:100%;padding:6px 8px;border:1.5px solid var(--g);border-radius:8px;font-family:\'SF Mono\',Menlo,monospace;font-size:12.5px;box-sizing:border-box;min-height:34px" aria-label="Новий артикул"></td><td><input id="rf-name-new" placeholder="назва" style="width:100%;padding:6px 8px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px;box-sizing:border-box;min-height:34px" aria-label="Назва"></td>'+refRowInputs('new',{})+'<td><button class="btn pr sm" type="button" onclick="refAddNew()">+ Додати</button></td></tr>'
+    +(list.length?list.map(function(r,i){var id='r'+i;var fu=furyGet(r.art);var fp=fu&&!fu._synthetic&&fu._hadPack?getPackQtyRaw(r.art):'';return '<tr><td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;color:var(--blue)"><a href="#" onclick="findShow(\'art\',\''+esc(r.art)+'\');return false;" style="color:inherit;text-decoration:none">'+esc(r.art)+'</a>'+(fu&&!fu._synthetic?'<div style="font-size:10px;color:var(--mu);font-family:inherit">є у фурі'+(fp?' · '+fp+' шт':'')+'</div>':'<div style="font-size:10px;color:var(--o);font-family:inherit">нема у фурі</div>')+'</td><td><input id="rf-name-'+id+'" value="'+esc(r.name)+'" style="width:100%;padding:6px 8px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px;box-sizing:border-box;min-height:34px" aria-label="Назва">'+(r.at?'<div style="font-size:10px;color:var(--mu);margin-top:2px">'+esc(r.at)+(r.op?' · '+esc(r.op):'')+'</div>':'')+'</td>'+refRowInputs(id,r)+'<td style="white-space:nowrap"><button class="btn sm" type="button" onclick="refSaveRow(\''+id+'\',\''+esc(r.art)+'\')">Зберегти</button> <button class="btn sm" type="button" onclick="refDelete(\''+esc(r.art)+'\')" aria-label="Видалити" title="Видалити">✕</button></td></tr>';}).join(''):'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:14px">'+(refQ?'Нічого не знайдено':'Довідник порожній — додай перший запис угорі або впиши Арт.Флоріум / упаковку в модалці списку вантажнику')+'</td></tr>')
+    +'</tbody></table></div></div>';
+  el.innerHTML=h;
+}
+
+// ============================================================
+//  НЕУЗГОДЖЕНОСТІ — те, що система має помітити сама і показати, поки хтось не пояснив позначкою:
+//   • замовлення в «Готове/Перевірено/Відправлено», а позиція не зібрана і без позначки (немає/частково/довезти…)
+//   • прийнято більше, ніж замовлено (перебір без розподілу)
+//   • ящик прийнятий без к-сті на наліпці (рахуємо за фурою — але це треба знати)
+//   • відправлене замовлення: перевірено менше, ніж треба, без позначки
+// ============================================================
+function orderAnomalies(o){
+  var out=[];if(!o)return out;var its=items[o.num]||[];var k=sk(o.status);
+  var late=(k==='sent'||k==='verified'||k==='ready');
+  var anyVer=Object.keys(verifiedAgg).some(function(x){return x.indexOf(nk(o.num)+'||')===0;});
+  its.forEach(function(it){
+    var art=nk(it.art);var iss=issueOf(o.num,art);var blk=issueBlocks(o.num,art);var sh=issueShip(iss);
+    var target=blk?0:(sh?Math.min(it.qty,sh):it.qty);var got=receivedBoxesFor(o.num,art);
+    if(late&&!iss&&got<target)out.push({type:'unfilled',art:art,name:it.name,qty:it.qty,got:got,target:target,text:'не зібрано '+got+' з '+target+' уп, а замовлення вже «'+(o.status||'')+'» — без позначки'});
+    if(got>it.qty&&!blk)out.push({type:'over',art:art,name:it.name,qty:it.qty,got:got,target:target,text:'прийнято '+got+' уп при замовлених '+it.qty+' — перебір без розподілу'});
+    if(k==='sent'&&anyVer&&!iss&&target>0){var v=verifiedAgg[nk(o.num)+'||'+art];var pk=furyPackOf(art);var vp=v?((pk?Math.floor(v.stems/pk):0)+v.packs):0;if(vp<Math.min(target,got))out.push({type:'verless',art:art,name:it.name,qty:it.qty,got:got,target:target,text:'перевірено '+vp+' уп, прийнято '+got+' — поїхало не все, без позначки'});}
+  });
+  var noQ=income.filter(function(r){return String(r.orderNum)===String(o.num)&&r.type!=='на перефасовку'&&!(r.packQty>0)&&furyPackOf(r.art)>0;});
+  if(noQ.length)out.push({type:'noqty',art:'',name:'',text:noQ.length+' ящ. прийнято без к-сті на наліпці (рахуємо за фурою): '+noQ.slice(0,4).map(function(r){return r.art+' '+(r.barcode||'');}).join(', ')+(noQ.length>4?' …':'')});
+  return out;
+}
+function anomaliesAll(){var res=[];orders.forEach(function(o){var a=orderAnomalies(o);if(a.length)res.push({o:o,list:a});});return res;}
+function anomalyPanelHtml(o,list){
+  if(!list.length)return '';
+  return '<div style="margin:10px 0 14px;background:#fff0f0;border:1px solid #f1b9b9;border-radius:12px;padding:12px 14px">'
+    +'<div style="font-weight:800;color:var(--r);margin-bottom:6px">⚠ Потребує уваги · '+list.length+'</div>'
+    +list.map(function(a){return '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px solid #f7d6d6;font-size:12.5px">'
+      +(a.art?'<span style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;color:var(--blue)">'+esc(a.art)+'</span><span>'+esc(a.name||'')+'</span>':'')
+      +'<span style="color:var(--r);font-weight:600">'+esc(a.text)+'</span>'
+      +(a.type==='unfilled'||a.type==='verless'?'<span style="margin-left:auto;display:flex;gap:6px;align-items:center;white-space:nowrap"><span style="font-size:11px;color:var(--mu)">познач, що з нею:</span>'+issueBtn(o.num,o.name,a.art,a.name,a.qty,'function(){selectOrder(selOr)}')+'</span>':'')
+      +'</div>';}).join('')
+    +'</div>';
+}
+// ============================================================
 //  ПРОБЛЕМНІ ПОЗИЦІЇ (аркуш «проблеми позицій»): ручний статус позиції замовлення —
 //  «немає» / «погана якість» / «інше» + коментар. Позиція НЕ їде клієнту: не блокує «Готове» і перевірку,
 //  не потрапляє в накладну відбору, скан більше не призначає її цьому замовленню (ящик піде далі за FIFO або в запас).
@@ -5952,7 +6123,19 @@ async function saveIssue(forceStatus){
 }
 
 // ---------- Сторінка «Не поїхало клієнтам» ----------
+function renderAnomSec(){
+  var el=G('anomSec');if(!el)return;
+  var an=anomaliesAll();
+  if(!an.length){el.innerHTML='<div style="background:#f4fbf4;border:1px solid #cfe5d0;border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--green-d);font-weight:600">✓ Неузгодженостей нема: усі незібрані позиції у готових/відправлених замовленнях мають позначку, усі ящики з к-стю.</div>';return;}
+  var pos=an.reduce(function(t,x){return t+x.list.length;},0);
+  el.innerHTML='<div style="background:#fff0f0;border:1px solid #f1b9b9;border-radius:12px;padding:12px 14px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><div style="font-weight:800;color:var(--r)">⚠ Потребує уваги · '+an.length+' замовл. · '+pos+' неузгодженостей</div><div style="font-size:11.5px;color:var(--mu)">Замовлення в «Готове/Перевірено/Відправлено» з незібраними позиціями без позначки, перебори, ящики без к-сті на наліпці. Познач ⚠ — і рядок зникне.</div></div>'
+    +'<div style="overflow:auto;margin-top:8px"><table class="dt" style="width:100%;font-size:12.5px"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>Статус</th><th>Позиція</th><th>Що не так</th><th></th></tr></thead><tbody>'
+    +an.map(function(x){return x.list.map(function(a){return '<tr><td><a href="#" onclick="nav(\'orders\');selectOrder(\''+esc(x.o.id)+'\');return false;" style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;color:var(--blue);text-decoration:none">#'+esc(x.o.num)+'</a></td><td>'+esc(x.o.name)+'</td><td>'+pillH(x.o.status)+'</td><td>'+(a.art?'<span style="font-family:\'SF Mono\',Menlo,monospace;color:var(--blue);font-weight:600">'+esc(a.art)+'</span> '+esc(a.name||''):'<span style="color:var(--mu)">прихід</span>')+'</td><td style="color:var(--r);font-weight:600">'+esc(a.text)+'</td><td style="white-space:nowrap">'+((a.type==='unfilled'||a.type==='verless')?issueBtn(x.o.num,x.o.name,a.art,a.name,a.qty,'renderIssuesPage'):'')+'</td></tr>';}).join('');}).join('')
+    +'</tbody></table></div></div>';
+}
 function renderIssuesPage(){
+  renderAnomSec();
   var body=G('issBody');if(!body)return;
   var list=Object.keys(issues).map(function(k){return issues[k];});
   // клієнт: з запису або з замовлення
@@ -6312,7 +6495,7 @@ function nk(a){return String(a==null?'':a).replace(/[\s\u200B-\u200D\uFEFF]/g,''
 function furyGet(art){var k=nk(art);return fury[k]||fury['b_'+k]||fury['f_'+k]||null;}
 
 function parseFury(rows){
-  fury={};
+  fury={};_furyRows=rows||[];
   for(var i=2;i<rows.length;i++){
     var r=rows[i]||[];
     var artBox=(r[9]||'').toString().trim();     // J = артикул ящика
