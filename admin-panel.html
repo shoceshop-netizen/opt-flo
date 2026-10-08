@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Florium Admin</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4f8a63">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Florium">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap">
@@ -435,6 +442,14 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
 .sob-num{font-size:13px;font-weight:600;color:var(--gd);font-family:var(--mono);user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;cursor:text;}
 .sob-name{font-size:15px;font-weight:600;margin-left:10px;}
 .sob-right{display:flex;align-items:center;gap:10px;}
+@media(max-width:640px){
+  .sob-head{flex-wrap:wrap;gap:6px;padding:10px 12px;}
+  .sob-head>div:first-child{flex:1 1 100%;min-width:0;}
+  .sob-head>div:first-child>span[title]{display:block;margin-left:0!important;margin-top:2px;}
+  .sob-right{margin-left:auto;}
+  .upd{display:none!important;}
+  .tb-title{font-size:16px!important;}
+}
 .pb-w{width:80px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
 .pb-f{height:100%;border-radius:3px;background:var(--g);transition:width .3s;}
 .sob-body{display:none;border-top:1px solid var(--bo);}
@@ -813,7 +828,8 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
       <div class="scan-wrap">
         <div class="scan-lbl">📱 Сканування приходу — система знайде замовлення автоматично</div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mu);margin:8px 0 2px;cursor:pointer;user-select:none;"><input type="checkbox" id="fastReceiveChk" onchange="setFastReceive(this.checked)" style="width:15px;height:15px;cursor:pointer;"><span>⚡ Швидкий прийом — без вводу к-сті і без попереджень про перебір</span></label>
-        <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false">
+        <input class="s-inp" id="scInp" placeholder="Артикул..." autocomplete="off" spellcheck="false" enterkeyhint="go">
+        <button type="button" id="kbTgl" class="btn sm" onclick="toggleKb()" style="display:none;margin:6px 0 2px">⌨ показати клавіатуру</button>
         <div class="s-fb sf-em" id="scFb">Скануйте або введіть артикул</div>
       </div>
     </div>
@@ -2784,7 +2800,22 @@ var combinedFilter=new Set(); // обрані категорії (порожнь
 var combinedAllItems=[]; // незмінений повний список для фільтрації
 
 // ===== INIT =====
+// Термінал зі сканером (Datalogic тощо): сканер друкує як клавіатура, тож екранна клавіатура лише заважає.
+// На сенсорних пристроях за замовчуванням поля скану без екранної клавіатури; кнопка «⌨» вмикає її для ручного вводу.
+function isTouchDev(){return ('ontouchstart' in window)||(navigator.maxTouchPoints>0);}
+function applyKbMode(){
+  var scanner=(localStorage.getItem('kbMode')||'scanner')==='scanner'&&isTouchDev();
+  ['scInp','vmInput'].forEach(function(id){var el=G(id);if(el)el.setAttribute('inputmode',scanner?'none':'text');});
+  var b=G('kbTgl');if(b){b.style.display=isTouchDev()?'':'none';b.textContent=scanner?'⌨ показати клавіатуру':'⌨ сховати клавіатуру (режим сканера)';}
+}
+function toggleKb(){
+  localStorage.setItem('kbMode',(localStorage.getItem('kbMode')||'scanner')==='scanner'?'manual':'scanner');applyKbMode();
+  var el=G('scInp');if(el){el.blur();setTimeout(function(){el.focus();},60);}
+}
 function init(){
+  applyKbMode();
+  // відкрити потрібну сторінку з посилання/іконки програми: admin-panel.html?page=scan
+  try{var _qp=new URLSearchParams(location.search).get('page');if(_qp&&G('page-'+_qp))setTimeout(function(){nav(_qp);},250);}catch(e){}
   loadAll();
   setInterval(loadAll,5*60*1000); // 5 хвилин (було 1 хв — забагато)
   setInterval(()=>G('sbt').textContent=new Date().toLocaleTimeString('uk-UA'),1000);
@@ -4056,6 +4087,7 @@ function closeCombinedModal(){G('combinedModal').style.display='none';}
 var verifyState={order:null,items:[],scanned:{},strangers:[]};
 
 function openVerifyModal(o){
+  setTimeout(applyKbMode,0);
   verifyState.order=o;
   verifyState.items=items[o.num]||[];
   verifyState.scanned={};
@@ -6779,6 +6811,8 @@ function renderStock(){
 // Wait for DOM before init
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', checkAuth);
+  // програма на телефоні/терміналі: service worker (встановлення з Chrome «Додати на головний екран / Встановити»)
+  if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW:',e);});});}
 } else {
   checkAuth();
 }
