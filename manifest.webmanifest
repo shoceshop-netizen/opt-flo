@@ -10,12 +10,55 @@
   "background_color": "#f5f6f3",
   "theme_color": "#4f8a63",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    {"name": "Прийом", "url": "admin-panel.html?page=scan&source=app", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Замовлення", "url": "admin-panel.html?page=orders&source=app", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]}
+    {
+      "name": "Прийом",
+      "url": "admin-panel.html?page=scan&source=app",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Відбір",
+      "url": "admin-panel.html?page=pick&source=app",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Замовлення",
+      "url": "admin-panel.html?page=orders&source=app",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
