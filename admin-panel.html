@@ -2997,6 +2997,7 @@ async function loadAll(skipCache){
     parseIssues(res.issues||[]);
     parsePrices(res.prices||[]);
     parseVerified(res.verified||[]);
+    (function(){var v=(res.settings&&res.settings.ANOM_FROM)!=null?res.settings.ANOM_FROM:(function(){try{return localStorage.getItem('anomFrom')||'';}catch(e){return '';}})();anomFrom=v?new Date(v+'T00:00:00'):null;try{localStorage.setItem('anomFrom',v||'');}catch(e){}})();
     (function(){var m=refMissing().length;var b=G('bRef');if(b){b.textContent=m;b.style.display=m?'':'none';}if(G('page-ref')&&G('page-ref').classList.contains('on'))renderRefPage();})();
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
     repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
@@ -3785,7 +3786,7 @@ async function changeStatus(num,name,newStatus){
   }
   if(newStatus==='Відправлено'||newStatus==='Перевірено'){
     var oA=orders.find(function(x){return String(x.num).trim()===String(num).trim();});
-    if(oA){var probe=Object.assign({},oA,{status:newStatus});var an=orderAnomalies(probe).filter(function(a){return a.type==='unfilled';});
+    if(oA){var probe=Object.assign({},oA,{status:newStatus});var an=(anomSkip(probe)==='date'?[]:orderAnomaliesRaw(probe)).filter(function(a){return a.type==='unfilled';});   // при зміні статусу перевіряємо навіть без сканів
       if(an.length&&!confirm('⚠ '+an.length+' позиц. не зібрано і без позначки:\n'+an.slice(0,5).map(function(a){return '• '+a.art+' '+a.name+' — '+a.got+' з '+a.target+' уп';}).join('\n')+(an.length>5?'\n…':'')+'\n\nКраще спершу позначити, що з ними (⚠ у рядку). Все одно перевести в «'+newStatus+'»?'))return;}
   }
   toast('Змінюємо статус...','in',2000);
@@ -5763,7 +5764,7 @@ async function savePrice(art,val,name,inp,orderNum){
 //  замовлення — у звичайній картці замовлення (там додано «Чи вистачає» і фільтри). Усе рахується з уже завантажених даних.
 // ============================================================
 var verifiedAgg={};   // 'замовлення||артикул' -> {stems, packs} — з аркуша «перевірка» (зведення від бека)
-function parseVerified(rows){verifiedAgg={};(rows||[]).forEach(function(r){if(!r||!r[0])return;verifiedAgg[nk(r[0])+'||'+nk(r[1])]={stems:parseInt(r[2])||0,packs:parseInt(r[3])||0};});}
+function parseVerified(rows){verifiedAgg={};verifiedOrders={};(rows||[]).forEach(function(r){if(!r||!r[0])return;verifiedAgg[nk(r[0])+'||'+nk(r[1])]={stems:parseInt(r[2])||0,packs:parseInt(r[3])||0};verifiedOrders[nk(r[0])]=1;});}
 // Скільки упаковок реально поїхало (перевірка); якщо перевірки по замовленню не було, а воно відправлене — рахуємо як прийняте
 function shippedPacks(orderNum,art){
   var k=nk(orderNum)+'||'+nk(art);var v=verifiedAgg[k];var pk=furyPackOf(art);
@@ -6186,7 +6187,29 @@ async function ttsNameOnDemand(name){
 //   • ящик прийнятий без к-сті на наліпці (рахуємо за фурою — але це треба знати)
 //   • відправлене замовлення: перевірено менше, ніж треба, без позначки
 // ============================================================
-function orderAnomalies(o){
+// ---- «До програми»: такі замовлення не перевіряємо ----
+//  • вигружені раніше дати ANOM_FROM (налаштування, спільне для всіх пристроїв);
+//  • відправлені, по яких у програмі нема жодного скану — ні в прийомі, ні в перевірці (оброблені повністю поза нею).
+var anomFrom=null,_incOrdCache={len:-1,set:{}},verifiedOrders={};
+function incomeOrderSet(){if(_incOrdCache.len!==income.length){var st={};income.forEach(function(r){if(r&&r.orderNum)st[String(r.orderNum)]=1;});_incOrdCache={len:income.length,set:st};}return _incOrdCache.set;}
+function anomSkip(o){
+  if(!o)return true;var d=orderDate(o);
+  if(anomFrom&&d&&d<anomFrom)return 'date';
+  if(sk(o.status)==='sent'&&!incomeOrderSet()[String(o.num)]&&!verifiedOrders[nk(o.num)])return 'noscan';
+  return false;
+}
+function orderAnomalies(o){if(!o||anomSkip(o))return [];return orderAnomaliesRaw(o);}
+function legacyHiddenCount(){var n2=0;orders.forEach(function(o){if(anomSkip(o)&&orderAnomaliesRaw(o).length)n2++;});return n2;}
+function firstScanDate(){var m=null;income.forEach(function(r){if(!r||!r.orderNum)return;var d=parseUaDate(r.date);if(d&&(!m||d<m))m=d;});return m;}
+function _isoD(d){return d?d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'+_p2(d.getDate()):'';}
+async function saveAnomFrom(){
+  var v=(G('anomFromInp')||{}).value||'';
+  anomFrom=v?new Date(v+'T00:00:00'):null;
+  try{localStorage.setItem('anomFrom',v);}catch(e){}
+  renderIssuesPage();if(typeof renderDash==='function'&&G('page-dash')&&G('page-dash').classList.contains('on'))renderDash();
+  if(SCRIPT_URL){try{var res=await callScriptPost('setSetting',{key:'ANOM_FROM',value:v});if(!res||!res.ok)toast('Не збереглось: '+((res&&res.error)||'?'),'er',4000);else toast(v?'Замовлення до '+v.split('-').reverse().join('.')+' більше не перевіряються':'Перевіряються всі замовлення','ok',2600);}catch(e){toast('Помилка збереження налаштування','er',3000);}}
+}
+function orderAnomaliesRaw(o){
   var out=[];if(!o)return out;var its=items[o.num]||[];var k=sk(o.status);
   var late=(k==='sent'||k==='verified'||k==='ready');
   var anyVer=Object.keys(verifiedAgg).some(function(x){return x.indexOf(nk(o.num)+'||')===0;});
@@ -6334,10 +6357,19 @@ async function saveIssue(forceStatus){
 function renderAnomSec(){
   var el=G('anomSec');if(!el)return;
   var an=anomaliesAll();
-  if(!an.length){el.innerHTML='<div style="background:#f4fbf4;border:1px solid #cfe5d0;border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--green-d);font-weight:600">✓ Неузгодженостей нема: усі незібрані позиції у готових/відправлених замовленнях мають позначку, усі ящики з к-стю.</div>';return;}
+  var hidden=legacyHiddenCount();var fs=firstScanDate();
+  var bar='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--tx2)">'
+    +'<label for="anomFromInp">Перевіряти замовлення, вигружені від:</label>'
+    +'<input id="anomFromInp" type="date" value="'+esc(_isoD(anomFrom))+'" style="padding:5px 8px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px">'
+    +'<button class="btn sm" type="button" onclick="saveAnomFrom()">Зберегти</button>'
+    +(fs?'<button class="btn sm" type="button" onclick="G(\'anomFromInp\').value=\''+_isoD(fs)+'\';saveAnomFrom()" title="Дата першого скану на прийомі в програмі">з першого скану ('+esc(fmtDM(fs))+')</button>':'')
+    +(anomFrom?'<button class="btn sm" type="button" onclick="G(\'anomFromInp\').value=\'\';saveAnomFrom()">перевіряти всі</button>':'')
+    +'<span style="color:var(--mu)">'+(hidden?'приховано замовлень «до програми»: '+hidden+' · ':'')+'відправлені без жодного скану в програмі не перевіряються</span></div>';
+  if(!an.length){el.innerHTML='<div style="background:#f4fbf4;border:1px solid #cfe5d0;border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--green-d);font-weight:600">✓ Неузгодженостей нема: усі незібрані позиції у готових/відправлених замовленнях мають позначку, усі ящики з к-стю.'+bar+'</div>';return;}
   var pos=an.reduce(function(t,x){return t+x.list.length;},0);
   el.innerHTML='<div style="background:#fff0f0;border:1px solid #f1b9b9;border-radius:12px;padding:12px 14px">'
     +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><div style="font-weight:800;color:var(--r)">⚠ Потребує уваги · '+an.length+' замовл. · '+pos+' неузгодженостей</div><div style="font-size:11.5px;color:var(--mu)">Замовлення в «Готове/Перевірено/Відправлено» з незібраними позиціями без позначки, перебори, ящики без к-сті на наліпці. Познач ⚠ — і рядок зникне.</div></div>'
+    +bar
     +'<div style="overflow:auto;margin-top:8px"><table class="dt" style="width:100%;font-size:12.5px"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>Статус</th><th>Позиція</th><th>Що не так</th><th></th></tr></thead><tbody>'
     +an.map(function(x){return x.list.map(function(a){return '<tr><td><a href="#" onclick="nav(\'orders\');selectOrder(\''+esc(x.o.id)+'\');return false;" style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600;color:var(--blue);text-decoration:none">#'+esc(x.o.num)+'</a></td><td>'+esc(x.o.name)+'</td><td>'+pillH(x.o.status)+'</td><td>'+(a.art?'<span style="font-family:\'SF Mono\',Menlo,monospace;color:var(--blue);font-weight:600">'+esc(a.art)+'</span> '+esc(a.name||''):'<span style="color:var(--mu)">прихід</span>')+'</td><td style="color:var(--r);font-weight:600">'+esc(a.text)+'</td><td style="white-space:nowrap">'+((a.type==='unfilled'||a.type==='verless')?issueBtn(x.o.num,x.o.name,a.art,a.name,a.qty,'renderIssuesPage'):'')+'</td></tr>';}).join('');}).join('')
     +'</tbody></table></div></div>';
