@@ -740,6 +740,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
   </div>
   <div class="sb-foot" id="sbt"></div>
   <div style="padding:10px 18px;border-top:1px solid var(--bo)">
+    <div id="dataModeBox" style="padding:8px 10px 10px"></div>
     <button onclick="logout()" style="width:100%;padding:9px 12px;background:transparent;border:1px solid var(--bo);color:var(--tx3);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px" onmouseover="this.style.background='var(--red-l)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='transparent';this.style.color='var(--tx3)';this.style.borderColor='var(--bo)'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:16px;height:16px;stroke-width:1.85;flex-shrink:0"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg><span class="ni-lbl">Вийти</span></button>
   </div>
 </aside>
@@ -1093,7 +1094,16 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var CACHE_KEY='fl_cache';
+var CACHE_KEY_BASE='fl_cache';
+// Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
+function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
+function dataLite(){var m=dataMode();if(m==='full')return false;if(m==='lite')return true;return !!(window.matchMedia&&window.matchMedia('(max-width:640px)').matches);}
+var CACHE_KEY=CACHE_KEY_BASE+(dataLite()?'_lite':'');
+function setDataMode(m){try{localStorage.setItem('dataMode',m);}catch(e){}CACHE_KEY=CACHE_KEY_BASE+(dataLite()?'_lite':'');renderDataModeBox();loadAll(true);toast(dataLite()?'Легкі дані: лише активні замовлення':'Повні дані: уся таблиця','in',2500);}
+function renderDataModeBox(){var el=G('dataModeBox');if(!el)return;var lite=dataLite();
+  el.innerHTML='<div style="font-size:11px;color:var(--mu);margin-bottom:4px">Дані: <b style="color:var(--tx)">'+(lite?'легкі (лише активні)':'повні')+'</b>'+(dataMode()==='auto'?' · авто':'')+'</div>'
+    +'<button type="button" class="btn sm" style="width:100%" onclick="setDataMode(\''+(lite?'full':'lite')+'\')">'+(lite?'Завантажити повні дані':'Лише активні (швидше)')+'</button>'
+    +(dataMode()!=='auto'?'<button type="button" class="btn sm" style="width:100%;margin-top:4px" onclick="setDataMode(\'auto\')">Авто за екраном</button>':'');}
 
 // ===== AUTH — відключено =====
 // ===== AUTH =====
@@ -2840,7 +2850,7 @@ function toggleKb(){
   var el=G('scInp');if(el){el.blur();setTimeout(function(){el.focus();},60);}
 }
 function init(){
-  applyKbMode();
+  applyKbMode();renderDataModeBox();
   // відкрити потрібну сторінку з посилання/іконки програми: admin-panel.html?page=scan
   try{var _qp=new URLSearchParams(location.search).get('page');if(_qp&&G('page-'+_qp))setTimeout(function(){nav(_qp);},250);}catch(e){}
   loadAll();
@@ -3018,7 +3028,7 @@ async function loadAll(skipCache){
   }
   try{
     // Один запит getAllData замість 6 окремих (захищено токеном)
-    var res=await callScript('getAllData',{});
+    var res=await callScript('getAllData',dataLite()?{lite:'1'}:{});
     if(!res||!res.ok)throw new Error(res&&res.msg?res.msg:(res&&res.error?res.error:'getAllData failed'));
     parseOrders(res.orders||[],res.statuses||[]);parseItems(res.items||[]);parseStock(res.stock||[]);parseFury(res.trucks||[]);parseRef(res.ref||[]);parseIncome(res.income||[]);
     scanState={};income.forEach(function(inc){if(!inc.orderNum||!inc.art)return;if(inc.type==='на перефасовку')return;var pk=furyPackOf(inc.art);var add=pk?(inc.packQty||pk):(inc.qty||1);/* без к-сті на наліпці → упаковка з фури */if(!scanState[inc.orderNum])scanState[inc.orderNum]={};scanState[inc.orderNum][inc.art]=(scanState[inc.orderNum][inc.art]||0)+add;});
@@ -4123,7 +4133,19 @@ function closeCombinedModal(){G('combinedModal').style.display='none';}
 // ============= VERIFY MODAL =============
 var verifyState={order:null,items:[],scanned:{},strangers:[]};
 
+// Перевірка відкривається зі свіжими даними: прийом міг іти на іншому пристрої хвилину тому.
 function openVerifyModal(o){
+  if(SCRIPT_URL&&(!window._dataAt||Date.now()-window._dataAt>20000)){
+    G('verifyModal').style.display='flex';
+    G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600">#'+esc(o.num)+' · '+esc(o.name)+'</div><div style="font-size:13px;color:var(--mu);margin-top:4px">Оновлюю дані з таблиці (прийом міг іти на іншому пристрої)…</div>';
+    G('vmBody').innerHTML='';var vi=G('vmInput');if(vi)vi.disabled=true;
+    loadAll(true).then(function(){var vi2=G('vmInput');if(vi2)vi2.disabled=false;openVerifyModalNow(orders.find(function(x){return String(x.num)===String(o.num);})||o);})
+      .catch(function(){var vi3=G('vmInput');if(vi3)vi3.disabled=false;toast('Не вдалося оновити дані — перевіряю за тими, що є','wa',3500);openVerifyModalNow(o);});
+    return;
+  }
+  openVerifyModalNow(o);
+}
+function openVerifyModalNow(o){
   setTimeout(applyKbMode,0);
   verifyState.order=o;
   verifyState.items=items[o.num]||[];
@@ -4131,7 +4153,11 @@ function openVerifyModal(o){
   verifyState.strangers=[];
   verifyState.boxes={};
   verifyState.last='';
+  // уже перевірене раніше (на цьому чи іншому пристрої) — продовжуємо, а не починаємо з нуля
+  verifyState.base={};var baseN=0;
+  verifyState.items.forEach(function(it){var v=verifiedAgg[nk(o.num)+'||'+nk(it.art)];if(!v)return;var pk=furyPackOf(it.art);var b=pk?((v.stems||0)+(v.packs||0)*pk):((v.packs||0)||(v.stems||0));if(b>0&&!verifyState.base[it.art]){verifyState.base[it.art]=b;verifyState.scanned[it.art]=b;baseN++;}});
   G('vmHead').innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:3px">#'+esc(o.num)+' · '+esc(o.name)+'</div>'
+    +(baseN?'<div style="font-size:12px;color:var(--green-d);font-weight:600;margin-bottom:3px">Уже перевірено раніше: '+baseN+' поз. — продовжуємо з того місця</div>':'')
     +'<div style="font-size:12px;color:var(--tx4)">Скануй наліпку ящика (артикул · штрихкод · к-сть) — як у прийомі: система звіряє ящик з прийомкою і рахує кількість. Вручну: артикул + к-сть упаковок + Enter.</div>';
   renderVerifyTable();
   G('verifyModal').style.display='flex';
@@ -4350,8 +4376,9 @@ async function verifyScanArt(){
 
   // Записуємо у Apps Script (зі штрихкодом і к-стю в упаковці — як у прийомі)
   if(SCRIPT_URL){
+    var vr=null;
     try{
-      await callScript('verifyScan',{
+      vr=await callScript('verifyScan',{
         orderNum:verifyState.order.num,
         orderName:verifyState.order.name,
         art:art,
@@ -4360,9 +4387,18 @@ async function verifyScanArt(){
         unit:unit,
         barcode:scanBarcode,
         packQty:stickerQty||pack||0,
-        operator:'Адмін'
+        operator:(typeof pickOperator==='function'&&pickOperator())||'Адмін'
       });
     }catch(e){}
+    if(vr&&(vr.duplicate||vr.foreign||vr.busy)){
+      verifyState.scanned[art]=Math.max(0,(verifyState.scanned[art]||0)-add);
+      if(scanBarcode)delete verifyState.boxes[scanBarcode];
+      renderVerifyTable();
+      if(vr.duplicate)showVerifyAlert('⛔ ЯЩИК УЖЕ ПЕРЕВІРЕНО','Ящик '+scanBarcode+' уже відскановано в перевірці цього замовлення'+(vr.at?' ('+vr.at+(vr.operator?', '+vr.operator:'')+')':'')+'. Повторно не рахую.');
+      else if(vr.foreign){if(scanBarcode)scannedBarcodes[scanBarcode]={orderNum:vr.boxOrder,art:vr.boxArt||art,qty:1,name:item.name||''};showVerifyAlert('⛔ ЧУЖИЙ ЯЩИК','Ящик '+scanBarcode+' прийнято на замовлення #'+vr.boxOrder+(vr.boxClient?' '+vr.boxClient:'')+', а не на #'+verifyState.order.num+'. НЕ кидати в пакет!');speakPhrase('phrase-wrong-package');}
+      else showVerifyAlert('⚠ НЕ ЗАПИСАНО','Таблиця саме зайнята іншим записом — відскануй цей ящик ще раз.');
+      beepAlert();input.value='';input.focus();return;
+    }
   }
 
   input.value='';
@@ -5923,8 +5959,9 @@ function findShow(type,key){findState={type:type,key:key,f:'all'};nav('find');re
 function findSetF(f){if(!findState)return;findState.f=f;renderFind();}
 function renderFind(){
   var b=G('findBody');if(!b)return;
+  var liteNote=dataLite()?'<div style="background:#fff8ec;border:1px solid #f0cf9a;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;color:#7a4a00">На цьому пристрої завантажено лише активні замовлення — історія відправлених тут не видна. <a href="#" onclick="setDataMode(\'full\');return false;">Завантажити повні дані</a></div>':'';
   if(!findState){b.innerHTML='<div style="padding:60px 20px;text-align:center;color:var(--mu)"><div style="font-size:16px;font-weight:600;color:var(--tx)">Пошук по таблиці</div><div style="margin-top:6px">Введи у рядок угорі артикул, № замовлення, клієнта або штрихкод ящика. Клавіша «/» ставить курсор у пошук.</div></div>';return;}
-  b.innerHTML=findState.type==='art'?renderFindArticle(findState.key):renderFindClient(findState.key);
+  b.innerHTML=liteNote+(findState.type==='art'?renderFindArticle(findState.key):renderFindClient(findState.key));
 }
 function chip(label,f,cur,n){return '<button class="btn sm" type="button" onclick="findSetF(\''+f+'\')" style="border-radius:999px;'+(cur===f?'background:var(--g);color:#fff;border-color:var(--g)':'')+'">'+esc(label)+(n!=null?' · '+n:'')+'</button>';}
 function stRank(st){var k=sk(st);return k==='verified'?0:k==='ready'?1:k==='pack'?2:k==='work'?3:k==='new'?4:k==='partial'?5:k==='defer'?6:k==='sent'?7:8;}
