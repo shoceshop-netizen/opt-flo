@@ -1,4 +1,5 @@
 {
+  "id": "admin-panel.html",
   "name": "Florium Склад",
   "short_name": "Florium",
   "description": "Прийом, перевірка перед відправкою і замовлення складу Florium",
@@ -60,5 +61,6 @@
         }
       ]
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }
