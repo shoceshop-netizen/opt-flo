@@ -13,7 +13,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap"></noscript>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -663,6 +664,11 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 </style>
 </head>
 <body>
+<div id="bootSplash" style="position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:99999;background:#f5f6f3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#2f5233">
+  <div style="width:64px;height:64px;border-radius:18px;background:#4f8a63;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:800">F</div>
+  <div style="font-size:18px;font-weight:700">Florium · склад</div>
+  <div style="font-size:13px;color:#5a6a5c">Завантаження…</div>
+</div>
 
 <div id="pz"></div>
 <div class="mob-ov" id="mobOv" onclick="sbClose()"></div>
@@ -1150,7 +1156,9 @@ function checkAuth(){
   showLogin();
 }
 
+function bootDone(){var b=document.getElementById('bootSplash');if(b)b.remove();}
 function showLogin(){
+  bootDone();
   // Ховаємо весь UI — крім loginScreen, scripts, styles
   document.querySelectorAll('body > *').forEach(function(el){
     if(el.id==='loginScreen')return;
@@ -1267,6 +1275,7 @@ function getDeviceName(){
 }
 
 function showApp(){
+  bootDone();
   // Показуємо UI — але НЕ чіпаємо модалки (їх display керується inline-style)
   document.querySelectorAll('body > *').forEach(function(el){
     if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
