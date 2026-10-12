@@ -5582,6 +5582,10 @@ async function processIncomingScan(){
   // --- ВАЛІДАЦІЯ: сканер дав ЛИШЕ артикул (без штрихкоду й кількості) ---
   // відкриваємо вікно, де вручну вводимо кількість; у прихід пишемо артикул + кількість, без штрихкоду.
   if(parts.length===1){
+    if(/^7000\d{5}$/.test(art)){   // це номер замовлення (наклейка/документ), а не ящик
+      var oN=orders.find(function(x){return String(x.num)===art;});
+      beep('error');toast('Це номер замовлення '+art+(oN?' ('+oN.name+')':'')+', а не ящик — скануй наліпку на ящику','wa',4000);return;
+    }
     if(fastReceive){doScanRecord(art,'',furyPackOf(art));}
     else{openQtyModal(art);}
     return;
@@ -5609,6 +5613,7 @@ function showPickChoice(ctx){
     +'<div style="font-size:14px;color:var(--tx2);margin-top:6px">'
       +(h?'Цей товар потрібен у списку відбору <b>№'+esc(h.list)+'</b>: «'+esc(h.line.name)+'» для '+esc(h.line.clients.join(', '))+'.':'')
       +(sb?'<div style="margin-top:4px">Це ящик зі складу'+(sb.location?' (палета <b>'+esc(sb.location)+'</b>)':'')+(sb.name?' — '+esc(sb.name):'')+'.</div>':'')
+      +(ctx.noSticker&&!h&&!sb?'<div style="margin-top:4px">Без наліпки (лише код) і такого артикула нема в жодному замовленні — можливо, відскановано не той штрихкод (документ, етикетка). <b>Точно записати в прихід?</b></div>':'')
     +'</div></div>'
     +'<div style="padding:12px 20px 20px;display:flex;flex-direction:column;gap:8px">'
       +(h?'<button type="button" tabindex="-1" onclick="pickChoiceAct(\'pick\')" style="min-height:54px;border:none;border-radius:12px;background:#37714a;color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer">📦 Записати як відбір · список №'+esc(h.list)+'</button>':'')
@@ -5678,7 +5683,7 @@ async function doScanRecord(art,barcode,packQty,opNote,forceGeneral){
     });
     if(!allDone.length&&!forceGeneral){
       var pHit=pickNeedFor(art);var sBox=barcode?stock.find(function(sx){return nk(sx.boxId)===nk(barcode);}):null;
-      if(pHit||sBox){showPickChoice({art:art,barcode:barcode,packQty:packQty,opNote:opNote,hit:pHit,sbox:sBox});return;}
+      if(pHit||sBox||!barcode){showPickChoice({art:art,barcode:barcode,packQty:packQty,opNote:opNote,hit:pHit,sbox:sBox,noSticker:!barcode});return;}
     }
     inp.classList.add('shake');setTimeout(function(){inp.classList.remove('shake');},300);
     beep('error');
@@ -6900,6 +6905,26 @@ async function saveIssue(forceStatus){
 }
 
 // ---------- Сторінка «Не поїхало клієнтам» ----------
+function suspiciousIncome(){
+  return income.filter(function(r){var a=nk(r.art);return /^7000\d{5}$/.test(a)||(!r.barcode&&!(r.packQty>0)&&r.type==='загальний');});
+}
+async function incomeDel(i){
+  var r=suspiciousIncome()[i];if(!r)return;
+  if(!confirm('Видалити з «прихід» рядок: '+r.art+' · '+r.date+'?'))return;
+  var res=await callScriptPost('incomeDelete',{art:r.art,barcode:r.barcode||'',date:r.date});
+  if(!res||!res.ok){toast('Не видалилось: '+((res&&res.error)||'?'),'er',4000);return;}
+  income=income.filter(function(x){return x!==r;});toast('Рядок видалено','ok',1800);renderIssuesPage();
+}
+function suspiciousIncomeHtml(){
+  var sus=suspiciousIncome();if(!sus.length)return '';
+  return '<div style="background:#fff8ec;border:1px solid #f0cf9a;border-radius:12px;padding:12px 14px;margin-bottom:12px">'
+    +'<div style="font-weight:800;color:#7a4a00">Підозрілі скани в приході · '+sus.length+'</div>'
+    +'<div style="font-size:11.5px;color:var(--mu);margin:2px 0 8px">Замість наліпки ящика відскановано номер замовлення або сторонній код — записалось як «загальний» без штрихкоду й кількості. Перевір і видали.</div>'
+    +'<div style="overflow:auto"><table class="dt" style="width:100%;font-size:12.5px"><thead><tr><th>Коли</th><th>Що відскановано</th><th>Чому підозріло</th><th>Хто</th><th></th></tr></thead><tbody>'
+    +sus.map(function(r,i){var a=nk(r.art);var isOrd=/^7000\d{5}$/.test(a);var o=isOrd?orders.find(function(x){return String(x.num)===a;}):null;
+      return '<tr><td style="white-space:nowrap">'+esc(r.date)+'</td><td style="font-family:\'SF Mono\',Menlo,monospace;font-weight:600">'+esc(r.art)+'</td><td>'+(isOrd?'це № замовлення'+(o?' ('+esc(o.name)+')':''):'без наліпки, артикула нема в замовленнях')+'</td><td style="color:var(--mu)">'+esc(r.operator||'')+'</td><td>'+(isWorker()?'':'<button class="btn sm" type="button" onclick="incomeDel('+i+')">Видалити</button>')+'</td></tr>';}).join('')
+    +'</tbody></table></div></div>';
+}
 function renderAnomSec(){
   var el=G('anomSec');if(!el)return;
   var an=anomaliesAll();
@@ -6911,9 +6936,9 @@ function renderAnomSec(){
     +(fs?'<button class="btn sm" type="button" onclick="G(\'anomFromInp\').value=\''+_isoD(fs)+'\';saveAnomFrom()" title="Дата першого скану на прийомі в програмі">з першого скану ('+esc(fmtDM(fs))+')</button>':'')
     +(anomFrom?'<button class="btn sm" type="button" onclick="G(\'anomFromInp\').value=\'\';saveAnomFrom()">перевіряти всі</button>':'')
     +'<span style="color:var(--mu)">'+(hidden?'приховано замовлень «до програми»: '+hidden+' · ':'')+'відправлені без жодного скану в програмі не перевіряються</span></div>';
-  if(!an.length){el.innerHTML='<div style="background:#f4fbf4;border:1px solid #cfe5d0;border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--green-d);font-weight:600">✓ Неузгодженостей нема: усі незібрані позиції у готових/відправлених замовленнях мають позначку, усі ящики з к-стю.'+bar+'</div>';return;}
+  if(!an.length){el.innerHTML=suspiciousIncomeHtml()+'<div style="background:#f4fbf4;border:1px solid #cfe5d0;border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--green-d);font-weight:600">✓ Неузгодженостей нема: усі незібрані позиції у готових/відправлених замовленнях мають позначку, усі ящики з к-стю.'+bar+'</div>';return;}
   var pos=an.reduce(function(t,x){return t+x.list.length;},0);
-  el.innerHTML='<div style="background:#fff0f0;border:1px solid #f1b9b9;border-radius:12px;padding:12px 14px">'
+  el.innerHTML=suspiciousIncomeHtml()+'<div style="background:#fff0f0;border:1px solid #f1b9b9;border-radius:12px;padding:12px 14px">'
     +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><div style="font-weight:800;color:var(--r)">⚠ Потребує уваги · '+an.length+' замовл. · '+pos+' неузгодженостей</div><div style="font-size:11.5px;color:var(--mu)">Замовлення в «Готове/Перевірено/Відправлено» з незібраними позиціями без позначки, перебори, ящики без к-сті на наліпці. Познач ⚠ — і рядок зникне.</div></div>'
     +bar
     +'<div style="overflow:auto;margin-top:8px"><table class="dt" style="width:100%;font-size:12.5px"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>Статус</th><th>Позиція</th><th>Що не так</th><th></th></tr></thead><tbody>'
