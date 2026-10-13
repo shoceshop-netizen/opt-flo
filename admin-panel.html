@@ -3232,7 +3232,14 @@ function boxLeft(sx){if(!sx)return 0;if(sx.leftRaw===''||sx.leftRaw==null)return
 // ящик на палеті: «В запасі» — завжди; «Ящик пустий» / «На фасовці» — ні; інший статус — якщо є залишок
 function boxOnPallet(sx){var st=String(sx.boxStatus||'');if(st==='Ящик пустий'||st==='На фасовці')return false;if(isInStock(sx))return true;var l=boxLeft(sx);return l===null||l>0;}
 function qtyTxt(q,unk){return q==null?'?':(unk?(q?q+'+?':'?'):String(q));}
+var _stockIdx=null,_stockIdxRef=null,_stockIdxLen=-1;
+function stockByKey(k){
+  if(!_stockIdx||_stockIdxRef!==stock||_stockIdxLen!==stock.length){_stockIdx={};_stockIdxRef=stock;_stockIdxLen=stock.length;for(var i=0;i<stock.length;i++){var sx=stock[i];if(!sx)continue;var kk=nk(sx.art);(_stockIdx[kk]=_stockIdx[kk]||[]).push(sx);}}
+  return _stockIdx[nk(k)]||[];
+}
+function stockForKeys(KS){var out=[],seen={};Object.keys(KS||{}).forEach(function(k){var kk=nk(k);if(seen[kk])return;seen[kk]=1;var a=stockByKey(kk);for(var i=0;i<a.length;i++)out.push(a[i]);});return out;}
 function parseStock(rows){
+  if(typeof pickBump==='function')pickBump();
   stock=[];
   for(var i=2;i<rows.length;i++){
     var r=rows[i]||[];
@@ -3277,7 +3284,7 @@ function findStockForItem(art){
 function findAllStockLocations(art,KSo){
   var fu=furyGet(art)||null;
   var KS=KSo||stockKeysOf(art);   // фура + довідник (для міксів — кілька Арт.Флоріум)
-  var matches=stock.filter(function(s){
+  var matches=stockForKeys(KS).filter(function(s){
     if(!s)return false;
     if(!KS[nk(s.art)])return false;
     if((s.boxStatus||'')==='Ящик пустий')return false;
@@ -3338,7 +3345,7 @@ function repackLocInfo(art,listFlor,listLoc,listName){
   var fl=String(listFlor||'').split(/[,;\s]+/).map(nk).filter(Boolean);
   var KS;if(fl.length){KS={};fl.forEach(function(f){KS[f]=1;});}else KS=stockKeysOf(a);
   var byLoc={};var total=0;var subName='';
-  stock.forEach(function(sx){
+  stockForKeys(KS).forEach(function(sx){
     if(!KS[nk(sx.art)])return;if(!boxOnPallet(sx))return;
     var q=boxLeft(sx);var loc=String(sx.location||'').trim();if(!loc||(q!==null&&q<=0))return;
     var e=byLoc[loc]=byLoc[loc]||{q:0,u:0};if(q===null)e.u++;else{e.q+=q;total+=q;}if(!subName&&sx.name)subName=sx.name;
@@ -4753,7 +4760,7 @@ function stockLocData(art,KSo){
   var fu=furyGet(art)||null;
   var KS=KSo||stockKeysOf(art);
   var byLoc={};var total=0;
-  stock.forEach(function(sx){
+  stockForKeys(KS).forEach(function(sx){
     if(!sx)return;
     if(!KS[nk(sx.art)])return;
     if((sx.boxStatus||'')==='Ящик пустий')return;
@@ -4770,7 +4777,7 @@ function stockLocData(art,KSo){
 // Беремо ящики з основної локації (маршрут), більші спершу, доки не набереться потрібна кількість.
 function pickPlan(art,totalPcs,KSo){
   var KS=KSo||stockKeysOf(art);
-  var boxes=stock.filter(function(sx){
+  var boxes=stockForKeys(KS).filter(function(sx){
     if(!sx)return false;
     if(!KS[nk(sx.art)])return false;
     if((sx.boxStatus||'')==='Ящик пустий')return false;
@@ -5961,7 +5968,7 @@ function artNameOf(art){
 // Залишок на складі по артикулу (усі ключі: наш, ящик, Флоріум), без «пустих» ящиків
 function stockAvailFor(art){
   var a=nk(art);var keys=stockKeysOf(a);
-  var rows=stock.filter(function(s2){if(!keys[nk(s2.art)])return false;if((s2.boxStatus||'')==='Ящик пустий')return false;var l=boxLeft(s2);return l===null||l>0;})
+  var rows=stockForKeys(keys).filter(function(s2){if(!keys[nk(s2.art)])return false;if((s2.boxStatus||'')==='Ящик пустий')return false;var l=boxLeft(s2);return l===null||l>0;})
     .map(function(s2){var l=boxLeft(s2);return {loc:(s2.location||'').trim()||'—',box:s2.boxId,bulbs:l==null?0:l,unknown:l==null,status:s2.boxStatus||''};});
   rows.sort(function(x,y){return (florLocKeyS(x.loc)-florLocKeyS(y.loc))||(y.bulbs-x.bulbs);});
   return {rows:rows,bulbs:rows.reduce(function(t,r){return t+r.bulbs;},0),boxes:rows.length,unknown:rows.filter(function(r){return r.unknown;}).length};
@@ -6153,6 +6160,7 @@ function fcInvoice(){var nums=[].map.call(document.querySelectorAll('#findBody .
 var refItems={};var _furyRows=[];
 var REF_TYPES=['','заміна','мікс','інше'];
 function parseRef(rows){
+  if(typeof pickBump==='function')pickBump();
   refItems={};
   for(var i=1;i<(rows||[]).length;i++){var r=rows[i]||[];var a=nk(r[0]);if(!a)continue;
     refItems[a]={art:a,name:String(r[1]||'').trim(),pack:parseInt(r[2])||0,flor:String(r[3]||'').split(/[,;\s]+/).map(nk).filter(Boolean),type:String(r[4]||'').trim(),note:String(r[5]||'').trim(),override:/^(так|\+|1|yes|true|x)$/i.test(String(r[6]||'').trim()),at:String(r[7]||'').trim(),op:String(r[8]||'').trim()};}
@@ -6369,6 +6377,7 @@ var picks=[],cellsByFlor={};
 var pickState={list:null,lists:[],mode:null,lastIds:[],fb:null,showClosed:false,cellsFor:null,missFor:null,more:null,palPin:null,lastPal:''};
 
 function parsePicks(rows){
+  if(typeof pickBump==='function')pickBump();
   picks=(rows||[]).slice(1).filter(function(r){return r&&String(r[1]||'').trim();}).map(function(r){return {at:String(r[0]||''),listNum:String(r[1]||'').trim(),orders:String(r[2]||''),clients:String(r[3]||''),art:nk(r[4]),name:String(r[5]||''),flor:nk(r[6]),box:nk(r[7]),qty:parseInt(r[8])||0,type:String(r[9]||'').trim(),place:String(r[10]||''),note:String(r[11]||''),op:String(r[12]||''),id:String(r[13]||'')};});
   var q=pickQLoad();var ids={};picks.forEach(function(p){if(p.id)ids[p.id]=1;});
   pickRecentLoad().forEach(function(x){if(x.row&&!ids[x.row.id]){picks.push(Object.assign({},x.row,{pending:false}));ids[x.row.id]=1;}});
@@ -6377,6 +6386,7 @@ function parsePicks(rows){
 }
 
 function parseCells(rows){
+  if(typeof pickBump==='function')pickBump();
   cellsByFlor={};
   (rows||[]).slice(1).forEach(function(r){var f=nk(r[0]);var c=String(r[1]||'').trim();if(!f||!c)return;(cellsByFlor[f]=cellsByFlor[f]||[]).push({cell:c,name:String(r[2]||'').trim(),qty:String(r[3]||'').trim(),note:String(r[4]||'').trim()});});
 }
@@ -6409,7 +6419,10 @@ function pickEffective(ps){var lf=-1;ps.forEach(function(p,i){if(p.type==='зн�
 function pickListClosed(n){var lv=picks.filter(function(p){return p.listNum===String(n)&&!p.art&&(p.type==='закрито'||p.type==='відкрито');});return lv.length&&lv[lv.length-1].type==='закрито'?lv[lv.length-1]:null;}
 
 function pickListsOverview(){
-  var nums=[];lists.forEach(function(l){var n=String(l.listNum);if(nums.indexOf(n)<0)nums.push(n);});
+  var act={};orders.forEach(function(o){var k=sk(o.status);if(k!=='sent'&&k!=='cancel')act[String(o.num)]=1;});
+  var lim=Date.now()-14*86400000;var nums=[],seen={},rel={};
+  lists.forEach(function(l){var n=String(l.listNum);if(!seen[n]){seen[n]=1;nums.push(n);}if(rel[n])return;if(act[String(l.orderNum)]){rel[n]=1;return;}var d=parseUaDate(l.date);if(d&&d.getTime()>=lim)rel[n]=1;});
+  nums=nums.filter(function(n){return rel[n]||(pickState.lists||[]).indexOf(n)>=0;});   // старі списки по відправлених замовленнях не перебираємо
   return nums.map(function(n){var lines=pickLines(n);var rows=lists.filter(function(l){return String(l.listNum)===n;});var cl=[];rows.forEach(function(l){if(l.client&&cl.indexOf(l.client)<0)cl.push(l.client);});
     return {num:n,date:rows[0]?rows[0].date:'',clients:cl,total:lines.length,open:lines.filter(function(x){return x.open;}).length,done:lines.filter(function(x){return x.done;}).length,missing:lines.filter(function(x){return x.missing;}).length,closedBy:pickListClosed(n)};})
     .filter(function(x){return x.total>0;}).sort(function(a,b){return (parseInt(b.num)||0)-(parseInt(a.num)||0);});
@@ -6459,6 +6472,7 @@ async function pickQFlush(){
 if(!window._pickQInit){window._pickQInit=true;setInterval(pickQFlush,15000);window.addEventListener('online',function(){pickQFlush();});document.addEventListener('visibilitychange',function(){if(!document.hidden)pickQFlush();});setTimeout(pickQFlush,3000);}
 
 function pickRecord(ln,rec){
+  if(typeof pickBump==='function')pickBump();
   var id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var row={at:new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}).replace(',',''),listNum:String(ln.listNum||pickState.list),orders:ln.orders.join(','),clients:ln.clients.join(', '),art:ln.art,name:ln.name,flor:nk(rec.flor||''),box:nk(rec.box||''),qty:parseInt(rec.qty)||0,type:rec.type,place:rec.place||'',note:rec.note||'',op:pickOperator()||'Вантажник',id:id,pending:true};
   picks.push(row);pickState.lastIds.push(id);
@@ -6514,7 +6528,14 @@ function pickOverviewHtml(){
 //  Кнопки рядка: ✓ Відібрано (вручну) · Нема тут (→ наступна палета) · ⋯ (заміна, ячейка, пізніше, нема на місці).
 //  Уже взяте на цій палеті: «Добрати ще» (мало → наступна палета / наступний ящик) і «↶» (скасувати).
 // ============================================================
+var _plVer=0,_plCache={};
+function pickBump(){_plVer++;_plCache={};}
 function pickLines(listNum){
+  var L0=String(listNum);var sig=_plVer+'|'+picks.length+'|'+lists.length+'|'+stock.length+'|'+income.length+'|'+(window._dataAt||0);
+  var cc=_plCache[L0];if(cc&&cc.sig===sig)return cc.v;
+  var v=pickLinesCalc(L0);_plCache[L0]={sig:sig,v:v};return v;
+}
+function pickLinesCalc(listNum){
   var L=String(listNum);var rows=lists.filter(function(l){return String(l.listNum)===L;});
   var by={},order=[];
   rows.forEach(function(l){
@@ -6551,7 +6572,7 @@ function pickListPseudo(n){var rows=lists.filter(function(l){return String(l.lis
 // ящики, які вже взято (будь-який список) — їх не пропонуємо вдруге
 function pickTakenBoxes(art){var a=nk(art);var t={};picks.forEach(function(p){if(p.art===a&&(p.type==='ящик'||p.type==='заміна')&&p.box)t[p.box]=1;});return t;}
 function pickBoxesAt(ln,loc){var KS={};ln.florList.forEach(function(f){KS[f]=1;});if(!ln.florList.length)KS=stockKeysOf(ln.art);
-  return stock.filter(function(x){return KS[nk(x.art)]&&String(x.location||'').trim()===String(loc).trim()&&boxOnPallet(x);}).map(function(x){return {box:nk(x.boxId),q:boxLeft(x)};});}
+  return stockForKeys(KS).filter(function(x){return KS[nk(x.art)]&&String(x.location||'').trim()===String(loc).trim()&&boxOnPallet(x);}).map(function(x){return {box:nk(x.boxId),q:boxLeft(x)};});}
 // поточна палета рядка: перша по маршруту, де є ще невзяті ящики цього товару
 function pickRowPallet(ln){
   if(ln.locsAvail.length){var Lc=ln.locsAvail[0].loc;var taken=pickTakenBoxes(ln.art);var free=pickBoxesAt(ln,Lc).filter(function(b){return !taken[b.box];}).sort(function(x,y){return (y.q==null?-1:y.q)-(x.q==null?-1:x.q);});return {loc:Lc,free:free};}
@@ -6622,6 +6643,7 @@ function pickNotHere(art,listNum){
   pickFb('warn','Палета '+pal.loc+': нема «'+ln.name+'» — '+(nx?'перенесено на палету '+nx:'інших палет нема → «нема на місці»'));renderPickPage();
 }
 function pickUndoId(id){
+  if(typeof pickBump==='function')pickBump();
   pickRecentDel(id);
   var p=picks.find(function(x){return x.id===id;});picks=picks.filter(function(x){return x.id!==id;});pickState.lastIds=pickState.lastIds.filter(function(x){return x!==id;});
   var q=pickQLoad();var queued=q.some(function(x){return x.id===id&&x.kind==='log';});
@@ -6637,7 +6659,7 @@ function pickAll(fn,art,csv){
   renderPickPage();
 }
 function pickMore(art,listNum){var k=listNum+'|'+nk(art);pickState.more=pickState.more===k?null:k;pickState.cellsFor=null;pickState.missFor=null;renderPickPage();}
-function pickLater(art,listNum){pickState.later=pickState.later||{};pickState.later[String(listNum)+'|'+nk(art)]=1;pickState.more=null;pickState.fb=null;renderPickPage();}
+function pickLater(art,listNum){pickBump();pickState.later=pickState.later||{};pickState.later[String(listNum)+'|'+nk(art)]=1;pickState.more=null;pickState.fb=null;renderPickPage();}
 function pickStartSubst(art,listNum){pickState.mode={type:'заміна',art:nk(art),listNum:String(listNum)};pickState.more=null;pickState.fb=null;renderPickPage();}
 function pickCancelMode(){pickState.mode=null;renderPickPage();}
 function pickCellsOpen(art,listNum){var k=listNum+'|'+nk(art);pickState.cellsFor=pickState.cellsFor===k?null:k;pickState.missFor=null;renderPickPage();setTimeout(function(){var q=G('pkCellQty');if(q){q.focus();q.select();}},50);}
@@ -6947,6 +6969,7 @@ function issueHintHtml(art,excludeOrder,small){
   return '<div title="'+esc(title)+'" style="font-size:'+(small?'10':'11')+'px;color:#b26a00;font-weight:600;margin-top:2px;line-height:1.3">&#9888; раніше по цьому артикулу: '+parts.join(' · ')+'</div>';
 }
 function parseIssues(rows){
+  if(typeof pickBump==='function')pickBump();
   issues={};
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
@@ -7462,6 +7485,7 @@ function parseFury(rows){
 // ===== PARSE INCOME (прихід) =====
 // прихід: A=Дата/час, B=Артикул, C=Назва, D=К-сть, E=№ замовлення, F=Клієнт, G=Оператор, H=Тип, I=Штрихкод
 function parseIncome(rows){
+  if(typeof pickBump==='function')pickBump();
   income=[];scannedBarcodes={};
   for(var i=1;i<rows.length;i++){
     var r=rows[i]||[];
