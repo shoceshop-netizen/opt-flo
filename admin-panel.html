@@ -763,6 +763,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
     <div class="ni" id="nav-issues" onclick="nav('issues')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span class="ni-lbl">Не поїхало</span><span class="nb nb-g" id="bIssues" style="background:#fff3e0;color:var(--o)">0</span></div>
     <div class="ni" id="nav-ref" onclick="nav('ref')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg></span><span class="ni-lbl">Довідник</span><span class="nb nb-g" id="bRef" style="background:#fff3e0;color:var(--o);display:none">0</span></div>
     <div class="ni" id="nav-pick" onclick="nav('pick')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span><span class="ni-lbl">Відбір</span></div>
+    <div class="ni" id="nav-stickers" onclick="nav('stickers')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span><span class="ni-lbl">Друк наліпок</span></div>
     <div class="ni" id="nav-users" onclick="nav('users')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.6 3.3-5.5 6.5-5.5s5.8 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.6c2.6.2 4.6 1.9 5.2 4.9"/></svg></span><span class="ni-lbl">Користувачі</span></div>
     <div class="ni" id="nav-voices"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></span><span class="ni-lbl">Голоси</span></div>
     <div class="ni" id="nav-ai"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span><span class="ni-lbl">Бот-помічник</span></div>
@@ -933,6 +934,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 
   <!-- RESERVE PAGE -->
   <div class="page" id="page-users"><div id="usersBody" style="padding:24px;max-width:1100px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1"></div></div>
+  <div class="page" id="page-stickers"><div id="stickBody" style="padding:14px 16px 24px;max-width:860px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1"></div></div>
   <div class="page" id="page-pick"><div id="pickBody" style="padding:14px 16px 24px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1"></div></div>
   <div class="page" id="page-ref"><div style="padding:24px;max-width:1400px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1" id="refBody"></div></div>
   <div class="page" id="page-find"><div style="padding:20px 24px;max-width:1400px;margin:0 auto;width:100%;box-sizing:border-box;overflow-y:auto;flex:1" id="findBody"></div></div>
@@ -2923,7 +2925,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
+var TITLES={dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',stickers:'Друк наліпок',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   if(typeof pageAllowed==='function'&&!pageAllowed(p))p='scan';
   document.body.classList.remove('pick-full');
@@ -2939,6 +2941,7 @@ function nav(p){
   if(p==='find'){renderFind();}
   if(p==='ref'){renderRefPage();}
   if(p==='pick'){renderPickPage();pickRefreshIfStale(20000);}
+  if(p==='stickers'){renderStickersPage();}
   if(p==='users'){usersCache=null;renderUsersPage();}
   [].forEach.call(document.querySelectorAll('.mtab button'),function(b){b.classList.toggle('on',b.dataset.p===p||(p==='orders'&&b.dataset.p==='orders'));});
   if(p==='ai'){setTimeout(initAiPage,100);}
@@ -3089,6 +3092,7 @@ async function loadAll(skipCache){
     parsePicks(res.picks||[]);parseCells(res.cells||[]);parseMixes(res.mixes||[]);
     window._dataAt=Date.now();
     if(G('page-pick')&&G('page-pick').classList.contains('on'))renderPickPage();
+    if(G('page-stickers')&&G('page-stickers').classList.contains('on'))renderStickersPage();
     (function(){var v=(res.settings&&res.settings.ANOM_FROM)!=null?res.settings.ANOM_FROM:(function(){try{return localStorage.getItem('anomFrom')||'';}catch(e){return '';}})();anomFrom=v?new Date(v+'T00:00:00'):null;try{localStorage.setItem('anomFrom',v||'');}catch(e){}})();
     (function(){var m=refMissing().length;var b=G('bRef');if(b){b.textContent=m;b.style.display=m?'':'none';}if(G('page-ref')&&G('page-ref').classList.contains('on'))renderRefPage();})();
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
@@ -3461,6 +3465,7 @@ function renderRepackDash(){
   clientList.forEach(function(c){h+='<option value="'+esc(c)+'"'+(fasovkaFilter.client===c?' selected':'')+'>'+esc(c)+'</option>';});
   h+='</select>';
   h+='<input data-fs="1" value="'+esc(fasovkaFilter.search)+'" oninput="fasovkaFilter.search=this.value;clearTimeout(window._fasD);window._fasD=setTimeout(renderRepackDash,250)" placeholder="Артикул / назва / замовлення..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border:1px solid var(--bo);border-radius:7px">';
+  h+='<button type="button" class="btn sm" onclick="openStickers()" style="white-space:nowrap">🏷 Друк наліпок</button>';
   h+='</div>';
   if(!rows.length){
     h+='<div style="padding:40px;text-align:center;color:var(--mu)">Нічого не знайдено за фільтром.</div>';
@@ -6524,9 +6529,10 @@ function pickRecord(ln,rec){
 function pickMixBadgeHtml(listNums,a,mx){
   var done=0,prob=0;mx.comps.forEach(function(cp){var key=a+'/'+cp.flor;var ps=pickEffective(picks.filter(function(p){return listNums.indexOf(p.listNum)>=0&&p.art===key;}));
     if(ps.some(function(p){return p.type==='ящик'||p.type==='заміна'||p.type==='ячейка'||p.type==='відібрано';}))done++;else if(ps.some(function(p){return p.type==='нема'||p.type==='проблема';}))prob++;});
-  if(!done&&!prob)return '';
+  var stkM0=picks.some(function(p){return listNums.indexOf(p.listNum)>=0&&p.art===a&&p.type==='наліпки';});if(!done&&!prob&&!stkM0)return '';
   var pill=function(bg,fg,txt){return '<span style="display:inline-block;margin:3px 0 0 4px;padding:2px 8px;border-radius:7px;background:'+bg+';color:'+fg+';font-size:10.5px;font-weight:800;white-space:nowrap">'+txt+'</span>';};
-  return (done?pill('#dff0e3','#1d5a36','📦 мікс: '+done+' з '+mx.comps.length+' сортів'):'')+(prob?pill('#fbe3e3','#8a1c1c','⚠ '+prob+' сорт. нема / уточнити'):'');
+  var stkM=picks.some(function(p){return listNums.indexOf(p.listNum)>=0&&p.art===a&&p.type==='наліпки';});
+  return (done?pill('#dff0e3','#1d5a36','📦 мікс: '+done+' з '+mx.comps.length+' сортів'):'')+(prob?pill('#fbe3e3','#8a1c1c','⚠ '+prob+' сорт. нема / уточнити'):'')+(stkM?pill('#e2ecfb','#1f4a86','🏷 наліпки надруковано'):'');
 }
 function pickBadgeHtml(listNums,art){
   var a=nk(art);var mxB=mixOf(a);if(mxB)return pickMixBadgeHtml(listNums,a,mxB);
@@ -6540,6 +6546,7 @@ function pickBadgeHtml(listNums,art){
   if(has('ячейка'))out+=pill('#efe8f8','#4b2f86','▦ з ячейки');
   if(has('нема')&&!has('ящик')&&!has('заміна')&&!has('ячейка'))out+=pill('#fbe3e3','#8a1c1c','⚠ нема на місці');
   if(has('проблема'))out+=pill('#fff1d6','#7a4a00','⚠ уточнити: поїде без цього / заміна');
+  if(has('наліпки'))out+=pill('#e2ecfb','#1f4a86','🏷 наліпки надруковано');
   return out;
 }
 
@@ -6552,6 +6559,7 @@ function pickSummaryHtml(listNums,art){
   ps.filter(function(p){return p.type==='ячейка';}).forEach(function(p){parts.push('<span style="color:#5a3f8f;font-weight:700">▦ з ячейки '+esc(p.place)+'</span> <span style="color:var(--mu)">'+p.qty+' шт</span>');});
   if(ps.some(function(p){return p.type==='проблема';}))parts.push('<span style="color:#9a5a00;font-weight:700">⚠ мало в ящику — уточнити (поїде без цього або заміна)</span>');
   if(ps.some(function(p){return p.type==='відібрано';}))parts.push('<span style="color:var(--green-d);font-weight:700">✓ відібрано вручну</span>');
+  var stk=ps.filter(function(p){return p.type==='наліпки'&&p.art===a;});if(stk.length)parts.push('<span style="color:#1f4a86;font-weight:700">🏷 наліпки надруковано ('+stk.reduce(function(t,p){return t+(p.qty||0);},0)+')</span>');
   if(ps.some(function(p){return p.type==='нема';}))parts.push('<span style="color:var(--r);font-weight:700">⚠ нема на місці</span>');
   ps.filter(function(p){return p.type==='мало';}).forEach(function(p){parts.push('<span style="color:var(--o);font-weight:700">мало в ящику '+esc(p.box)+' — взяли ще</span>');});
   var nh=ps.filter(function(p){return p.type==='нема тут';}).map(function(p){return p.place;});if(nh.length)parts.push('<span style="color:var(--mu)">нема на палеті '+esc(nh.join(', '))+'</span>');
@@ -6561,7 +6569,8 @@ function pickSummaryHtml(listNums,art){
 function pickOverviewHtml(){
   var h='';var btn=function(label,onclick,primary){return '<button type="button" class="btn'+(primary?' pr':'')+'" onclick="'+onclick+'" style="min-height:48px;border-radius:12px;font-size:14px;font-weight:600;flex:1">'+label+'</button>';};
     var ov=pickListsOverview();var openL=ov.filter(function(x){return !x.closedBy&&(x.open>0||x.missing>0);});var closed=ov.filter(function(x){return x.closedBy||!(x.open>0||x.missing>0);});
-    if(openL.length)h+='<button type="button" class="btn pr" onclick="pickStartAll()" style="width:100%;min-height:56px;border-radius:14px;font-size:16px;font-weight:800;margin-bottom:12px">▶ Почати відбір · '+openL.length+' '+(openL.length===1?'список':(openL.length<5?'списки':'списків'))+'</button>';
+    if(openL.length)h+='<button type="button" class="btn pr" onclick="pickStartAll()" style="width:100%;min-height:56px;border-radius:14px;font-size:16px;font-weight:800;margin-bottom:8px">▶ Почати відбір · '+openL.length+' '+(openL.length===1?'список':(openL.length<5?'списки':'списків'))+'</button>';
+    h+='<button type="button" class="btn" onclick="openStickers()" style="width:100%;min-height:48px;border-radius:12px;margin-bottom:12px;font-weight:700">🏷 Друк наліпок</button>';
     var dAt=window._dataAt?new Date(window._dataAt):null;
     h+='<div style="display:flex;align-items:center;gap:8px;margin:6px 0 8px"><div style="font-size:12px;font-weight:700;color:var(--mu);letter-spacing:.4px;text-transform:uppercase">Відкриті списки · '+openL.length+'</div>'
       +'<button type="button" class="btn sm" onclick="pickRefresh()" style="margin-left:auto;min-height:40px;border-radius:10px"'+(_pickRefreshing?' disabled':'')+'>'+(_pickRefreshing?'Оновлюю…':'↻ Оновити')+'</button></div>'
@@ -6981,6 +6990,115 @@ async function userResetPw(i){
 async function userDel(i){
   var u=usersCache[i];if(!u||!confirm('Видалити «'+u.name+'» ('+u.login+')? Його входи одразу перестануть діяти.'))return;
   var r=await callScriptPost('userDelete',{login:u.login});if(!r||!r.ok){toast((r&&r.error)||'Не видалилось','er',4000);return;}toast('Видалено','ok',1500);usersCache=null;renderUsersPage();
+}
+
+// ============================================================
+//  НАКЛЕЙКИ З ВІДІБРАНОГО — список для друку наклейок на упаковки.
+//  Беремо позиції списків вантажнику, які вже відібрано (скан / ✓ / ячейка / заміна; мікс — коли відібрано всі сорти),
+//  мінус те, що вже прийшло на прийом. Одна упаковка — одна наклейка.
+// ============================================================
+var stickerState={lists:null,sel:'',onlyPicked:true,showPrinted:false};
+// позначка «наліпки надруковано» — рядок журналу «відбір» типу «наліпки» (на список + артикул)
+function stickRecs(listNums,art){var a=nk(art);return picks.filter(function(p){return listNums.indexOf(p.listNum)>=0&&p.art===a&&p.type==='наліпки';});}
+function stickerRows(listNums,onlyPicked){
+  var set={};(listNums||[]).forEach(function(n){set[String(n)]=1;});
+  var by={},order=[];
+  lists.forEach(function(l){var n=String(l.listNum);if(!set[n])return;var a=nk(l.art);if(issueBlocks(l.orderNum,a))return;
+    if(!by[a]){by[a]={art:a,name:l.name,orders:[],lists:{}};order.push(a);}var r=by[a];r.lists[n]=1;
+    var ex=r.orders.find(function(o){return o.num===l.orderNum&&o.list===n;});if(ex)ex.qty+=l.qty||0;else r.orders.push({num:l.orderNum,client:l.client||'',qty:l.qty||0,list:n});});
+  var CNT={'ящик':1,'заміна':1,'ячейка':1,'відібрано':1};
+  var pickedIn=function(art,lns){return pickEffective(picks.filter(function(p){return lns[p.listNum]&&p.art===art;})).some(function(p){return CNT[p.type];});};
+  var out=[];
+  order.forEach(function(a){
+    var r=by[a];var recs=stickRecs(Object.keys(r.lists),a);
+    r.orders.forEach(function(o){o.left=Math.max(0,o.qty-receivedBoxesFor(o.num,a));});   // мінус уже прийняте
+    var ords=r.orders.filter(function(o){return o.left>0;});if(!ords.length&&!recs.length)return;
+    var mx=mixOf(a),picked=false,partial='';
+    if(mx){var d=mx.comps.filter(function(cp){return pickedIn(a+'/'+cp.flor,r.lists);}).length;picked=d===mx.comps.length;if(d&&!picked)partial=d+' з '+mx.comps.length+' сортів';}
+    else picked=pickedIn(a,r.lists);
+    if(onlyPicked&&!picked&&!recs.length)return;
+    var per=mx?(mx.perPack||0):furyPackOf(a);var fu=furyGet(a);var size=(fu&&fu.size)||'';
+    if(!size){var sx=(mx?stockByKey(mx.comps[0].flor):[]).find(function(x){return x.size;});if(sx)size=sx.size;}
+    var last=recs.length?recs[recs.length-1]:null;
+    out.push({art:a,name:r.name,size:size,per:per,unit:a.charAt(0)==='3'?'ящ':'уп',stickers:ords.reduce(function(t,o){return t+o.left;},0),orders:ords.length?ords:r.orders,picked:picked,partial:partial,mix:!!mx,
+      printed:!!recs.length,printedQty:recs.reduce(function(t,p){return t+(p.qty||0);},0),printedBy:last?(String(last.op||'')+' '+String(last.at||'').slice(0,16).replace(/^(\d\d\.\d\d)\.\d{4}/,'$1')):''});
+  });
+  out.sort(function(x,y){return (x.printed-y.printed)||String(x.name).localeCompare(String(y.name),'uk');});
+  return out;
+}
+// списки для вибору: ті, що відбирають / відібрали / ще не почали
+function stickerCandidates(){
+  return pickListsOverview().map(function(x){var hp=picks.some(function(p){return p.listNum===x.num&&p.art&&(p.type==='ящик'||p.type==='заміна'||p.type==='ячейка'||p.type==='відібрано');});
+    var st=x.closedBy?'закрито':(x.open===0&&x.total>0?'відібрано':(hp?'відбирають':'ще не почали'));return {num:x.num,date:x.date,clients:x.clients,hasPicks:hp,state:st,open:x.open,total:x.total};});
+}
+function openStickers(){nav('stickers');}
+function stickSetList(v){stickerState.sel=v;stickerState.lists=null;renderStickersPage();}
+function renderStickersPage(){
+  var el=G('stickBody');if(!el)return;
+  var c=stickerCandidates();
+  if(!stickerState.sel||(stickerState.sel!=='ALL'&&!c.some(function(x){return x.num===stickerState.sel;}))){var f=c.find(function(x){return x.hasPicks;});stickerState.sel=f?f.num:(c[0]?c[0].num:'');}
+  stickerState.lists=stickerState.sel==='ALL'?c.filter(function(x){return x.hasPicks;}).map(function(x){return x.num;}):(stickerState.sel?[stickerState.sel]:[]);
+  var all=stickerRows(stickerState.lists,stickerState.onlyPicked);
+  var todo=all.filter(function(r){return !r.printed;}),done=all.filter(function(r){return r.printed;});
+  var rows=stickerState.showPrinted?all:todo;
+  var stTodo=todo.reduce(function(t,r){return t+r.stickers;},0);
+  var opt=function(v,label,on){return '<option value="'+esc(v)+'"'+(on?' selected':'')+'>'+esc(label)+'</option>';};
+  var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><h2 style="font-size:22px;font-weight:800;margin:0">🏷 Друк наліпок</h2><div style="font-size:12.5px;color:var(--mu);margin-top:2px">Вибери список, друкуй наліпки й став галочку — у «Фасовці» зʼявиться «наліпки надруковано».</div></div>'
+    +'<button type="button" class="btn sm" onclick="loadAll(true).then(renderStickersPage)">↻ Оновити</button></div>';
+  h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:12px;margin-bottom:12px">'
+    +'<label for="stSel" style="font-size:12px;font-weight:700;color:var(--mu)">СПИСОК</label>'
+    +'<select id="stSel" onchange="stickSetList(this.value)" style="display:block;width:100%;margin-top:4px;min-height:48px;padding:0 10px;border:1.5px solid var(--bo2);border-radius:12px;font-family:inherit;font-size:15px;background:#fff">'
+      +(c.length?c.map(function(x){return opt(x.num,'№'+x.num+' · '+x.clients.join(', ').slice(0,40)+' · '+x.state+(x.total?' ('+(x.total-x.open)+'/'+x.total+')':''),stickerState.sel===x.num);}).join('')+opt('ALL','Усі списки з відібраним',stickerState.sel==='ALL'):opt('','— списків нема —',true))
+    +'</select>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px">'
+      +'<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" '+(stickerState.onlyPicked?'checked':'')+' onchange="stickerState.onlyPicked=this.checked;renderStickersPage()" style="width:18px;height:18px"> лише відібране</label>'
+      +'<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" '+(stickerState.showPrinted?'checked':'')+' onchange="stickerState.showPrinted=this.checked;renderStickersPage()" style="width:18px;height:18px"> показати надруковані ('+done.length+')</label>'
+    +'</div></div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><div style="flex:1;font-size:14px">До друку: <b>'+todo.length+'</b> поз. · <b>'+stTodo+'</b> '+(stTodo%10===1&&stTodo%100!==11?'наліпка':(stTodo%10>=2&&stTodo%10<=4&&(stTodo%100<12||stTodo%100>14)?'наліпки':'наліпок'))+(done.length?' · <span style="color:var(--green-d)">надруковано '+done.length+'</span>':'')+'</div>'
+    +'<button type="button" class="btn sm" onclick="stickersCsv()"'+(all.length?'':' disabled')+'>⬇ CSV</button><button type="button" class="btn sm" onclick="stickersPrint()"'+(all.length?'':' disabled')+'>🖨 Список</button></div>';
+  if(!rows.length){h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:24px;text-align:center;color:var(--mu)">'+(all.length?'✓ Усі наліпки цього списку надруковано':'У цьому списку ще нема відібраного')+'</div>';el.innerHTML=h;return;}
+  h+=rows.map(function(r){
+    var ak=esc(r.art);
+    return '<div onclick="stickToggle(\''+ak+'\')" style="display:flex;gap:12px;align-items:flex-start;background:'+(r.printed?'#f4fbf4':'#fff')+';border:1.5px solid '+(r.printed?'#b9d3bf':'var(--bo)')+';border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer">'
+      +'<span role="checkbox" aria-checked="'+(r.printed?'true':'false')+'" style="flex:none;width:30px;height:30px;border-radius:8px;border:2px solid '+(r.printed?'var(--g)':'var(--bo2)')+';background:'+(r.printed?'var(--g)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800">'+(r.printed?'✓':'')+'</span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-family:\'SF Mono\',Menlo,monospace;font-weight:700;color:var(--blue)">'+esc(r.art)+'</span><span style="font-size:15.5px;font-weight:800">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:1px 7px;border-radius:7px;background:#141413;color:#fff;font-size:12px;font-weight:800">'+esc(r.size)+'</span>':'')+(r.mix?'<span style="font-size:11px;color:#5a3f8f;font-weight:700">мікс</span>':'')+'</div>'
+        +'<div style="font-size:13px;margin-top:3px"><b style="font-size:17px">'+r.stickers+'</b> '+(r.stickers===1?'наліпка':(r.stickers>1&&r.stickers<5?'наліпки':'наліпок'))+' · '+(r.per||'—')+' шт в '+r.unit+'</div>'
+        +'<div style="font-size:12px;color:var(--tx2);margin-top:2px">для '+r.orders.map(function(o){return esc(o.client||('#'+o.num))+' '+(o.left!=null?o.left:o.qty);}).join(', ')+(stickerState.lists.length>1?' · №'+esc(r.orders.map(function(o){return o.list;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', №')):'')+'</div>'
+        +(r.printed?'<div style="font-size:12px;color:var(--green-d);font-weight:700;margin-top:3px">✓ надруковано · '+esc(r.printedBy)+'</div>':(r.picked?'':'<div style="font-size:12px;color:#9a5a00;margin-top:3px">'+(r.partial?'відібрано '+esc(r.partial):'ще не відібрано')+'</div>'))
+      +'</div></div>';
+  }).join('');
+  el.innerHTML=h;
+}
+// галочка «надруковано»: на кожен список, де є цей артикул, — свій запис; повторний натиск знімає
+function stickToggle(art){
+  var a=nk(art);var nums=stickerState.lists||[];var recs=stickRecs(nums,a);
+  if(recs.length){recs.forEach(function(p){pickUndoId(p.id);});toast('Позначку «надруковано» знято','in',1800);renderStickersPage();return;}
+  nums.forEach(function(n){
+    var rr=stickerRows([n],false).find(function(r){return r.art===a;});if(!rr)return;
+    var pseudo={listNum:String(n),orders:rr.orders.map(function(o){return o.num;}),clients:rr.orders.map(function(o){return o.client;}),art:a,name:rr.name,florList:[],locsAvail:[]};
+    pickRecord(pseudo,{type:'наліпки',qty:rr.stickers,note:'надруковано '+rr.stickers+' шт'});
+  });
+  toast('✓ Наліпки надруковано','ok',1500);renderStickersPage();
+}
+function stickersPrint(){
+  var rows=stickerRows(stickerState.lists,stickerState.onlyPicked).filter(function(r){return stickerState.showPrinted||!r.printed;});if(!rows.length){toast('Нічого друкувати','in');return;}
+  var totalSt=rows.reduce(function(t,r){return t+r.stickers;},0);var now=new Date();
+  var td='padding:5px 6px;border-bottom:0.5px solid #ccc;font-size:11px;vertical-align:top';
+  var h='<div style="font-family:-apple-system,Arial,sans-serif;color:#111">'
+    +'<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #999;padding-bottom:6px;margin-bottom:8px"><div style="font-size:18px;font-weight:800">Наклейки з відібраного</div><div style="font-size:11px">списки №'+esc(stickerState.lists.join(', №'))+' · '+_p2(now.getDate())+'.'+_p2(now.getMonth()+1)+'.'+now.getFullYear()+' '+_p2(now.getHours())+':'+_p2(now.getMinutes())+'</div></div>'
+    +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#eee"><th style="'+td+';width:22px">#</th><th style="'+td+';text-align:left">Артикул</th><th style="'+td+';text-align:left">Назва</th><th style="'+td+'">Розмір</th><th style="'+td+'">Шт в уп</th><th style="'+td+'">Наклейок</th><th style="'+td+';text-align:left">Для кого</th><th style="'+td+';width:26px">✓</th></tr></thead><tbody>'
+    +rows.map(function(r,i){return '<tr><td style="'+td+'">'+(i+1)+'</td><td style="'+td+';font-family:Menlo,monospace;font-weight:700">'+esc(r.art)+'</td><td style="'+td+'">'+esc(r.name)+(r.mix?' (мікс)':'')+(r.picked?'':' <i>— ще не відібрано</i>')+'</td><td style="'+td+';text-align:center">'+esc(r.size||'')+'</td><td style="'+td+';text-align:center">'+(r.per||'')+'</td><td style="'+td+';text-align:center;font-size:14px;font-weight:800">'+r.stickers+'</td><td style="'+td+'">'+r.orders.map(function(o){return esc(o.client||('#'+o.num))+' '+o.left;}).join(', ')+'</td><td style="'+td+'"></td></tr>';}).join('')
+    +'</tbody></table><div style="margin-top:8px;font-size:12px;font-weight:700">Позицій: '+rows.length+' · наклейок: '+totalSt+'</div></div>';
+  G('pz').innerHTML=h;window.print();
+}
+function stickersCsv(){
+  var rows=stickerRows(stickerState.lists,stickerState.onlyPicked).filter(function(r){return stickerState.showPrinted||!r.printed;});if(!rows.length){toast('Нічого вивантажувати','in');return;}
+  var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var lines=['Артикул;Назва;Розмір;Шт в уп;К-сть наклейок;Для кого'];
+  rows.forEach(function(r){lines.push([r.art,r.name+(r.mix?' (мікс)':''),r.size,r.per,r.stickers,r.orders.map(function(o){return (o.client||('#'+o.num))+' '+o.left;}).join(', ')].map(q).join(';'));});
+  var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='naklejky_spysky_'+stickerState.lists.join('-')+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
 }
 
 // ============================================================
