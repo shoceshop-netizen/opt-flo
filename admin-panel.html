@@ -1133,7 +1133,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='16.10.2026 · минулі сезони';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='20.10.2026 · час старих замовлень';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -3097,7 +3097,7 @@ async function loadAll(skipCache){
     parseIssues(res.issues||[]);
     parsePrices(res.prices||[]);
     parseVerified(res.verified||[]);
-    parsePicks(res.picks||[]);parseCells(res.cells||[]);parseMixes(res.mixes||[]);if(res.pricelist&&res.pricelist.length)parsePriceList(res.pricelist);if(res.sales&&res.sales.length)parseSales(res.sales);if(res.archive&&res.archive.length)parseArchive(res.archive);
+    parsePicks(res.picks||[]);parseCells(res.cells||[]);parseMixes(res.mixes||[]);if(res.pricelist&&res.pricelist.length)parsePriceList(res.pricelist);if(res.sales&&res.sales.length)parseSales(res.sales);if(res.archive&&res.archive.length)parseArchive(res.archive);if(res.statusLog)parseStatusLog(res.statusLog);if(res.verifyTimes)parseVerifyTimes(res.verifyTimes);
     window._dataAt=Date.now();
     if(G('page-pick')&&G('page-pick').classList.contains('on'))renderPickPage();
     if(G('page-stickers')&&G('page-stickers').classList.contains('on'))renderStickersPage();
@@ -3162,9 +3162,19 @@ function parseItems(rows){
     if(!num||!art)continue;
     if(!items[num])items[num]=[];
     var price=parseFloat(String(r[7]||'').replace(/\s/g,'').replace(/[^\d,.\-]/g,'').replace(',','.'))||0;   // J «Ціна» — за упаковку (одиницю колонки B)
-    items[num].push({art,qty:parseInt(qty)||0,name,date,client,price,num});
+    items[num].push({art,qty:parseInt(qty)||0,name,date,client,price,num,siteStatus:(r[8]||'').trim()});
   }
 }
+// Статус замовлення у вигрузці (колонка G з сайту): найчастіший серед його рядків
+function siteStatusOf(o){var its=items[o.num]||[];var c={},best='',bn=0;its.forEach(function(it){var v=it.siteStatus;if(!v)return;c[v]=(c[v]||0)+1;if(c[v]>bn){bn=c[v];best=v;}});return best;}
+// Звірка зі статусом у панелі: 'shipped' — у вигрузці вже «Відправлено», а в панелі ні; 'diff' — інший статус; '' — збігається / нема даних
+// На сайті статусів менше («В роботі», «Готове все є», «Відправлено», «Відмова»), тож порівнюємо за групами:
+// Фасується ≈ В роботі, Перевірено ≈ Готове — це не розбіжність.
+var SITE_GROUP={new:'new',work:'work',pack:'work',ready:'ready',verified:'ready',partial:'ready',sent:'sent',defer:'defer',cancel:'cancel'};
+function siteStatusMismatch(o){var ss=siteStatusOf(o);if(!ss)return '';var a=SITE_GROUP[sk(o.status)]||sk(o.status),b=SITE_GROUP[sk(ss)]||sk(ss);if(a===b)return '';if(b==='sent')return 'shipped';return 'diff';}
+function siteStatusBadge(o,big){var m=siteStatusMismatch(o);if(!m)return '';var ss=siteStatusOf(o);
+  return m==='shipped'?'<span title="У гугл-таблиці «вигрузка» замовлення вже «'+esc(ss)+'», а в панелі — «'+esc(o.status||'')+'»" style="display:inline-block;background:#1f4a86;color:#fff;font-size:'+(big?'12':'10.5')+'px;font-weight:800;padding:2px 8px;border-radius:7px;white-space:nowrap">🚚 вже відправлено (вигрузка)</span>'
+    :'<span title="Статус у гугл-таблиці «вигрузка» інший" style="display:inline-block;background:#fff1d6;color:#7a4a00;border:1px solid #f0cf9a;font-size:'+(big?'12':'10.5')+'px;font-weight:800;padding:1px 7px;border-radius:7px;white-space:nowrap">≠ у вигрузці: '+esc(ss)+'</span>';}
 
 function _p2(x){return (x<10?'0':'')+x;}
 function fmtDM(d){return d?_p2(d.getDate())+'.'+_p2(d.getMonth()+1):'';}
@@ -3618,7 +3628,8 @@ function goVerify(){
 }
 function renderFilters(){
   var c=getCounts();
-  var fs=[{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel},{k:'all',l:'Всі',n:c.all}];
+  var mmN=orders.filter(function(o){return siteStatusMismatch(o);}).length;
+  var fs=[{k:'new',l:'Нові',n:c.new},{k:'work',l:'В роботі',n:c.work},{k:'pack',l:'Фасується',n:c.pack},{k:'ready',l:'Готові',n:c.ready},{k:'sent',l:'Відправ.',n:c.sent},{k:'defer',l:'Відклад.',n:c.defer},{k:'cancel',l:'Відмова',n:c.cancel},{k:'all',l:'Всі',n:c.all}].concat(mmN||filter==='mismatch'?[{k:'mismatch',l:'≠ Не сходиться з вигрузкою',n:mmN}]:[]);
   var chips=fs.map(f=>`<span class="chip${filter===f.k?' on':''}" data-f="${f.k}">${f.l}${f.n?' ('+f.n+')':''}</span>`).join('');
   var cl={};orders.forEach(function(o){if(o.name)cl[o.name]=1;});
   var clientList=Object.keys(cl).sort();
@@ -3631,7 +3642,8 @@ function renderOrders(){
   renderFilters();
   var q=(G('orSearch').value||'').toLowerCase().trim();
   var list=orders.filter(o=>{
-    if(filter!=='all'&&sk(o.status)!==filter)return false;
+    if(filter==='mismatch'){if(!siteStatusMismatch(o))return false;}
+    else if(filter!=='all'&&sk(o.status)!==filter)return false;
     if(orderClient&&o.name!==orderClient)return false;
     if(q&&!(o.name+o.num+o.comment).toLowerCase().includes(q))return false;
     return true;
@@ -3675,7 +3687,7 @@ function renderOrders(){
         +'<div class="oname">'+esc(o.name)+(orderAnomalies(o).length?' <span title="Є неузгодженості — відкрий картку" style="display:inline-block;background:var(--r);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">⚠ '+orderAnomalies(o).length+'</span>':'')+'</div><div class="onum">№ '+esc(o.num)+(oD?' · від '+esc(fmtDM(oD)):'')+(sameAsPrev?' <span style="color:var(--blue);font-weight:600">↳ ще одне замовлення цього клієнта</span>':'')+'</div>'
         +'<div class="oitem">'+(first?('<span class="osku">'+esc(first.art)+'</span>'+esc(first.name)):'—')+(more>0?'<span class="omore">+'+more+' позиц.</span>':'')+'</div>'
       +'</div>'
-      +pillH(o.status)
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+'</div>'
     +'</div>';
   });
   G('orList').innerHTML=html;
@@ -3683,12 +3695,21 @@ function renderOrders(){
 }
 function closeOrderDetail(){var m=G('ordModalOv');if(m)m.classList.remove('show');selOr=null;document.querySelectorAll('.order-list .pk-card.on').forEach(function(el){el.classList.remove('on');});}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){var m=G('ordModalOv');if(m&&m.classList.contains('show'))closeOrderDetail();}});
+// Поставити в панелі статус з вигрузки (запишеться в журнал статусів з часом і хто)
+async function syncStatusFromSite(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;var ss=siteStatusOf(o);if(!ss)return;
+  if(!confirm('Поставити замовленню №'+o.num+' статус «'+ss+'» (як у вигрузці)?'))return;
+  try{var res=await callScriptPost('setStatus',{orderNum:o.num,status:ss,orderName:o.name});
+    if(res&&res.ok){o.status=ss;toast('Статус «'+ss+'» — як у вигрузці','ok',2500);renderOrders();selectOrder(id);}
+    else toast('Не змінилось: '+((res&&res.error)||'?'),'er',4000);
+  }catch(e){toast('Помилка звʼязку','er');}
+}
 function selectOrder(id){
   selOr=id;var o=orders.find(x=>x.id===id);if(!o)return;
   G('orList').querySelectorAll('.pk-card').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
   var dv=G('orDetail');if(dv)dv.style.display='block';var mv=G('ordModalOv');if(mv){mv.classList.add('show');mv.scrollTop=0;}
   G('odN').textContent='#'+(o.num||'—');G('odC').textContent=o.name||'—';G('odS').textContent=o.comment||'';
-  G('odP').innerHTML=pillH(o.status,true);G('odSt').innerHTML=stagesH(o.status,true);
+  G('odP').innerHTML=pillH(o.status,true)+(siteStatusMismatch(o)?' '+siteStatusBadge(o,true)+(SCRIPT_URL&&curUser().role!=='worker'?' <button type="button" class="btn sm" style="margin-left:4px" onclick="syncStatusFromSite(\''+o.id+'\')" title="Поставити в панелі той самий статус, що у вигрузці">⇄ Як у вигрузці</button>':''):'');G('odSt').innerHTML=stagesH(o.status,true);
   var k2=sk(o.status);
   if(G('odPicker')){G('odPicker').style.display=(k2==='work'||k2==='pack')?'':'none';G('odPicker').onclick=function(){nav('picker');selectPicker(id);};}
   if(G('odStatus')){G('odStatus').style.display=SCRIPT_URL?'':'none';G('odStatus').onclick=function(){openStatusModal(o);};}
@@ -3844,6 +3865,13 @@ function selectOrder(id){
   body+=`</div>`;
   if(o.note)body+=`<div class="note-c">📝 <span>${esc(o.note)}</span></div>`;
 
+  // Історія статусів — коли і хто
+  var slg=statusLog[nk(o.num)]||[];
+  if(slg.length){
+    body+='<div class="sec-t">🕒 Історія статусів</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">'
+      +slg.map(function(x){return '<div style="display:flex;gap:10px;align-items:baseline;font-size:13px"><span style="font-family:var(--mono);color:var(--mu);min-width:128px">'+esc(x.at||'—')+'</span><span>'+(x.from?esc(x.from)+' → ':'')+'<b>'+esc(x.to)+'</b></span><span style="color:var(--mu);font-size:12px">'+esc(x.src)+'</span></div>';}).join('')
+      +(salesFileTime[nk(o.num)]?'<div style="font-size:12px;color:var(--mu)">ТТН вивантажено: '+salesFileTime[nk(o.num)].toLocaleString('uk-UA').slice(0,17)+'</div>':'')+'</div>';
+  }
   // Історія приходу з аркушу "прихід"
   var orderHistory=income.filter(function(r){return r.orderNum===o.num;});
   if(orderHistory.length){
@@ -7151,7 +7179,7 @@ function anKey(d,daily){return daily?d.getFullYear()+'-'+_p2(d.getMonth()+1)+'-'
 //      Оцінки — лише тут, в аналітиці; у накладні й таблицю нічого не пишеться.
 var _anPIdx=null,anList={},salesMap={},salesN=0;
 // «продажі ТТН»: A № · B Клієнт · C Артикул · D Назва · E Розмір · F К-сть · G Ціна, грн · H Вартість · I Імпортовано · J Файл
-function parseSales(rows){salesMap={};salesN=0;(rows||[]).slice(1).forEach(function(r){var o=nk(r[0]),a=nk(r[2]);var p=parseFloat(String(r[6]||'').replace(/\s/g,'').replace(',','.'))||0;if(!o||!a||!p)return;salesMap[o+'||'+a]={p:p,q:parseFloat(String(r[5]||'').replace(',','.'))||0,t:parseUaDate(r[8])};salesN++;});_anCache=null;_anPIdx=null;}
+function parseSales(rows){salesMap={};salesN=0;salesFileTime={};(rows||[]).slice(1).forEach(function(r){var o=nk(r[0]),a=nk(r[2]);if(o){String(r[9]||'').split(/\s*,\s*/).forEach(function(fn){var ft=ttnFileTime(fn);if(ft&&(!salesFileTime[o]||ft<salesFileTime[o]))salesFileTime[o]=ft;});}var p=parseFloat(String(r[6]||'').replace(/\s/g,'').replace(',','.'))||0;if(!o||!a||!p)return;salesMap[o+'||'+a]={p:p,q:parseFloat(String(r[5]||'').replace(',','.'))||0,t:parseUaDate(r[8])};salesN++;});_anCache=null;_anPIdx=null;}
 function parsePriceList(rows){anList={};(rows||[]).slice(1).forEach(function(r){var a=nk(r[0]);var p=parseFloat(String(r[1]||'').replace(/\s/g,'').replace(/[^\d,.\-]/g,'').replace(',','.'))||0;if(a&&p)anList[a]=p;});_anCache=null;}
 if(anState.estimate==null)anState.estimate=(function(){try{return localStorage.getItem('anEst')!=='0';}catch(e){return true;}})();
 function anPriceIdx(){
@@ -7178,6 +7206,18 @@ function anPrice(o,it,d){
 // ---- Минулі сезони (аркуш «минулі сезони»): рядки ТТН попередніх сезонів для порівняння «сезон до сезону».
 //      Дата рядка — дата з назви ТТН-файлу (коли вивантажували), тож по місяцях порівняння приблизне.
 var anArch={lines:[],seasons:[]};
+// ---- Журнал статусів (аркуш «журнал статусів»): кожна зміна з часом до секунди і хто/звідки ----
+var statusLog={};
+function parseStatusLog(rows){statusLog={};(rows||[]).slice(1).forEach(function(r){var num=nk(r[1]);if(!num)return;(statusLog[num]=statusLog[num]||[]).push({t:parseUaDate(r[0]),at:String(r[0]||''),from:String(r[3]||''),to:String(r[4]||''),src:String(r[5]||'')});});_anCache=null;}
+// час вивантаження ТТН з назви файлу (TTN2026-10-19_14-34-38) — день і година, коли друкували ТТН
+var salesFileTime={};
+function ttnFileTime(f){var m=String(f||'').match(/TTN(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})(?:-(\d{2}))?/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):null;}
+// Коли замовлення реально поїхало: остання зміна на «Відправлено» в журналі → дата в «статуси» → час ТТН-файлу → дата вигрузки
+function anShipDate(o){
+  var lg=statusLog[nk(o.num)];if(lg)for(var i=lg.length-1;i>=0;i--){if(lg[i].t&&sk(lg[i].to)==='sent')return lg[i].t;}
+  return o.sentAt||salesFileTime[nk(o.num)]||orderDate(o);
+}
+function anShipExact(o){var lg=statusLog[nk(o.num)];if(lg&&lg.some(function(x){return x.t&&sk(x.to)==='sent';}))return true;return !!(o.sentAt||salesFileTime[nk(o.num)]);}
 function parseArchive(rows){
   var lines=[],ss={};
   (rows||[]).slice(1).forEach(function(r){
@@ -7209,11 +7249,11 @@ function anCalcArch(r,season){
 // усі відправлені рядки за весь час (кеш, поки не змінились дані)
 var _anCache=null;
 function anLines(){
-  var sig=orders.length+'|'+Object.keys(items).length+'|'+Object.keys(issues).length+'|'+(window._dataAt||0)+'|'+Object.keys(mixes||{}).length+'|'+(anState.estimate?1:0)+'|'+salesN+'|'+anRate();
+  var sig=orders.length+'|'+Object.keys(items).length+'|'+Object.keys(issues).length+'|'+(window._dataAt||0)+'|'+Object.keys(mixes||{}).length+'|'+(anState.estimate?1:0)+'|'+salesN+'|'+anRate()+'|'+Object.keys(statusLog).length+'|'+Object.keys(salesFileTime).length;
   if(_anCache&&_anCache.sig===sig)return _anCache;
   var lines=[],first={},last={},sumAll={},sumAllU={},packsAll={};var rate=anRate();
   orders.forEach(function(o){
-    if(sk(o.status)!=='sent')return;var d=o.sentAt||orderDate(o);if(!d)return;
+    if(sk(o.status)!=='sent')return;var d=anShipDate(o);if(!d)return;
     (items[o.num]||[]).forEach(function(it){
       var a=nk(it.art);if(issueBlocks(o.num,a))return;var sh=issueShip(issueOf(o.num,a));var q=sh?Math.min(it.qty,sh):it.qty;if(!q)return;
       var mx=mixOf(a);var pk=mx?(mx.perPack||0):furyPackOf(a);var pr=anPrice(o,it,d);var raw=(pr.p||0)*q;var uah=anCur(a)==='UAH';
@@ -7315,6 +7355,81 @@ function anCsvRows(kind,a){
 }
 function anCsv(kind){var a=anCalc(anRange());var rows=anCsvRows(kind,a);var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='analityka_'+kind+'_'+anRange().label.replace(/\s+/g,'_')+'.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);}
+// ---- Фасування (за сканами на «Прийомі») і час обробки замовлень ----
+// Ящик — наш артикул на «3…», пакет — на «4…», інше — решта. Штуки = «Кільк в упаковці» (або упаковка з «інфо фури») × к-сть.
+// Прийшло замовлення: журнал статусів («нове замовлення» — точний час), інакше дата з вигрузки (≈, без годин).
+// Готове: перехід на «Готове» в журналі статусів, інакше час останнього скану прийому (≈).
+var verifyTimes={};
+function parseVerifyTimes(rows){verifyTimes={};(rows||[]).forEach(function(r){if(!r||!r[0])return;verifyTimes[nk(r[0])]={first:parseUaDate(r[1]),last:parseUaDate(r[2])};});}
+function anListTime(num){var t=null;lists.forEach(function(l){if(String(l.orderNum)!==String(num))return;var d=parseUaDate(l.date);if(d&&(!t||d<t))t=d;});return t;}
+function anUnitType(art){art=String(art||'');var c=art.charAt(0);return art.length>=8?(c==='3'?'box':(c==='4'?'pack':'other')):'other';}
+function anPackCalc(r){
+  var daily=anDaily(r);var res={box:0,pack:0,other:0,pcs:0,series:{},ops:{}};var ord={};
+  income.forEach(function(x){
+    if(x.type==='на перефасовку')return;var d=parseUaDate(x.date);if(!d)return;
+    var n=x.qty||1;var pk=x.packQty||furyPackOf(x.art)||0;var pcs=pk*n;var t=anUnitType(x.art);
+    if(x.orderNum){var O=ord[x.orderNum]=ord[x.orderNum]||{first:d,last:d,units:0,pcs:0,box:0,pack:0,other:0};if(d<O.first)O.first=d;if(d>O.last)O.last=d;O.units+=n;O.pcs+=pcs;O[t]+=n;}
+    if(!anIn(d,r))return;
+    res[t]+=n;res.pcs+=pcs;
+    var k=anKey(d,daily);var S=res.series[k]=res.series[k]||{box:0,pack:0,other:0,pcs:0};S[t]+=n;S.pcs+=pcs;
+  });
+  var list=[];
+  orders.forEach(function(o){
+    var O=ord[o.num];if(!O)return;var lg=statusLog[nk(o.num)]||[];
+    var nw=lg.find(function(x){return x.t&&x.src==='нове замовлення';});var tArr=nw?nw.t:orderDate(o),arrExact=!!nw;
+    var rd=null,rdExact=false;for(var i=0;i<lg.length;i++){if(lg[i].t&&SITE_GROUP[sk(lg[i].to)]==='ready'){rd=lg[i].t;rdExact=true;break;}}
+    var k=sk(o.status);var isReady=(k==='ready'||k==='verified'||k==='sent'||k==='partial');if(!rd&&isReady)rd=O.last;
+    var vf=null;for(var j=0;j<lg.length;j++){if(lg[j].t&&sk(lg[j].to)==='verified'){vf=lg[j].t;break;}}
+    var VT=verifyTimes[nk(o.num)];if(!vf&&VT&&VT.last)vf=VT.last;   // з аркуша «перевірка» — точний час останнього скану перевірки
+    var lt=anListTime(o.num);   // коли створили список вантажнику — початок роботи (точний час)
+    var sh=(k==='sent'&&anShipExact(o))?anShipDate(o):null;
+    var startW=lt&&lt<O.first?lt:O.first;
+    list.push({o:o,arr:tArr,arrExact:arrExact,list:lt,first:O.first,last:O.last,ready:rd,readyExact:rdExact,ver:vf,ship:sh,units:O.units,pcs:O.pcs,box:O.box,pack:O.pack,pos:(items[o.num]||[]).length,
+      toReady:(rd&&tArr)?(rd-tArr)/3600000:null,work:(rd&&startW&&rd>=startW)?(rd-startW)/3600000:null,packSpan:(O.last-O.first)/3600000,wait:tArr?(O.first-tArr)/3600000:null,
+      readyToShip:(sh&&rd&&sh>=rd)?(sh-rd)/3600000:null});
+  });
+  res.orders=list.filter(function(x){return x.ready?anIn(x.ready,r):anIn(x.last,r);});
+  var done=res.orders.filter(function(x){return x.toReady!=null&&x.toReady>=0;}).map(function(x){return x.toReady;}).sort(function(a,b){return a-b;});
+  res.doneN=done.length;res.avg=done.length?done.reduce(function(a,b){return a+b;},0)/done.length:null;res.median=done.length?done[Math.floor(done.length/2)]:null;
+  var sp=res.orders.map(function(x){return x.packSpan;}).filter(function(v){return v>=0;});res.avgSpan=sp.length?sp.reduce(function(a,b){return a+b;},0)/sp.length:null;
+  var wk=res.orders.map(function(x){return x.work;}).filter(function(v){return v!=null&&v>=0;}).sort(function(a,b){return a-b;});res.avgWork=wk.length?wk.reduce(function(a,b){return a+b;},0)/wk.length:null;res.medWork=wk.length?wk[Math.floor(wk.length/2)]:null;
+  var rs=res.orders.map(function(x){return x.readyToShip;}).filter(function(v){return v!=null;});res.avgShipWait=rs.length?rs.reduce(function(a,b){return a+b;},0)/rs.length:null;
+  res.buckets=[['до 1 дн',0],['1–2 дн',0],['2–3 дн',0],['3–5 дн',0],['5–7 дн',0],['понад 7 дн',0]];
+  done.forEach(function(h){var dd=h/24;var i=dd<1?0:dd<2?1:dd<3?2:dd<5?3:dd<7?4:5;res.buckets[i][1]++;});
+  return res;
+}
+function anDur(h){if(h==null||!isFinite(h)||h<0)return '—';if(h<1)return Math.round(h*60)+' хв';if(h<48)return (Math.round(h*10)/10).toLocaleString('uk-UA')+' год';return (Math.round(h/24*10)/10).toLocaleString('uk-UA')+' дн';}
+function anDT(d,approx){if(!d)return '—';return (approx?'≈ ':'')+fmtDM(d)+(d.getHours()||d.getMinutes()?' '+_p2(d.getHours())+':'+_p2(d.getMinutes()):'');}
+function anPackHtml(r){
+  var P=anPackCalc(r);
+  var tile=function(l,v,s,col){return '<div style="flex:1;min-width:120px;background:#f7f8f6;border-radius:12px;padding:10px 12px"><div style="font-size:11px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.4px">'+l+'</div><div style="font-size:24px;font-weight:800;'+(col?'color:'+col:'')+'">'+v+'</div>'+(s?'<div style="font-size:11.5px;color:var(--mu)">'+s+'</div>':'')+'</div>';};
+  var keys=Object.keys(P.series).sort();var mx=Math.max.apply(null,keys.map(function(k){var S=P.series[k];return S.box+S.pack+S.other;}).concat([1]));
+  var bars=keys.length?'<div style="display:flex;align-items:flex-end;gap:3px;height:110px;margin-top:10px;overflow-x:auto">'+keys.map(function(k){var S=P.series[k];var tot=S.box+S.pack+S.other;var hb=Math.round(S.box/mx*96),hp=Math.round(S.pack/mx*96),ho=Math.round(S.other/mx*96);var lbl=k.length>7?k.slice(8)+'.'+k.slice(5,7):AN_MONTHS[+k.slice(5)-1].slice(0,3);
+      return '<div title="'+k+': ящиків '+S.box+', пакетів '+S.pack+(S.other?', інше '+S.other:'')+', '+anFmt(S.pcs)+' шт" style="display:flex;flex-direction:column;align-items:center;min-width:18px;flex:1"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:96px;width:70%"><div style="height:'+ho+'px;background:#9aa39b"></div><div style="height:'+hp+'px;background:#4f8a63"></div><div style="height:'+hb+'px;background:#c98a1a;border-radius:3px 3px 0 0"></div></div><div style="font-size:9.5px;color:var(--mu);margin-top:2px">'+lbl+'</div></div>';}).join('')+'</div><div style="display:flex;gap:14px;font-size:11.5px;color:var(--mu);margin-top:4px"><span><span style="display:inline-block;width:10px;height:10px;background:#c98a1a;border-radius:2px"></span> ящики</span><span><span style="display:inline-block;width:10px;height:10px;background:#4f8a63;border-radius:2px"></span> пакети</span><span><span style="display:inline-block;width:10px;height:10px;background:#9aa39b;border-radius:2px"></span> інше</span></div>':'<div style="color:var(--mu);padding:12px">За цей період нічого не прийнято</div>';
+  var h=anCard('📦','Фасування',esc(r.label)+' · за сканами на «Прийомі»','<div style="display:flex;gap:8px;flex-wrap:wrap">'+tile('Ящиків',anFmt(P.box),'','#9a6a00')+tile('Пакетів',anFmt(P.pack),'','#37714a')+tile('Шт цибулин',anFmt(P.pcs),'',null)+(P.other?tile('Інше',anFmt(P.other),'6-значні арт.',null):'')+'</div>'+bars);
+  // час обробки
+  var hist=P.buckets.map(function(b){var m=Math.max.apply(null,P.buckets.map(function(x){return x[1];}).concat([1]));return '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:2px 0"><span style="width:76px;color:var(--mu)">'+b[0]+'</span><div style="flex:1;height:10px;border-radius:5px;background:#eef0ec"><div style="width:'+Math.round(b[1]/m*100)+'%;height:100%;border-radius:5px;background:'+(b[0].indexOf('7')>=0&&b[0].indexOf('понад')>=0?'#b42318':'#4f8a63')+'"></div></div><b style="width:28px;text-align:right">'+b[1]+'</b></div>';}).join('');
+  var rows=P.orders.slice().sort(function(a,b){return (b.toReady==null?-1:b.toReady)-(a.toReady==null?-1:a.toReady);});
+  var lim=anState.detail==='ptime'?rows.length:15;
+  var td='padding:5px 6px;border-bottom:1px solid #f0f2ee;white-space:nowrap';
+  var slow=function(hh){return hh!=null&&hh>=24*5;};
+  var tbl='<div style="overflow:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'+['№','Клієнт','Поз.','Ящ / пак','Шт','Прийшло','Список','Перший скан','Готове','До «Готове»','Робота','Фасування','Перевірено','Відправлено'].map(function(x){return '<th style="text-align:left;padding:6px;border-bottom:1px solid #e3e6e0;white-space:nowrap">'+x+'</th>';}).join('')+'</tr></thead><tbody>'
+    +(rows.slice(0,lim).map(function(x){return '<tr style="'+(slow(x.toReady)?'background:#fdecec':'')+'"><td style="'+td+'"><a href="#" onclick="nav(\'orders\');selectOrder(\''+x.o.id+'\');return false;" style="color:var(--blue);font-family:var(--mono)">'+esc(x.o.num)+'</a></td><td style="'+td+';max-width:170px;overflow:hidden;text-overflow:ellipsis">'+esc(x.o.name)+'</td><td style="'+td+'">'+x.pos+'</td><td style="'+td+'">'+x.box+' / '+x.pack+'</td><td style="'+td+'">'+anFmt(x.pcs)+'</td><td style="'+td+'">'+anDT(x.arr,!x.arrExact)+'</td><td style="'+td+'">'+anDT(x.list)+'</td><td style="'+td+'">'+anDT(x.first)+'</td><td style="'+td+'">'+anDT(x.ready,x.ready&&!x.readyExact)+'</td><td style="'+td+';font-weight:800;'+(slow(x.toReady)?'color:#b42318':'')+'">'+anDur(x.toReady)+'</td><td style="'+td+';font-weight:700">'+anDur(x.work)+'</td><td style="'+td+'">'+anDur(x.packSpan)+'</td><td style="'+td+'">'+anDT(x.ver)+'</td><td style="'+td+'">'+anDT(x.ship)+'</td></tr>';}).join('')||'<tr><td colspan="14" style="padding:12px;color:var(--mu)">Нема замовлень за цей період</td></tr>')
+    +'</tbody></table></div>';
+  var more=rows.length>lim?'<button class="btn sm" type="button" onclick="anState.detail=\'ptime\';renderAnalytics()">Показати всі ('+rows.length+')</button>':(anState.detail==='ptime'?'<button class="btn sm" type="button" onclick="anState.detail=\'\';renderAnalytics()">Згорнути</button>':'');
+  h+='<div style="margin-top:14px">'+anCard('⏱','Час обробки замовлень','від появи замовлення до «Готове» · '+esc(r.label),
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+tile('Готових за період',anFmt(P.doneN),'')+tile('Від появи до «Готове»',anDur(P.avg),'медіана '+anDur(P.median))+tile('Робота: від списку до «Готове»',anDur(P.avgWork),'медіана '+anDur(P.medWork)+' · точні часи')+tile('Саме фасування',anDur(P.avgSpan),'від першого до останнього скану')+tile('Від «Готове» до відправки',anDur(P.avgShipWait),'')+'</div>'
+    +'<div style="display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:16px;margin-top:12px;align-items:start"><div><div style="font-size:12px;font-weight:700;color:var(--mu);margin-bottom:4px">РОЗПОДІЛ: СКІЛЬКИ ЧЕКАЛИ ДО «ГОТОВЕ»</div>'+hist+'</div><div style="font-size:12px;color:var(--mu);line-height:1.5">Точний час: «Список» (створення списку вантажнику), «Перший скан» і останній (прийом), «Перевірено» (аркуш «перевірка»), «Відправлено» (журнал статусів / ТТН). «Робота» — від списку до «Готове», точно і для старих замовлень. ≈ — «Прийшло» лише з дати вигрузки (без години), «Готове» — за останнім сканом. Червоним — 5 днів і довше.</div></div>'
+    +tbl,more+'<button class="btn sm" type="button" onclick="anPackCsv()">⬇ CSV</button>')+'</div>';
+  return h;
+}
+function anPackCsv(){
+  var P=anPackCalc(anRange());var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var f=function(d){return d?d.toLocaleString('uk-UA').slice(0,17):'';};
+  var rows=[['№','Клієнт','Позицій','Ящиків','Пакетів','Шт','Прийшло','Прийшло точно','Список вантажнику','Перший скан','Готове (останній скан / статус)','Готове точно','До «Готове», год','Робота (список → готове), год','Фасування, год','Перевірено','Відправлено','Від «Готове» до відправки, год']]
+    .concat(P.orders.map(function(x){return [x.o.num,x.o.name,x.pos,x.box,x.pack,x.pcs,f(x.arr),x.arrExact?'так':'ні',f(x.list),f(x.first),f(x.ready),x.readyExact?'так':'ні',x.toReady!=null?Math.round(x.toReady*10)/10:'',x.work!=null?Math.round(x.work*10)/10:'',Math.round(x.packSpan*10)/10,f(x.ver),f(x.ship),x.readyToShip!=null?Math.round(x.readyToShip*10)/10:''];}));
+  var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='chas_obrobky_'+anRange().label.replace(/\s+/g,'_')+'.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);
+}
 function renderAnalytics(){
   var el=G('anBody');if(!el)return;
   var money=curUser().role!=='worker';if(!money&&anState.metric==='sum')anState.metric='packs';
@@ -7355,6 +7470,7 @@ function renderAnalytics(){
   // Динаміка
   var mBtn=function(m,l){var on=anState.metric===m;return '<button type="button" onclick="anState.metric=\''+m+'\';renderAnalytics()" style="padding:6px 12px;border-radius:999px;border:1.5px solid '+(on?'#37714a':'var(--bo2)')+';background:'+(on?'#e6f1e8':'#fff')+';font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'+l+'</button>';};
   h+=anCard('📈','Динаміка відправлень',(anDaily(r)?'по днях':'по місяцях')+' · '+esc(r.label),'<div style="display:flex;gap:6px;margin:-4px 0 8px">'+mBtn('packs','Упаковки')+mBtn('orders','Замовлення')+(money?mBtn('sum','Сума'):'')+'</div>'+anTrend(a.series,b?b.series:null,anState.metric,anDaily(r),isS,isS?'сезон '+anState.cmpSeason:'попередній'));
+  h+='<div style="margin-top:14px">'+anPackHtml(r)+'</div>';
   // Топ товарів / клієнтів
   var merge=!!anState.merge;var sortK=money&&anState.metric==='sum'?'sum':(merge?'pcs':'packs');
   var prodMap=merge?anMerge(a.prod):a.prod;
@@ -7430,8 +7546,8 @@ function renderAnalytics(){
       +'</tbody></table></div>';
     h+='<div id="anDetail" style="margin-top:14px">'+anCard(isC?'👥':'📦',isC?'Усі клієнти':'Усі товари',esc(r.label)+' · '+rows.length,body)+'</div>';
   }
-  var noDate=orders.filter(function(o){return sk(o.status)==='sent'&&!o.sentAt;}).length;
-  if(noDate&&anState.period!=='all')h+='<div style="font-size:11.5px;color:var(--mu);margin-top:10px">Для '+noDate+' старих відправлених замовлень у журналі «статуси» нема дати відправки — береться дата вигрузки.</div>';
+  var noDate=orders.filter(function(o){return sk(o.status)==='sent'&&!anShipExact(o);}).length;
+  if(noDate&&anState.period!=='all')h+='<div style="font-size:11.5px;color:var(--mu);margin-top:10px">Для '+noDate+' відправлених замовлень нема часу відправки (ні в журналі статусів, ні в ТТН) — для них береться дата вигрузки. Завантаж їхні ТТН у «продажі ТТН», і дата стане точною.</div>';
   el.innerHTML=h;
 }
 
@@ -8372,7 +8488,7 @@ $('vgBtnArch').addEventListener('click', async () => {
 
 $('vgBtnSales').addEventListener('click', async () => {
   const items = [];
-  orders.forEach(o => o.items.forEach(it => items.push({ orderNum: o.num, client: o.name, art: it.art, name: it.title, size: it.size, qty: it.qty, price: it.price, sum: it.sum })));
+  orders.forEach(o => o.items.forEach(it => items.push({ orderNum: o.num, client: o.name, art: it.art, name: it.title, size: it.size, qty: it.qty, price: it.price, sum: it.sum, file: o.file })));
   if(!items.length){ setNote('У файлі нема рядків.', true); return; }
   if(!SCRIPT_URL){ setNote('Нема зв’язку з беком.', true); return; }
   const btn = $('vgBtnSales'), old = btn.textContent; btn.disabled = true; btn.textContent = 'Записую…';
