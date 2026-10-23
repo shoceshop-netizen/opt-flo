@@ -1134,7 +1134,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='23.10.2026 · обʼєднання клієнтів';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='23.10.2026 · лише скани через програму';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -7435,19 +7435,30 @@ var verifyTimes={};
 function parseVerifyTimes(rows){verifyTimes={};(rows||[]).forEach(function(r){if(!r||!r[0])return;verifyTimes[nk(r[0])]={first:parseUaDate(r[1]),last:parseUaDate(r[2])};});}
 function anListTime(num){var t=null;lists.forEach(function(l){if(String(l.orderNum)!==String(num))return;var d=parseUaDate(l.date);if(d&&(!t||d<t))t=d;});return t;}
 function anUnitType(art){art=String(art||'');var c=art.charAt(0);return art.length>=8?(c==='3'?'box':(c==='4'?'pack':'other')):'other';}
+// Скан через програму (сторінка «Прийом»): є штрихкод ящика і реальний час скану.
+// Рядки без штрихкоду, без години або внесені масово (30+ рядків в одну й ту саму секунду) — не скани.
+var _anProgTs=null;
+function anProgScan(x){
+  if(!_anProgTs||_anProgTs.n!==income.length){var c={};income.forEach(function(y){var k=y.date;if(k)c[k]=(c[k]||0)+1;});_anProgTs={n:income.length,c:c};}
+  if(!x.barcode||!x.date)return false;var m=String(x.date).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);if(!m)return false;if(+m[1]===0&&+m[2]===0&&!+(m[3]||0))return false;
+  return (_anProgTs.c[x.date]||0)<30;
+}
 function anPackCalc(r){
   var daily=anDaily(r);var res={box:0,pack:0,other:0,pcs:0,series:{},ops:{}};var ord={};
   income.forEach(function(x){
     if(x.type==='на перефасовку')return;var d=parseUaDate(x.date);if(!d)return;
     var n=x.qty||1;var pk=x.packQty||furyPackOf(x.art)||0;var pcs=pk*n;var t=anUnitType(x.art);
-    if(x.orderNum){var O=ord[x.orderNum]=ord[x.orderNum]||{first:d,last:d,units:0,pcs:0,box:0,pack:0,other:0};if(d<O.first)O.first=d;if(d>O.last)O.last=d;O.units+=n;O.pcs+=pcs;O[t]+=n;}
+    if(x.orderNum){var O=ord[x.orderNum]=ord[x.orderNum]||{first:null,last:null,units:0,pcs:0,box:0,pack:0,other:0,prog:0};O.units+=n;O.pcs+=pcs;O[t]+=n;
+      if(anProgScan(x)){O.prog++;if(!O.first||d<O.first)O.first=d;if(!O.last||d>O.last)O.last=d;}}
     if(!anIn(d,r))return;
     res[t]+=n;res.pcs+=pcs;
     var k=anKey(d,daily);var S=res.series[k]=res.series[k]||{box:0,pack:0,other:0,pcs:0};S[t]+=n;S.pcs+=pcs;
   });
   var list=[];
+  res.noProgN=0;
   orders.forEach(function(o){
-    var O=ord[o.num];if(!O)return;var lg=statusLog[nk(o.num)]||[];
+    var O=ord[o.num];if(!O)return;if(!O.prog){res.noProgN++;return;}   // старі замовлення без сканів через програму — не рахуємо
+    var lg=statusLog[nk(o.num)]||[];
     var nw=lg.find(function(x){return x.t&&x.src==='нове замовлення';});var tArr=nw?nw.t:orderDate(o),arrExact=!!nw;
     var rd=null,rdExact=false;for(var i=0;i<lg.length;i++){if(lg[i].t&&SITE_GROUP[sk(lg[i].to)]==='ready'){rd=lg[i].t;rdExact=true;break;}}
     var k=sk(o.status);var shippedO=anIsShipped(o);var isReady=(k==='ready'||k==='verified'||k==='sent'||k==='partial'||shippedO);if(!rd&&isReady)rd=O.last;
@@ -7455,19 +7466,24 @@ function anPackCalc(r){
     var VT=verifyTimes[nk(o.num)];if(!vf&&VT&&VT.last)vf=VT.last;   // з аркуша «перевірка» — точний час останнього скану перевірки
     var lt=anListTime(o.num);   // коли створили список вантажнику — початок роботи (точний час)
     var sh=(shippedO&&anShipExact(o))?anShipDate(o):null;
-    var startW=lt&&lt<O.first?lt:O.first;
-    list.push({o:o,arr:tArr,arrExact:arrExact,list:lt,first:O.first,last:O.last,ready:rd,readyExact:rdExact,ver:vf,ship:sh,units:O.units,pcs:O.pcs,box:O.box,pack:O.pack,pos:(items[o.num]||[]).length,
+    var lw=null;for(var w=0;w<lg.length;w++){if(lg[w].t&&sk(lg[w].to)==='work'){lw=lg[w].t;break;}}   // «В роботі» в журналі статусів
+    var startW=[lw,lt].filter(Boolean).sort(function(a,b){return a-b;})[0]||O.first;var startSrc=lw&&startW===lw?'В роботі':(lt&&startW===lt?'список':'перший скан');
+    if(O.first&&startW>O.first){startW=O.first;startSrc='перший скан';}
+    list.push({o:o,arr:tArr,arrExact:arrExact,list:lt,start:startW,startSrc:startSrc,first:O.first,last:O.last,ready:rd,readyExact:rdExact,ver:vf,ship:sh,units:O.units,pcs:O.pcs,box:O.box,pack:O.pack,pos:(items[o.num]||[]).length,
       toReady:(rd&&tArr)?(rd-tArr)/3600000:null,work:(rd&&startW&&rd>=startW)?(rd-startW)/3600000:null,packSpan:(O.last-O.first)/3600000,wait:tArr?(O.first-tArr)/3600000:null,
       readyToShip:(sh&&rd&&sh>=rd)?(sh-rd)/3600000:null});
   });
   res.orders=list.filter(function(x){return x.ready?anIn(x.ready,r):anIn(x.last,r);});
-  var done=res.orders.filter(function(x){return x.toReady!=null&&x.toReady>=0;}).map(function(x){return x.toReady;}).sort(function(a,b){return a-b;});
-  res.doneN=done.length;res.avg=done.length?done.reduce(function(a,b){return a+b;},0)/done.length:null;res.median=done.length?done[Math.floor(done.length/2)]:null;
-  var sp=res.orders.map(function(x){return x.packSpan;}).filter(function(v){return v>=0;});res.avgSpan=sp.length?sp.reduce(function(a,b){return a+b;},0)/sp.length:null;
-  var wk=res.orders.map(function(x){return x.work;}).filter(function(v){return v!=null&&v>=0;}).sort(function(a,b){return a-b;});res.avgWork=wk.length?wk.reduce(function(a,b){return a+b;},0)/wk.length:null;res.medWork=wk.length?wk[Math.floor(wk.length/2)]:null;
-  var rs=res.orders.map(function(x){return x.readyToShip;}).filter(function(v){return v!=null;});res.avgShipWait=rs.length?rs.reduce(function(a,b){return a+b;},0)/rs.length:null;
+  // СЕРЕДНІ: обробка = від «В роботі» до «Готове»; замовлення, що висіли 5+ днів, у середні не входять
+  var LIM=120;var avg=function(a){return a.length?a.reduce(function(x,y){return x+y;},0)/a.length:null;};var med=function(a){return a.length?a[Math.floor(a.length/2)]:null;};
+  res.orders.forEach(function(x){x.slow=x.work!=null&&x.work>=LIM;});
+  var doneO=res.orders.filter(function(x){return x.work!=null&&x.work>=0;});res.doneN=doneO.length;res.slowN=doneO.filter(function(x){return x.slow;}).length;
+  var wk=doneO.filter(function(x){return !x.slow;}).map(function(x){return x.work;}).sort(function(a,b){return a-b;});res.avgWork=avg(wk);res.medWork=med(wk);
+  var sp=doneO.filter(function(x){return !x.slow&&x.packSpan>=0;}).map(function(x){return x.packSpan;});res.avgSpan=avg(sp);
+  var rs=res.orders.map(function(x){return x.readyToShip;}).filter(function(v){return v!=null&&v<LIM;});res.avgShipWait=avg(rs);res.shipSlowN=res.orders.filter(function(x){return x.readyToShip!=null&&x.readyToShip>=LIM;}).length;
+  var ar=res.orders.filter(function(x){return x.toReady!=null&&x.toReady>=0&&x.toReady<LIM;}).map(function(x){return x.toReady;}).sort(function(a,b){return a-b;});res.avg=avg(ar);res.median=med(ar);
   res.buckets=[['до 1 дн',0],['1–2 дн',0],['2–3 дн',0],['3–5 дн',0],['5–7 дн',0],['понад 7 дн',0]];
-  done.forEach(function(h){var dd=h/24;var i=dd<1?0:dd<2?1:dd<3?2:dd<5?3:dd<7?4:5;res.buckets[i][1]++;});
+  doneO.forEach(function(x){var dd=x.work/24;var i=dd<1?0:dd<2?1:dd<3?2:dd<5?3:dd<7?4:5;res.buckets[i][1]++;});
   return res;
 }
 function anDur(h){if(h==null||!isFinite(h)||h<0)return '—';if(h<1)return Math.round(h*60)+' хв';if(h<48)return (Math.round(h*10)/10).toLocaleString('uk-UA')+' год';return (Math.round(h/24*10)/10).toLocaleString('uk-UA')+' дн';}
@@ -7481,26 +7497,26 @@ function anPackHtml(r){
   var h=anCard('📦','Фасування',esc(r.label)+' · за сканами на «Прийомі»','<div style="display:flex;gap:8px;flex-wrap:wrap">'+tile('Ящиків',anFmt(P.box),'','#9a6a00')+tile('Пакетів',anFmt(P.pack),'','#37714a')+tile('Шт цибулин',anFmt(P.pcs),'',null)+(P.other?tile('Інше',anFmt(P.other),'6-значні арт.',null):'')+'</div>'+bars);
   // час обробки
   var hist=P.buckets.map(function(b){var m=Math.max.apply(null,P.buckets.map(function(x){return x[1];}).concat([1]));return '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:2px 0"><span style="width:76px;color:var(--mu)">'+b[0]+'</span><div style="flex:1;height:10px;border-radius:5px;background:#eef0ec"><div style="width:'+Math.round(b[1]/m*100)+'%;height:100%;border-radius:5px;background:'+(b[0].indexOf('7')>=0&&b[0].indexOf('понад')>=0?'#b42318':'#4f8a63')+'"></div></div><b style="width:28px;text-align:right">'+b[1]+'</b></div>';}).join('');
-  anSortState('ptime','toReady',-1);
-  var rows=anSortArr(P.orders,'ptime',{num:function(x){return x.o.num;},client:function(x){return x.o.name;},pos:function(x){return x.pos;},units:function(x){return x.box+x.pack;},pcs:function(x){return x.pcs;},arr:function(x){return x.arr;},list:function(x){return x.list;},first:function(x){return x.first;},ready:function(x){return x.ready;},toReady:function(x){return x.toReady;},work:function(x){return x.work;},pack:function(x){return x.packSpan;},ver:function(x){return x.ver;},ship:function(x){return x.ship;}});
+  anSortState('ptime','work',-1);
+  var rows=anSortArr(P.orders,'ptime',{num:function(x){return x.o.num;},client:function(x){return x.o.name;},pos:function(x){return x.pos;},units:function(x){return x.box+x.pack;},pcs:function(x){return x.pcs;},arr:function(x){return x.arr;},list:function(x){return x.list;},first:function(x){return x.first;},start:function(x){return x.start;},ready:function(x){return x.ready;},toReady:function(x){return x.toReady;},work:function(x){return x.work;},pack:function(x){return x.packSpan;},ver:function(x){return x.ver;},ship:function(x){return x.ship;}});
   var lim=anState.detail==='ptime'?rows.length:15;
   var td='padding:5px 6px;border-bottom:1px solid #f0f2ee;white-space:nowrap';
-  var slow=function(hh){return hh!=null&&hh>=24*5;};
-  var tbl='<div style="overflow:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'+[['num','№'],['client','Клієнт'],['pos','Поз.'],['units','Ящ / пак'],['pcs','Шт'],['arr','Прийшло'],['list','Список'],['first','Перший скан'],['ready','Готове'],['toReady','До «Готове»'],['work','Робота'],['pack','Фасування'],['ver','Перевірено'],['ship','Відправлено']].map(function(c){return anTh('ptime',c[0],c[1]);}).join('')+'</tr></thead><tbody>'
-    +(rows.slice(0,lim).map(function(x){return '<tr style="'+(slow(x.toReady)?'background:#fdecec':'')+'"><td style="'+td+'"><a href="#" onclick="nav(\'orders\');selectOrder(\''+x.o.id+'\');return false;" style="color:var(--blue);font-family:var(--mono)">'+esc(x.o.num)+'</a></td><td style="'+td+';max-width:170px;overflow:hidden;text-overflow:ellipsis">'+esc(x.o.name)+'</td><td style="'+td+'">'+x.pos+'</td><td style="'+td+'">'+x.box+' / '+x.pack+'</td><td style="'+td+'">'+anFmt(x.pcs)+'</td><td style="'+td+'">'+anDT(x.arr,!x.arrExact)+'</td><td style="'+td+'">'+anDT(x.list)+'</td><td style="'+td+'">'+anDT(x.first)+'</td><td style="'+td+'">'+anDT(x.ready,x.ready&&!x.readyExact)+'</td><td style="'+td+';font-weight:800;'+(slow(x.toReady)?'color:#b42318':'')+'">'+anDur(x.toReady)+'</td><td style="'+td+';font-weight:700">'+anDur(x.work)+'</td><td style="'+td+'">'+anDur(x.packSpan)+'</td><td style="'+td+'">'+anDT(x.ver)+'</td><td style="'+td+'">'+anDT(x.ship)+'</td></tr>';}).join('')||'<tr><td colspan="14" style="padding:12px;color:var(--mu)">Нема замовлень за цей період</td></tr>')
+  var slow=function(hh){return hh!=null&&hh>=120;};
+  var tbl='<div style="overflow:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'+[['num','№'],['client','Клієнт'],['pos','Поз.'],['units','Ящ / пак'],['pcs','Шт'],['arr','Прийшло'],['start','В роботі'],['first','Перший скан'],['ready','Готове'],['work','Обробка'],['pack','Фасування'],['ver','Перевірено'],['ship','Відправлено']].map(function(c){return anTh('ptime',c[0],c[1]);}).join('')+'</tr></thead><tbody>'
+    +(rows.slice(0,lim).map(function(x){return '<tr style="'+(slow(x.work)?'background:#fdecec':'')+'"><td style="'+td+'"><a href="#" onclick="nav(\'orders\');selectOrder(\''+x.o.id+'\');return false;" style="color:var(--blue);font-family:var(--mono)">'+esc(x.o.num)+'</a></td><td style="'+td+';max-width:170px;overflow:hidden;text-overflow:ellipsis">'+esc(x.o.name)+'</td><td style="'+td+'">'+x.pos+'</td><td style="'+td+'">'+x.box+' / '+x.pack+'</td><td style="'+td+'">'+anFmt(x.pcs)+'</td><td style="'+td+';color:var(--mu)">'+anDT(x.arr,!x.arrExact)+'</td><td style="'+td+'" title="'+esc(x.startSrc||'')+'">'+anDT(x.start)+(x.startSrc&&x.startSrc!=='В роботі'?'<div style="font-size:10px;color:var(--mu)">'+esc(x.startSrc)+'</div>':'')+'</td><td style="'+td+'">'+anDT(x.first)+'</td><td style="'+td+'">'+anDT(x.ready,x.ready&&!x.readyExact)+'</td><td style="'+td+';font-weight:800;'+(slow(x.work)?'color:#b42318':'')+'">'+anDur(x.work)+'</td><td style="'+td+'">'+anDur(x.packSpan)+'</td><td style="'+td+'">'+anDT(x.ver)+'</td><td style="'+td+'">'+anDT(x.ship)+'</td></tr>';}).join('')||'<tr><td colspan="13" style="padding:12px;color:var(--mu)">Нема замовлень за цей період</td></tr>')
     +'</tbody></table></div>';
   var more=rows.length>lim?'<button class="btn sm" type="button" onclick="anState.detail=\'ptime\';renderAnalytics()">Показати всі ('+rows.length+')</button>':(anState.detail==='ptime'?'<button class="btn sm" type="button" onclick="anState.detail=\'\';renderAnalytics()">Згорнути</button>':'');
   h+='<div style="margin-top:14px">'+anCard('⏱','Час обробки замовлень','від появи замовлення до «Готове» · '+esc(r.label),
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+tile('Готових за період',anFmt(P.doneN),'')+tile('Від появи до «Готове»',anDur(P.avg),'медіана '+anDur(P.median))+tile('Робота: від списку до «Готове»',anDur(P.avgWork),'медіана '+anDur(P.medWork)+' · точні часи')+tile('Саме фасування',anDur(P.avgSpan),'від першого до останнього скану')+tile('Від «Готове» до відправки',anDur(P.avgShipWait),'')+'</div>'
-    +'<div style="display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:16px;margin-top:12px;align-items:start"><div><div style="font-size:12px;font-weight:700;color:var(--mu);margin-bottom:4px">РОЗПОДІЛ: СКІЛЬКИ ЧЕКАЛИ ДО «ГОТОВЕ»</div>'+hist+'</div><div style="font-size:12px;color:var(--mu);line-height:1.5">Точний час: «Список» (створення списку вантажнику), «Перший скан» і останній (прийом), «Перевірено» (аркуш «перевірка»), «Відправлено» (журнал статусів / ТТН). «Робота» — від списку до «Готове», точно і для старих замовлень. ≈ — «Прийшло» лише з дати вигрузки (без години), «Готове» — за останнім сканом. Червоним — 5 днів і довше.</div></div>'
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+tile('Готових за період',anFmt(P.doneN),'')+tile('Обробка: від «В роботі» до «Готове»',anDur(P.avgWork),'медіана '+anDur(P.medWork))+tile('Саме фасування',anDur(P.avgSpan),'від першого до останнього скану')+tile('Від «Готове» до відправки',anDur(P.avgShipWait),P.shipSlowN?'без '+P.shipSlowN+' (5+ днів)':'')+(P.slowN?tile('Не в середньому',anFmt(P.slowN),'оброблялись 5+ днів — червоні в таблиці','#b42318'):'')+'</div>'
+    +'<div style="display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:16px;margin-top:12px;align-items:start"><div><div style="font-size:12px;font-weight:700;color:var(--mu);margin-bottom:4px">РОЗПОДІЛ: ОБРОБКА ВІД «В РОБОТІ» ДО «ГОТОВЕ»</div>'+hist+'</div><div style="font-size:12px;color:var(--mu);line-height:1.5">Враховано лише замовлення, які сканувались у прихід через програму (є штрихкод ящика і час скану)'+(P.noProgN?' — старих без таких сканів не враховано: '+P.noProgN:'')+'. Обробка — від «В роботі» (журнал статусів; для старих — створення списку вантажнику або перший скан) до «Готове» (журнал статусів або останній скан). Середні й медіана — без замовлень, що оброблялись 5+ днів: вони червоні в таблиці й показані окремо.</div></div>'
     +tbl,more+'<button class="btn sm" type="button" onclick="anPackCsv()">⬇ CSV</button>')+'</div>';
   return h;
 }
 function anPackCsv(){
   var P=anPackCalc(anRange());var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   var f=function(d){return d?d.toLocaleString('uk-UA').slice(0,17):'';};
-  var rows=[['№','Клієнт','Позицій','Ящиків','Пакетів','Шт','Прийшло','Прийшло точно','Список вантажнику','Перший скан','Готове (останній скан / статус)','Готове точно','До «Готове», год','Робота (список → готове), год','Фасування, год','Перевірено','Відправлено','Від «Готове» до відправки, год']]
-    .concat(P.orders.map(function(x){return [x.o.num,x.o.name,x.pos,x.box,x.pack,x.pcs,f(x.arr),x.arrExact?'так':'ні',f(x.list),f(x.first),f(x.ready),x.readyExact?'так':'ні',x.toReady!=null?Math.round(x.toReady*10)/10:'',x.work!=null?Math.round(x.work*10)/10:'',Math.round(x.packSpan*10)/10,f(x.ver),f(x.ship),x.readyToShip!=null?Math.round(x.readyToShip*10)/10:''];}));
+  var rows=[['№','Клієнт','Позицій','Ящиків','Пакетів','Шт','Прийшло','Прийшло точно','Взяли в роботу','Перший скан','Готове (останній скан / статус)','Готове точно','Від появи до «Готове», год','Обробка (в роботі → готове), год','Фасування, год','Перевірено','Відправлено','Від «Готове» до відправки, год']]
+    .concat(P.orders.map(function(x){return [x.o.num,x.o.name,x.pos,x.box,x.pack,x.pcs,f(x.arr),x.arrExact?'так':'ні',f(x.start),f(x.first),f(x.ready),x.readyExact?'так':'ні',x.toReady!=null?Math.round(x.toReady*10)/10:'',x.work!=null?Math.round(x.work*10)/10:'',Math.round(x.packSpan*10)/10,f(x.ver),f(x.ship),x.readyToShip!=null?Math.round(x.readyToShip*10)/10:''];}));
   var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='chas_obrobky_'+anRange().label.replace(/\s+/g,'_')+'.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);
 }
 // ---- Сортування таблиць аналітики: клік на заголовок колонки ----
