@@ -1134,7 +1134,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='23.10.2026 · сезон до сезону точно';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='23.10.2026 · відправлено = як у вигрузці';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -3103,6 +3103,7 @@ async function loadAll(skipCache){
     if(G('page-pick')&&G('page-pick').classList.contains('on'))renderPickPage();
     if(G('page-stickers')&&G('page-stickers').classList.contains('on'))renderStickersPage();
     if(G('page-analytics')&&G('page-analytics').classList.contains('on'))renderAnalytics();
+    (function(){try{anCliLinks=JSON.parse((res.settings&&res.settings.CLIENT_LINKS)||'{}')||{};}catch(e){anCliLinks={};}if(typeof _anArchCli!=='undefined')_anArchCli=null;})();
     (function(){var v=(res.settings&&res.settings.ANOM_FROM)!=null?res.settings.ANOM_FROM:(function(){try{return localStorage.getItem('anomFrom')||'';}catch(e){return '';}})();anomFrom=v?new Date(v+'T00:00:00'):null;try{localStorage.setItem('anomFrom',v||'');}catch(e){}})();
     (function(){var m=refMissing().length;var b=G('bRef');if(b){b.textContent=m;b.style.display=m?'':'none';}if(G('page-ref')&&G('page-ref').classList.contains('on'))renderRefPage();})();
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
@@ -7266,18 +7267,29 @@ function anPrice(o,it,d){
 var anArch={lines:[],seasons:[]};
 // ---- Журнал статусів (аркуш «журнал статусів»): кожна зміна з часом до секунди і хто/звідки ----
 var statusLog={};
-function parseStatusLog(rows){statusLog={};(rows||[]).slice(1).forEach(function(r){var num=nk(r[1]);if(!num)return;(statusLog[num]=statusLog[num]||[]).push({t:parseUaDate(r[0]),at:String(r[0]||''),from:String(r[3]||''),to:String(r[4]||''),src:String(r[5]||'')});});_anCache=null;}
+function parseStatusLog(rows){statusLog={};_siteTrackStart=undefined;(rows||[]).slice(1).forEach(function(r){var num=nk(r[1]);if(!num)return;(statusLog[num]=statusLog[num]||[]).push({t:parseUaDate(r[0]),at:String(r[0]||''),from:String(r[3]||''),to:String(r[4]||''),src:String(r[5]||'')});});_anCache=null;}
 // час вивантаження ТТН з назви файлу (TTN2026-10-19_14-34-38) — день і година, коли друкували ТТН
 var salesFileTime={};
 function ttnFileTime(f){var m=String(f||'').match(/TTN(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})(?:-(\d{2}))?/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):null;}
-// Коли замовлення реально поїхало: остання зміна на «Відправлено» в журналі → дата в «статуси» → час ТТН-файлу → дата вигрузки
+// ---- Коли замовлення реально поїхало. Джерело правди — ВИГРУЗКА (статус сайту, колонка G):
+//   1) журнал статусів, рядок «сайт: …» з переходом на «Відправлено» (коли поставили у вигрузці);
+//   2) час ТТН-файлу з «продажі ТТН»;
+//   3) статус у панелі — лише для замовлень, яких нема у вигрузці зі статусом, або якщо панель позначила
+//      відправку ще до того, як журнал почав стежити за сайтом (старі замовлення);
+//   4) інакше — дата з вигрузки (неточно).
+var _siteTrackStart=undefined;
+function anSiteTrackStart(){if(_siteTrackStart!==undefined)return _siteTrackStart;var m=null;Object.keys(statusLog).forEach(function(k){statusLog[k].forEach(function(x){if(x.t&&x.src.indexOf('сайт')===0&&(!m||x.t<m))m=x.t;});});_siteTrackStart=m;return m;}
+function anSiteSentTime(o){var lg=statusLog[nk(o.num)];if(!lg)return null;for(var i=lg.length-1;i>=0;i--){var x=lg[i];if(x.t&&x.src.indexOf('сайт')===0&&sk(x.to)==='sent')return x.t;}return null;}
+function anPanelSentTime(o){var lg=statusLog[nk(o.num)],t=null;if(lg)for(var i=lg.length-1;i>=0;i--){var x=lg[i];if(x.t&&x.src.indexOf('сайт')!==0&&sk(x.to)==='sent'){t=x.t;break;}}return t||o.sentAt||null;}
+function anPanelTimeOk(o,t){if(!t)return false;if(!(typeof siteStatusOf==='function'&&siteStatusOf(o)))return true;var st=anSiteTrackStart();return !st||t<st;}
 function anShipDate(o){
-  var lg=statusLog[nk(o.num)];if(lg)for(var i=lg.length-1;i>=0;i--){if(lg[i].t&&sk(lg[i].to)==='sent')return lg[i].t;}
-  return o.sentAt||salesFileTime[nk(o.num)]||orderDate(o);
+  var t=anSiteSentTime(o)||salesFileTime[nk(o.num)];if(t)return t;
+  var pt=anPanelSentTime(o);if(anPanelTimeOk(o,pt))return pt;
+  return orderDate(o);
 }
-// Відправлено — якщо так у панелі АБО на сайті (колонка G вигрузки)
-function anIsShipped(o){return sk(o.status)==='sent'||(typeof siteStatusOf==='function'&&sk(siteStatusOf(o))==='sent');}
-function anShipExact(o){var lg=statusLog[nk(o.num)];if(lg&&lg.some(function(x){return x.t&&sk(x.to)==='sent';}))return true;return !!(o.sentAt||salesFileTime[nk(o.num)]);}
+// Відправлено — як у вигрузці (статус сайту); якщо у вигрузці статусу нема — як у панелі
+function anIsShipped(o){var ss=(typeof siteStatusOf==='function')?siteStatusOf(o):'';return ss?sk(ss)==='sent':sk(o.status)==='sent';}
+function anShipExact(o){if(anSiteSentTime(o)||salesFileTime[nk(o.num)])return true;return anPanelTimeOk(o,anPanelSentTime(o));}
 function parseArchive(rows){
   var lines=[],ss={};
   (rows||[]).slice(1).forEach(function(r){
@@ -7587,13 +7599,20 @@ function anDaysCsv(){
   var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='po_dnyah_'+anRange().label.replace(/\s+/g,'_')+'.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);
 }
 // ---- Клієнти між сезонами: у вигрузці часто коротке імʼя («Гелетей»), у ТТН — повне («Павло Гелетей») ----
-function anCliNorm(n){return String(n||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-яіїєґ0-9'’ ]+/g,' ').replace(/['’]/g,'').replace(/\s+/g,' ').trim();}
+var AN_HOMO={a:'а',c:'с',e:'е',i:'і',k:'к',m:'м',o:'о',p:'р',t:'т',x:'х',y:'у',h:'н',b:'в'};
+function anCliNorm(n){return String(n||'').toLowerCase().replace(/ё/g,'е').replace(/ы/g,'и').replace(/э/g,'е').replace(/ъ/g,'').replace(/[^a-zа-яіїєґ0-9'’ ]+/g,' ').replace(/['’]/g,'').replace(/\s+/g,' ').trim()
+  .split(' ').map(function(w){return /[а-яіїєґ]/.test(w)&&/[a-z]/.test(w)?w.replace(/[a-z]/g,function(ch){return AN_HOMO[ch]||ch;}):w;}).join(' ');}
+function anLev1(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>1)return false;var i=0,j=0,d=0;while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;continue;}if(++d>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++;}}return d+(a.length-i)+(b.length-j)<=1;}
+function anTokEq(a,b){return a===b||(a.length>=6&&b.length>=6&&anLev1(a,b));}
 function anCliTok(n){return anCliNorm(n).split(' ').filter(function(w){return w.length>1;});}
-function anCliSame(a,b){var A=anCliTok(a),B=anCliTok(b);if(!A.length||!B.length)return false;if(A.join(' ')===B.join(' '))return true;var sub=function(x,y){return x.every(function(w){return y.indexOf(w)>=0;});};return sub(A,B)||sub(B,A);}
+function anCliSame(a,b){var A=anCliTok(a),B=anCliTok(b);if(!A.length||!B.length)return false;if(A.join(' ')===B.join(' '))return true;var sub=function(x,y){return x.every(function(w){return y.some(function(v){return anTokEq(w,v);});});};return sub(A,B)||sub(B,A);}
+// ручні звʼязки «цей клієнт = той з минулого сезону» (налаштування CLIENT_LINKS)
+var anCliLinks={};
+function anCliLinked(n){return anCliLinks[anCliNorm(n)]||'';}
 var _anArchCli=null;
 function anArchClients(){if(_anArchCli&&_anArchCli.n===anArch.lines.length)return _anArchCli;var m={};anArch.lines.forEach(function(x){var k=anCliNorm(x.o.name);if(k)m[k]=x.o.name;});_anArchCli={n:anArch.lines.length,names:Object.keys(m).map(function(k){return m[k];}),memo:{}};return _anArchCli;}
 // чи купував клієнт у будь-якому з минулих сезонів (аркуш «минулі сезони»)
-function anCliWasBefore(name){if(!anArch.lines.length||!name)return false;var A=anArchClients();var k=anCliNorm(name);if(k in A.memo)return A.memo[k];var hit=A.names.some(function(n){return anCliSame(name,n);});A.memo[k]=hit;return hit;}
+function anCliWasBefore(name){if(!anArch.lines.length||!name)return false;if(anCliLinked(name))return true;var A=anArchClients();var k=anCliNorm(name);if(k in A.memo)return A.memo[k];var hit=A.names.some(function(n){return anCliSame(name,n);});A.memo[k]=hit;return hit;}
 // Точне порівняння сезонів: підсумок, клієнти, товари
 function anSeasonCompare(r,season,merge,rate){
   var pr=anSeasonShift(r,season);
@@ -7613,10 +7632,11 @@ function anSeasonCompare(r,season,merge,rate){
     names.forEach(function(n){var into=canon.filter(function(c){return anCliSame(n,c);});if(into.length===1&&anCliTok(n).length<anCliTok(into[0]).length){var A=cliC[into[0]],B=cliC[n];Object.keys(B.orders).forEach(function(o){A.orders[o]=1;});A.packs+=B.packs;A.sum+=B.sum;A.sumU+=B.sumU;delete cliC[n];}else canon.push(n);});})();
   // зіставлення з минулим сезоном: спершу точне імʼя, потім «Гелетей» ⊂ «Павло Гелетей» (лише якщо збіг один)
   var pNames=Object.keys(cliP),usedP={},rows=[];
-  Object.keys(cliC).forEach(function(n){var c=cliC[n];var hit=pNames.find(function(p){return !usedP[p]&&anCliNorm(p)===anCliNorm(n);});
+  Object.keys(cliC).forEach(function(n){var c=cliC[n];var ln=anCliLinked(n)||anCliLinked(c.short);var hit=ln?pNames.find(function(p){return !usedP[p]&&anCliNorm(p)===anCliNorm(ln);}):null;var manual=!!hit;
+    if(!hit)hit=pNames.find(function(p){return !usedP[p]&&anCliNorm(p)===anCliNorm(n);});
     if(!hit){var cands=pNames.filter(function(p){return !usedP[p]&&anCliSame(n,p);});if(!cands.length)cands=pNames.filter(function(p){return !usedP[p]&&anCliSame(c.short,p);});if(cands.length===1)hit=cands[0];}
     if(hit)usedP[hit]=1;var p=hit?cliP[hit]:null;
-    rows.push({name:n,prevName:hit||'',c:c,p:p,st:p?'повернувся':(anCliWasBefore(n)||anCliWasBefore(c.short)?'був раніше':'новий')});});
+    rows.push({name:n,short:c.short,prevName:hit||'',manual:manual,c:c,p:p,st:p?'повернувся':(anCliWasBefore(n)||anCliWasBefore(c.short)?'був раніше':'новий')});});
   pNames.forEach(function(pn){if(!usedP[pn])rows.push({name:pn,prevName:pn,c:null,p:cliP[pn],st:'не повернувся'});});
   var keys={};Object.keys(prC).forEach(function(k){keys[k]=1;});Object.keys(prP).forEach(function(k){keys[k]=1;});
   var prods=Object.keys(keys).map(function(k){var c=prC[k],p=prP[k];return {k:k,art:(c||p).art,name:(c||p).name,c:c,p:p};});
@@ -7654,7 +7674,10 @@ function anSeasonCmpHtml(r,season,money,merge){
     var stB=function(st){var c={'повернувся':'#eef5ef;color:#1d4a30','новий':'#e8f2ff;color:#1f4a86','був раніше':'#f1f2ef;color:#4b5a4d','не повернувся':'#fdecec;color:#8a1c1c'}[st];return '<span style="background:'+c+';border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700">'+st+'</span>';};
     body='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">'+fbtn('all','Усі',S.clients.length)+fbtn('повернувся','Повернулись',cnt('повернувся'))+fbtn('новий','Нові',cnt('новий'))+(cnt('був раніше')?fbtn('був раніше','Були раніше',cnt('був раніше')):'')+fbtn('не повернувся','Не повернулись',cnt('не повернувся'))+'</div>'
       +'<div style="overflow:auto;max-height:520px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'+anTh('scli','name','Клієнт')+anTh('scli','st','Статус')+anTh('scli','co','Замовл. зараз','right')+anTh('scli','cp','Уп зараз','right')+(money?anTh('scli','cs','Сума зараз','right'):'')+anTh('scli','po','Замовл. '+esc(season),'right')+anTh('scli','pp','Уп '+esc(season),'right')+(money?anTh('scli','ps','Сума '+esc(season),'right'):'')+anTh('scli','dp','Δ уп','right')+'</tr></thead><tbody>'
-      +list.map(function(x){var dp=(x.c?x.c.packs:0)-(x.p?x.p.packs:0);return '<tr><td style="'+td+'"><b>'+esc(x.name)+'</b>'+(x.prevName&&anCliNorm(x.prevName)!==anCliNorm(x.name)?'<div style="font-size:11px;color:var(--mu)">у сезоні '+esc(season)+': '+esc(x.prevName)+'</div>':'')+'</td><td style="'+td+'">'+stB(x.st)+'</td><td style="'+tdr+'">'+(x.c?Object.keys(x.c.orders).length:'—')+'</td><td style="'+tdr+';font-weight:700">'+(x.c?f(x.c.packs):'—')+'</td>'+(money?'<td style="'+tdr+'">'+m2(x.c)+'</td>':'')+'<td style="'+tdr+';color:var(--tx2)">'+(x.p?Object.keys(x.p.orders).length:'—')+'</td><td style="'+tdr+';color:var(--tx2)">'+(x.p?f(x.p.packs):'—')+'</td>'+(money?'<td style="'+tdr+';color:var(--tx2)">'+m2(x.p)+'</td>':'')+'<td style="'+tdr+'">'+(dp?'<span style="color:'+(dp>0?'#1d7a3e':'#b42318')+';font-weight:700">'+(dp>0?'+':'−')+f(Math.abs(dp))+'</span>':'0')+'</td></tr>';}).join('')
+      +list.map(function(x){var dp=(x.c?x.c.packs:0)-(x.p?x.p.packs:0);var nameEnc=encodeURIComponent(x.name);
+        var linkUi=(x.c&&!x.p&&money)?'<div style="margin-top:3px"><select onchange="anLinkClient(decodeURIComponent(\''+nameEnc+'\'),this.value)" title="Якщо це той самий клієнт, що в минулому сезоні під іншим іменем" style="font-size:11px;padding:2px 4px;border:1px solid var(--bo2);border-radius:6px;max-width:220px"><option value="">🔗 це той самий, що…</option>'+S.clients.filter(function(z){return z.st==='не повернувся';}).sort(function(a,b){return (anCliSame(b.name,x.name)?1:0)-(anCliSame(a.name,x.name)?1:0)||a.name.localeCompare(b.name,'uk');}).map(function(z){return '<option value="'+esc(z.name)+'">'+esc(z.name)+(z.p?' · '+z.p.packs+' уп':'')+'</option>';}).join('')+'</select></div>':'';
+        var unl=x.manual?' <a href="#" onclick="anLinkClient(decodeURIComponent(\''+nameEnc+'\'),\'\');return false;" title="Прибрати ручний звʼязок" style="font-size:11px;color:var(--mu)">✕ розвʼязати</a>':'';
+        return '<tr><td style="'+td+'"><b>'+esc(x.name)+'</b>'+(x.prevName&&anCliNorm(x.prevName)!==anCliNorm(x.name)?'<div style="font-size:11px;color:var(--mu)">у сезоні '+esc(season)+': '+esc(x.prevName)+(x.manual?' (звʼязано вручну)':'')+unl+'</div>':'')+linkUi+'</td><td style="'+td+'">'+stB(x.st)+'</td><td style="'+tdr+'">'+(x.c?Object.keys(x.c.orders).length:'—')+'</td><td style="'+tdr+';font-weight:700">'+(x.c?f(x.c.packs):'—')+'</td>'+(money?'<td style="'+tdr+'">'+m2(x.c)+'</td>':'')+'<td style="'+tdr+';color:var(--tx2)">'+(x.p?Object.keys(x.p.orders).length:'—')+'</td><td style="'+tdr+';color:var(--tx2)">'+(x.p?f(x.p.packs):'—')+'</td>'+(money?'<td style="'+tdr+';color:var(--tx2)">'+m2(x.p)+'</td>':'')+'<td style="'+tdr+'">'+(dp?'<span style="color:'+(dp>0?'#1d7a3e':'#b42318')+';font-weight:700">'+(dp>0?'+':'−')+f(Math.abs(dp))+'</span>':'0')+'</td></tr>';}).join('')
       +'</tbody></table></div>';
   } else {
     var sK=money&&anState.metric==='sum'?'sum':(merge?'pcs':'packs');
@@ -7671,6 +7694,14 @@ function anSeasonCmpHtml(r,season,money,merge){
   return anCard('🔁','Сезон до сезону — точні цифри',esc(r.label)+' проти сезону '+esc(season)+(S.pr.from?' ('+fmtDM(S.pr.from)+'.'+S.pr.from.getFullYear()+' – '+fmtDM(new Date(S.pr.to.getTime()-1))+'.'+S.pr.to.getFullYear()+')':' · весь сезон'),
     sumTbl+'<div style="display:flex;gap:4px;border-bottom:1px solid var(--bo);margin-top:14px">'+tbtn('cli','👥 Клієнти')+tbtn('prod','📦 Товари')+'</div>'+body,
     '<button class="btn sm" type="button" onclick="anSeasonCsv()">⬇ CSV</button>');
+}
+async function anLinkClient(name,prev){
+  var k=anCliNorm(name);if(!k)return;var next=Object.assign({},anCliLinks);if(prev)next[k]=prev;else delete next[k];
+  var val=JSON.stringify(next);if(val.length>8500){toast('Забагато звʼязків — видали зайві','er');return;}
+  try{var res=await callScriptPost('setSetting',{key:'CLIENT_LINKS',value:Object.keys(next).length?val:''});
+    if(res&&res.ok){anCliLinks=next;_anArchCli=null;toast(prev?'Звʼязано: «'+name+'» = «'+prev+'»':'Звʼязок прибрано','ok',2500);renderAnalytics();}
+    else toast('Не збереглось: '+((res&&res.error)||'?'),'er',4000);
+  }catch(e){toast('Помилка звʼязку','er');}
 }
 function anSeasonCsv(){
   var r=anRange();var season=anState.cmpSeason;var S=anSeasonCompare(r,season,!!anState.merge,anRate());var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
