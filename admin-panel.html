@@ -1170,7 +1170,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='26.10.2026 · без шипіння 2';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='26.10.2026 · поштучні: ціль у шт';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -6157,6 +6157,7 @@ async function doScanRecord(art,barcode,packQty,opNote,forceGeneral){
 //   інакше (наш/дрібний гурт, зазвичай '4') -> по M, беремо колонку N (packQty)
 function getPackQtyRaw(art){
   var a=String(art||'').trim();
+  if(/^\d{6}$/.test(a))return '1';   // 6-значний Арт.Флоріум — поштучно: 1 одиниця = 1 шт (не пакет з фури)
   var fu=furyGet(a)||null;
   if(!fu)return '';
   if(a.charAt(0)==='3')return fu.packBoxQty||'';
@@ -7995,6 +7996,19 @@ function renderAnalytics(){
     +anCard('🕒','Навантаження складу','прийом + відбір по годинах і днях тижня',anHeat(a.heat))
     +anCard('🧑‍🔧','Команда',esc(r.label),team)
     +'</div>';
+  // Поштучні артикули: відфасовано (і, ймовірно, відправлено) більше, ніж замовлено
+  (function(){
+    var got={};income.forEach(function(x){if(!x.orderNum||!/^\d{6}$/.test(String(x.art||'').trim())||x.type==='на перефасовку')return;var k=nk(x.orderNum)+'||'+nk(x.art);got[k]=(got[k]||0)+(x.packQty||1)*(x.qty||1);});
+    var rows=[];Object.keys(got).forEach(function(k){var p=k.split('||');var its=(items[p[0]]||[]).filter(function(it){return nk(it.art)===p[1];});if(!its.length)return;var ord=its.reduce(function(t,it){return t+(parseInt(it.qty)||0);},0);if(got[k]<=ord)return;
+      var o=orders.find(function(x){return nk(x.num)===p[0];});var pr=priceOf(p[1],its[0],p[0])||0;rows.push({o:o,num:p[0],art:p[1],name:its[0].name,ord:ord,got:got[k],extra:got[k]-ord,price:pr,val:(got[k]-ord)*pr});});
+    if(!rows.length)return;rows.sort(function(a,b){return b.val-a.val||b.extra-a.extra;});
+    var tot=rows.reduce(function(t,r){return t+r.val;},0),pcs=rows.reduce(function(t,r){return t+r.extra;},0);
+    var td='padding:6px 8px;border-bottom:1px solid #f0f2ee;white-space:nowrap';
+    h+='<div style="margin-top:14px">'+anCard('🧮','Поштучні артикули: відфасовано більше, ніж замовлено',rows.length+' позицій · зайве '+anFmt(pcs)+' шт'+(tot?' · ≈ '+anFmt(tot)+' грн':''),
+      '<div style="font-size:12.5px;color:#7a4a00;background:#fff8ec;border:1px solid #f0cf9a;border-radius:10px;padding:8px 12px;margin-bottom:10px">6-значні Арт.Флоріум замовляють поштучно, а панель рахувала ціль як «к-сть × упаковка з фури» (5 × 25 = 125). Це виправлено: тепер ціль — рівно замовлені штуки. Нижче — замовлення, де через це поклали зайве.</div>'
+      +'<div style="overflow:auto;max-height:420px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'+['№','Клієнт','Артикул','Товар','Замовлено, шт','Відфасовано, шт','Зайве, шт','Ціна, грн/шт','Зайве на суму, грн','Статус'].map(function(x){return '<th style="text-align:left;padding:6px 8px">'+x+'</th>';}).join('')+'</tr></thead><tbody>'
+      +rows.map(function(r){return '<tr><td style="'+td+'">'+(r.o?'<a href="#" onclick="nav(\'orders\');selectOrder(\''+r.o.id+'\');return false;" style="color:var(--blue);font-family:var(--mono)">'+esc(r.num)+'</a>':esc(r.num))+'</td><td style="'+td+'">'+esc(r.o?r.o.name:'')+'</td><td style="'+td+';font-family:var(--mono)">'+esc(r.art)+'</td><td style="'+td+';white-space:normal">'+esc(r.name)+'</td><td style="'+td+';text-align:right">'+r.ord+'</td><td style="'+td+';text-align:right">'+r.got+'</td><td style="'+td+';text-align:right;font-weight:800;color:#b42318">+'+r.extra+'</td><td style="'+td+';text-align:right">'+(r.price?r.price.toLocaleString('uk-UA',{maximumFractionDigits:2}):'—')+'</td><td style="'+td+';text-align:right;font-weight:700">'+(r.val?anFmt(Math.round(r.val)):'—')+'</td><td style="'+td+'">'+esc(r.o?r.o.status:'')+'</td></tr>';}).join('')+'</tbody></table></div>')+'</div>';
+  })();
   // Сезон до сезону — точні цифри
   if(isS)h+='<div style="margin-top:14px">'+anSeasonCmpHtml(r,anState.cmpSeason,money,merge)+'</div>';
   // Сезон до сезону
