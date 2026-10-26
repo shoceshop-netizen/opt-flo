@@ -1132,6 +1132,17 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
             <button id="aiKeySaveBtn" onclick="saveAiKey()" class="btn pr" style="padding:9px 16px;">Зберегти</button>
           </div>
         </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:13px">
+          <select id="aiEngine" onchange="aiSaveOpts()" class="si" style="padding:6px 10px;font-size:13px;border-radius:10px"><option value="auto">Модель: авто (Gemini, якщо є ключ)</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option></select>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="aiWithAn" checked onchange="aiSaveOpts()"> додавати аналітику за весь час</label>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn sm" onclick="aiAsk('all')">📊 Звіт за весь час</button>
+          <button class="btn sm" onclick="aiAsk('week')">📅 Тиждень</button>
+          <button class="btn sm" onclick="aiAsk('improve')">🧭 Що покращити</button>
+          <button class="btn sm" onclick="aiAsk('clients')">👥 Клієнти</button>
+          <button class="btn sm" onclick="aiAsk('season')">🔁 Сезон до сезону</button>
+        </div>
       </div>
       <div id="aiMessages" style="flex:1;overflow-y:auto;padding:8px 24px;display:flex;flex-direction:column;gap:12px;"></div>
       <div style="padding:14px 24px 20px;border-top:1px solid var(--bo);display:flex;gap:10px;align-items:flex-end;">
@@ -1170,7 +1181,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='26.10.2026 · відбір на ПК без імені';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='26.10.2026 · бот Gemini';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -3127,7 +3138,7 @@ function nav(p){
   if(p==='analytics'){renderAnalytics();}
   if(p==='users'){usersCache=null;renderUsersPage();}
   [].forEach.call(document.querySelectorAll('.mtab button'),function(b){b.classList.toggle('on',b.dataset.p===p||(p==='orders'&&b.dataset.p==='orders'));});
-  if(p==='ai'){setTimeout(initAiPage,100);}
+  if(p==='ai'){setTimeout(initAiPage,100);setTimeout(function(){try{aiLoadOpts();}catch(e){}},120);}
   if(p==='dash'){renderDash(getCounts());}
   if(p==='repack'){renderRepackDash();}
 }
@@ -3178,12 +3189,72 @@ async function saveAiKey(){
   }catch(e){toast('⚠️ '+String((e&&e.message)||e),'er',4000);}
   if(btn)btn.disabled=false;
 }
+// ===== Зведення аналітики для бота: ті самі цифри, що на сторінці «Аналітика», компактним JSON =====
+function anDigest(){
+  var r2=function(v){return Math.round((v||0)*10)/10;};var nowD=new Date();var dstr=function(d){return d?fmtDM(d)+'.'+d.getFullYear():'';};
+  var L=anLines();var months={};
+  L.lines.forEach(function(x){var k=x.d.getFullYear()+'-'+_p2(x.d.getMonth()+1);var M=months[k]=months[k]||{orders:{},packs:0,pcs:0,eur:0,uah:0,cli:{}};M.orders[x.o.num]=1;M.packs+=x.packs;M.pcs+=x.pcs;M.eur+=x.sum;M.uah+=x.sumU||0;M.cli[x.cn||x.o.name]=1;});
+  var byMonth=Object.keys(months).sort().map(function(k){var M=months[k];return {month:k,orders:Object.keys(M.orders).length,packs:M.packs,pcs:M.pcs,eur:Math.round(M.eur),uah:Math.round(M.uah),clients:Object.keys(M.cli).length};});
+  var all=anCalc({from:null,to:null,label:'весь час'});
+  var prods=Object.keys(all.prod).map(function(k){return all.prod[k];}).sort(function(a,b){return b.packs-a.packs;});
+  var clis=Object.keys(all.cli).map(function(k){return all.cli[k];}).sort(function(a,b){return (b.sum-a.sum)||(b.packs-a.packs);});
+  var d60=new Date(nowD.getFullYear(),nowD.getMonth(),nowD.getDate()-59),dEnd=new Date(nowD.getFullYear(),nowD.getMonth(),nowD.getDate()+1);
+  var days=anDays({from:d60,to:dEnd,label:'60 днів'}).map(function(d){return {day:d.k,newOrders:d.newO.length,lists:Object.keys(d.lists).length,recvBoxes:d.recv.box,recvPacks:d.recv.pack,recvPcs:d.recv.pcs,picks:d.picks,stickers:d.stickers,ready:d.ready.length,verified:d.ver.length,shipped:d.ship.length,shippedPacks:d.shipPacks,shippedEur:Math.round(d.shipSum),problems:d.probs.length};});
+  var P=anPackCalc({from:null,to:null,label:''});
+  var proc={readyOrders:P.doneN,avgWorkHours:r2(P.avgWork),medianWorkHours:r2(P.medWork),avgPackingSpanHours:r2(P.avgSpan),avgReadyToShipHours:r2(P.avgShipWait),ordersOver5days:P.slowN,distribution:P.buckets,
+    note:'обробка = від «В роботі»/списку до «Готове»; середні без замовлень 5+ днів; лише замовлення зі сканами через програму',
+    slowest:P.orders.filter(function(x){return x.slow;}).sort(function(a,b){return (b.work||0)-(a.work||0);}).slice(0,15).map(function(x){return {order:x.o.num,client:x.o.name,workHours:r2(x.work),start:dstr(x.start),ready:dstr(x.ready)};})};
+  var st={};orders.forEach(function(o){var k=o.status||'—';st[k]=(st[k]||0)+1;});
+  var iss={};Object.keys(issues).forEach(function(k){var s2=issues[k].status||'—';iss[s2]=(iss[s2]||0)+1;});
+  var sleepy=Object.keys(L.last).filter(function(n){return (nowD-L.last[n])/86400000>30;}).map(function(n){return {client:n,lastShipped:dstr(L.last[n]),eurAllTime:Math.round(L.sumAll[n]||0),packsAllTime:L.packsAll[n]||0};}).sort(function(a,b){return b.eurAllTime-a.eurAllTime;}).slice(0,30);
+  var season=null;
+  if(anArch&&anArch.seasons&&anArch.seasons.length){var sn=anArch.seasons[0];var S=anSeasonCompare({from:null,to:null,label:'весь час'},sn,false,anRate());
+    var cs=function(st2){return S.clients.filter(function(x){return x.st===st2;});};
+    var diffs=S.prods.map(function(x){var c=x.c?x.c.packs:0,p=x.p?x.p.packs:0;return {art:x.art,name:x.name,now:c,prev:p,diff:c-p};});
+    season={comparedWith:sn,now:{orders:S.curN,packs:S.cur.packs,pcs:S.cur.pcs,eur:Math.round(S.cur.sum)},prev:{orders:S.prevN,packs:S.prev.packs,pcs:S.prev.pcs,eur:Math.round(S.prev.sum)},
+      clients:{returned:cs('повернувся').length,new:cs('новий').length,notReturned:cs('не повернувся').length},
+      notReturnedTop:cs('не повернувся').sort(function(a,b){return (b.p?b.p.sum:0)-(a.p?a.p.sum:0);}).slice(0,25).map(function(x){return {client:x.name,prevPacks:x.p?x.p.packs:0,prevEur:x.p?Math.round(x.p.sum):0};}),
+      growing:diffs.filter(function(x){return x.diff>0;}).sort(function(a,b){return b.diff-a.diff;}).slice(0,20),
+      falling:diffs.filter(function(x){return x.diff<0;}).sort(function(a,b){return a.diff-b.diff;}).slice(0,20)};}
+  return JSON.stringify({generated:nowD.toLocaleString('uk-UA'),currency:'8-значні артикули — €, 6-значні (Арт.Флоріум) — грн',
+    orderStatuses:st,totals:{shippedOrders:Object.keys(all.orders).length,packs:all.packs,pcs:all.pcs,eur:Math.round(all.sum),uah:Math.round(all.sumUah||0),clients:Object.keys(all.cli).length},
+    byMonth:byMonth,last60days:days,
+    topProducts:prods.slice(0,60).map(function(p){return {art:p.art,name:p.name,cat:p.cat,packs:p.packs,pcs:p.pcs,eur:Math.round(p.sum),clients:Object.keys(p.cl).length};}),
+    topClients:clis.slice(0,60).map(function(c){return {client:c.name,orders:Object.keys(c.orders).length,packs:c.packs,eur:Math.round(c.sum),uah:Math.round(c.sumUah||0),lastShipped:dstr(c.last)};}),
+    categories:Object.keys(all.cat).map(function(k){return all.cat[k];}).sort(function(a,b){return b.packs-a.packs;}).map(function(c){return {cat:c.cat,packs:c.packs,pcs:c.pcs,eur:Math.round(c.sum)};}),
+    processing:proc,itemIssues:iss,sleepyClients:sleepy,season:season});
+}
+// Швидкі звіти
+var AI_PRESETS={
+  all:'Зроби повний звіт про роботу за весь час: обсяги й гроші по місяцях, топ товарів і клієнтів, категорії, як швидко обробляємо замовлення, проблеми, порівняння з минулим сезоном. Наприкінці — 5 практичних порад.',
+  week:'Звіт за останні 7 днів: скільки прийшло замовлень, скільки зафасували (ящики, пакети, штуки), скільки відправили і на яку суму, швидкість обробки, проблеми. Порівняй з попередніми 7 днями.',
+  improve:'Проаналізуй, де ми втрачаємо час і гроші: повільні замовлення, проблемні позиції, затримки між «Готове» і відправкою, дні з низькою продуктивністю. Дай конкретні поради, що змінити на складі.',
+  clients:'Аналіз клієнтів: хто купує найбільше, хто ще не повернувся з минулого сезону (з сумами), хто давно не замовляв. Кому варто подзвонити першим і чому.',
+  season:'Порівняй цей сезон з минулим: замовлення, упаковки, гроші, клієнти; які товари ростуть і падають; що закупити більше, а що менше на наступний сезон.'
+};
+function aiAsk(kind){var inp=G('aiInput');if(!inp)return;inp.value=AI_PRESETS[kind]||kind;var w=G('aiWithAn');if(w)w.checked=true;sendAiQuestion();}
+function aiSaveOpts(){try{localStorage.setItem('aiEngine',(G('aiEngine')||{}).value||'auto');localStorage.setItem('aiWithAn',(G('aiWithAn')||{}).checked?'1':'0');}catch(e){}}
+function aiLoadOpts(){try{var e=localStorage.getItem('aiEngine');if(e&&G('aiEngine'))G('aiEngine').value=e;var w=localStorage.getItem('aiWithAn');if(w!=null&&G('aiWithAn'))G('aiWithAn').checked=w==='1';}catch(e){}}
+// Markdown-lite для відповідей бота: заголовки, жирний, списки, таблиці
 function aiFormat(t){
-  var h=esc(String(t||''));
-  h=h.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
-  h=h.replace(/^[ \t]*[-•]\s+/gm,'• ');
-  h=h.replace(/\n/g,'<br>');
-  return h;
+  var lines=String(t||'').split('\n'),out=[],i=0;
+  var inl=function(s){s=esc(s);s=s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<i>$2</i>').replace(/`([^`]+)`/g,'<code style="background:#f1f3ef;padding:0 4px;border-radius:4px">$1</code>');return s;};
+  while(i<lines.length){var l=lines[i];
+    if(/^\s*\|.*\|\s*$/.test(l)&&i+1<lines.length&&/^\s*\|?\s*:?-{2,}/.test(lines[i+1])){
+      var rows=[];while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i])){rows.push(lines[i]);i++;}
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim();});};
+      var head=cells(rows[0]),body=rows.slice(2).map(cells);
+      out.push('<div style="overflow:auto;margin:6px 0"><table style="border-collapse:collapse;font-size:13px;min-width:60%"><thead><tr>'+head.map(function(c){return '<th style="text-align:left;padding:5px 8px;border-bottom:2px solid var(--bo);background:#f4f5f2">'+inl(c)+'</th>';}).join('')+'</tr></thead><tbody>'+body.map(function(r){return '<tr>'+r.map(function(c){return '<td style="padding:4px 8px;border-bottom:1px solid #eef0ec">'+inl(c)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>');
+      continue;}
+    var m;
+    if((m=l.match(/^\s*(#{1,4})\s+(.*)$/))){var sz=[0,18,16,15,14][m[1].length];out.push('<div style="font-weight:800;font-size:'+sz+'px;margin:10px 0 4px">'+inl(m[2])+'</div>');}
+    else if(/^\s*([-*•])\s+/.test(l)){out.push('<div style="padding-left:16px;text-indent:-12px">• '+inl(l.replace(/^\s*[-*•]\s+/,''))+'</div>');}
+    else if((m=l.match(/^\s*(\d+)[.)]\s+(.*)$/))){out.push('<div style="padding-left:18px;text-indent:-14px">'+m[1]+'. '+inl(m[2])+'</div>');}
+    else if(/^\s*(-{3,}|_{3,})\s*$/.test(l)){out.push('<hr style="border:none;border-top:1px solid var(--bo);margin:8px 0">');}
+    else if(!l.trim()){out.push('<div style="height:6px"></div>');}
+    else out.push('<div>'+inl(l)+'</div>');
+    i++;}
+  return out.join('');
 }
 function renderAiMessages(){
   var box=G('aiMessages');if(!box)return;
@@ -3192,7 +3263,7 @@ function renderAiMessages(){
       return '<div style="align-self:flex-end;max-width:85%;background:var(--g);color:#fff;padding:10px 14px;border-radius:14px 14px 4px 14px;font-size:14px;white-space:pre-wrap;word-break:break-word;">'+esc(m.content)+'</div>';
     if(m.role==='typing')
       return '<div style="align-self:flex-start;color:var(--mu);font-size:13px;padding:8px 4px;">Аналізую дані…</div>';
-    return '<div style="align-self:flex-start;max-width:92%;background:var(--card);border:1px solid var(--bo);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:14px;line-height:1.55;word-break:break-word;">'+aiFormat(m.content)+aiTraceHtml(m.trace)+'</div>';
+    return '<div style="align-self:flex-start;max-width:92%;background:var(--card);border:1px solid var(--bo);padding:11px 14px;border-radius:14px 14px 14px 4px;font-size:14px;line-height:1.55;word-break:break-word;">'+aiFormat(m.content)+aiTraceHtml(m.trace)+(m.model?'<div style="font-size:11px;color:var(--mu);margin-top:4px">модель: '+esc(m.model)+'</div>':'')+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -3226,10 +3297,12 @@ async function sendAiQuestion(){
   try{
     var hist=aiHistory.filter(function(m){return m.role==='user'||m.role==='assistant';}).slice(0,-1).slice(-6)
       .map(function(m){return {role:m.role,content:String(m.content).slice(0,800)};});
-    var res=await callScript('aiQuery',{question:q,history:JSON.stringify(hist)});
+    var eng=(G('aiEngine')||{}).value||'auto',ctx='';
+    if((G('aiWithAn')||{}).checked){if(typeof dataLite==='function'&&dataLite())toast('Аналітика за весь час доступна з повними даними (на компʼютері)','wa',3500);else{try{ctx=anDigest();}catch(e){console.warn('anDigest',e);}}}
+    var res=await callScriptPost('aiQuery',{question:q,history:JSON.stringify(hist),context:ctx,engine:eng});
     aiHistory=aiHistory.filter(function(m){return m.role!=='typing';});
-    if(res&&res.ok){aiHistory.push({role:'assistant',content:res.answer||'(порожня відповідь)',trace:res.trace||[]});}
-    else{aiHistory.push({role:'assistant',content:'⚠️ '+((res&&res.error)||'Помилка запиту')});}
+    if(res&&res.ok){aiHistory.push({role:'assistant',content:res.answer||'(порожня відповідь)',trace:res.trace||[],model:res.model||''});}
+    else{aiHistory.push({role:'assistant',content:'⚠️ '+((res&&(res.error||res.msg))||'Помилка запиту')});}
   }catch(e){
     aiHistory=aiHistory.filter(function(m){return m.role!=='typing';});
     aiHistory.push({role:'assistant',content:'⚠️ '+String((e&&e.message)||e)});
