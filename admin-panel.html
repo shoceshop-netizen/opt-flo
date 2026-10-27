@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+<script>(function(){try{var m=localStorage.getItem('theme')||'auto';var d=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Florium Admin</title>
@@ -663,6 +664,55 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .page.on{overflow-y:auto!important;overflow-x:hidden;}
 .page.on>*{flex-shrink:0;}
 #page-repack.on{display:block!important;overflow-y:auto!important;overflow-x:hidden;height:100%;}
+
+/* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
+@media screen{
+html[data-theme="dark"]{color-scheme:dark;
+  --blue:#6b9be0;--blue-l:rgba(80,130,220,.18);--blue-d:#8fb2ea;--green:#5fa57a;--green-l:rgba(79,138,99,.22);--green-d:#8fd1a5;
+  --orange:#d4a453;--orange-l:rgba(201,150,60,.18);--red:#e07a6e;--red-l:rgba(192,86,74,.2);--purple:#a98bd0;--purple-l:rgba(126,90,160,.22);
+  --teal:#5fb5a8;--teal-l:rgba(58,143,131,.22);--yellow:#dcb862;--yellow-l:rgba(201,162,78,.18);
+  --gray:#8c9198;--gray2:#5d636a;--gray3:#3d4248;--gray4:#2d3237;--gray5:#25292e;--gray6:#1f2327;
+  --g:#5fa57a;--gl:rgba(79,138,99,.22);--gd:#8fd1a5;--gm:#5fa57a;--y:#d4a453;--yl:rgba(201,150,60,.18);--b:#6b9be0;--bl:rgba(80,130,220,.18);
+  --r:#e07a6e;--rl:rgba(192,86,74,.2);--o:#d4a453;--ol:rgba(201,150,60,.18);--p:#a98bd0;--pl:rgba(126,90,160,.22);--t:#5fb5a8;--tl:rgba(58,143,131,.22);
+  --tx:#e8eaed;--tx2:#cfd3d8;--tx3:#a9afb6;--tx4:#7d848c;--mu:#8a9198;--bo:rgba(255,255,255,.13);--bo2:rgba(255,255,255,.08);
+  --bg:#121518;--card:#1b1f23;
+  --sb-bg:#16191c;--sb-tx:#cfd3d8;--sb-tx-mu:#7d848c;--sb-hover:#22272c;--sb-active:#4f8a63;--sb-active-tx:#fff;--sb-border:rgba(255,255,255,.07);
+  --sh:0 1px 3px rgba(0,0,0,.4);--sh2:0 2px 8px rgba(0,0,0,.45);--sh3:0 12px 32px rgba(0,0,0,.55);}
+html[data-theme="dark"] body{background:var(--bg)!important;color:var(--tx)}
+html[data-theme="dark"] .tb,html[data-theme="dark"] .gs input,html[data-theme="dark"] #gsDrop,html[data-theme="dark"] .chip,html[data-theme="dark"] .modal-box,html[data-theme="dark"] .cm-box,html[data-theme="dark"] .cm-inp,html[data-theme="dark"] .cm-chip,html[data-theme="dark"] .cm-sort,html[data-theme="dark"] .mtab,html[data-theme="dark"] .order-list-col,html[data-theme="dark"] .picker-list,html[data-theme="dark"] .si:focus,html[data-theme="dark"] .pk-card-cb,html[data-theme="dark"] .pk-multi-btn,html[data-theme="dark"] .sd,html[data-theme="dark"] .cpbtn,html[data-theme="dark"] .vc-sel,html[data-theme="dark"] .s-inp,html[data-theme="dark"] .dig-btn,html[data-theme="dark"] .pk-edit:focus,html[data-theme="dark"] #page-vygruzka #vgDrop,html[data-theme="dark"] #page-vygruzka .vg-opts,html[data-theme="dark"] #page-vygruzka .vg-tablebox,html[data-theme="dark"] #page-vygruzka .vg-bar button.vg-ghost,html[data-theme="dark"] #page-vygruzka .vg-tablebox tr.vg-gap td,html[data-theme="dark"] #page-vygruzka .vg-opts input[type=date]{background:var(--card)!important;color:var(--tx)}
+html[data-theme="dark"] .cm-foot,html[data-theme="dark"] .pk-edit:hover{background:var(--gray5)!important}
+html[data-theme="dark"] .dig-card.done,html[data-theme="dark"] .p-ready,html[data-theme="dark"] .sf-ok,html[data-theme="dark"] .scan-complete-bar,html[data-theme="dark"] .oi:hover,html[data-theme="dark"] .sob-head:hover,html[data-theme="dark"] .scan-order-block.complete .sob-head,html[data-theme="dark"] .sob-row.ok,html[data-theme="dark"] .dt tbody tr:hover td,html[data-theme="dark"] .od-item.has-stock,html[data-theme="dark"] .cm-group-row td{background:rgba(79,138,99,.16)!important}
+html[data-theme="dark"] .dig-card.recording,html[data-theme="dark"] .p-cancel,html[data-theme="dark"] .sf-er,html[data-theme="dark"] .od-item.no-stock{background:rgba(192,86,74,.18)!important}
+html[data-theme="dark"] .p-pack,html[data-theme="dark"] .sf-wa,html[data-theme="dark"] .sob-row.part,html[data-theme="dark"] .cm-hint{background:rgba(201,150,60,.16)!important}
+html[data-theme="dark"] .p-verified,html[data-theme="dark"] .p-sent,html[data-theme="dark"] .p-partial{background:rgba(126,90,160,.2)!important}
+html[data-theme="dark"] .p-defer{background:rgba(58,143,131,.18)!important}
+html[data-theme="dark"] .pk-card:hover{background:rgba(255,255,255,.04)!important}
+html[data-theme="dark"] .pb-w{background:#33383e!important}
+html[data-theme="dark"] .ni.on .nb{background:rgba(255,255,255,.92)}
+html[data-theme="dark"] input:not([type=checkbox]):not([type=radio]):not([type=range]),html[data-theme="dark"] select,html[data-theme="dark"] textarea{background-color:var(--card);color:var(--tx);border-color:var(--bo)}
+html[data-theme="dark"] [style*="background:#fff"],html[data-theme="dark"] [style*="background: #fff"],html[data-theme="dark"] [style*="background:white"],html[data-theme="dark"] [style*="background: white"],html[data-theme="dark"] [style*="background:#ffffff"],html[data-theme="dark"] [style*="background: #ffffff"],html[data-theme="dark"] [style*="background-color:#fff"]{background:var(--card)!important}
+html[data-theme="dark"] [style*="background:#f4f5f2"],html[data-theme="dark"] [style*="background: #f4f5f2"],html[data-theme="dark"] [style*="background:#f7f8f6"],html[data-theme="dark"] [style*="background: #f7f8f6"],html[data-theme="dark"] [style*="background:#f1f2ef"],html[data-theme="dark"] [style*="background: #f1f2ef"],html[data-theme="dark"] [style*="background:#f5f8f5"],html[data-theme="dark"] [style*="background: #f5f8f5"],html[data-theme="dark"] [style*="background:#f7faf7"],html[data-theme="dark"] [style*="background: #f7faf7"],html[data-theme="dark"] [style*="background:#f3f8f4"],html[data-theme="dark"] [style*="background: #f3f8f4"],html[data-theme="dark"] [style*="background:#f8f9fa"],html[data-theme="dark"] [style*="background: #f8f9fa"],html[data-theme="dark"] [style*="background:#f1f3f5"],html[data-theme="dark"] [style*="background: #f1f3f5"],html[data-theme="dark"] [style*="background:#f6f7f9"],html[data-theme="dark"] [style*="background: #f6f7f9"],html[data-theme="dark"] [style*="background:#f3f4f1"],html[data-theme="dark"] [style*="background: #f3f4f1"],html[data-theme="dark"] [style*="background:#f0f2ee"],html[data-theme="dark"] [style*="background: #f0f2ee"],html[data-theme="dark"] [style*="background:#f1f3ef"],html[data-theme="dark"] [style*="background: #f1f3ef"],html[data-theme="dark"] [style*="background:#fafafa"],html[data-theme="dark"] [style*="background: #fafafa"],html[data-theme="dark"] [style*="background:#f8fdf8"],html[data-theme="dark"] [style*="background: #f8fdf8"],html[data-theme="dark"] [style*="background:#fafbff"],html[data-theme="dark"] [style*="background: #fafbff"],html[data-theme="dark"] [style*="background:#f9fdf9"],html[data-theme="dark"] [style*="background: #f9fdf9"]{background:var(--gray5)!important}
+html[data-theme="dark"] [style*="background:#eef0ec"],html[data-theme="dark"] [style*="background: #eef0ec"],html[data-theme="dark"] [style*="background:#e0e0e0"],html[data-theme="dark"] [style*="background: #e0e0e0"],html[data-theme="dark"] [style*="background:#eef0ee"],html[data-theme="dark"] [style*="background: #eef0ee"],html[data-theme="dark"] [style*="background:#e7e9ec"],html[data-theme="dark"] [style*="background: #e7e9ec"]{background:#2f3439!important}
+html[data-theme="dark"] [style*="background:#e6f1e8"],html[data-theme="dark"] [style*="background: #e6f1e8"],html[data-theme="dark"] [style*="background:#eef5ef"],html[data-theme="dark"] [style*="background: #eef5ef"],html[data-theme="dark"] [style*="background:#dff0e3"],html[data-theme="dark"] [style*="background: #dff0e3"],html[data-theme="dark"] [style*="background:#e2ede4"],html[data-theme="dark"] [style*="background: #e2ede4"],html[data-theme="dark"] [style*="background:#e8fdf0"],html[data-theme="dark"] [style*="background: #e8fdf0"],html[data-theme="dark"] [style*="background:#edf3ee"],html[data-theme="dark"] [style*="background: #edf3ee"],html[data-theme="dark"] [style*="background:#e8f5e9"],html[data-theme="dark"] [style*="background: #e8f5e9"],html[data-theme="dark"] [style*="background:#f1f6f2"],html[data-theme="dark"] [style*="background: #f1f6f2"],html[data-theme="dark"] [style*="background:#cfe5d0"],html[data-theme="dark"] [style*="background: #cfe5d0"],html[data-theme="dark"] [style*="background:#f0f9f0"],html[data-theme="dark"] [style*="background: #f0f9f0"]{background:rgba(79,138,99,.2)!important}
+html[data-theme="dark"] [style*="background:#eef3fb"],html[data-theme="dark"] [style*="background: #eef3fb"],html[data-theme="dark"] [style*="background:#e8effa"],html[data-theme="dark"] [style*="background: #e8effa"],html[data-theme="dark"] [style*="background:#e8f2ff"],html[data-theme="dark"] [style*="background: #e8f2ff"],html[data-theme="dark"] [style*="background:#eef6ff"],html[data-theme="dark"] [style*="background: #eef6ff"],html[data-theme="dark"] [style*="background:#e3efff"],html[data-theme="dark"] [style*="background: #e3efff"],html[data-theme="dark"] [style*="background:#eaf0f7"],html[data-theme="dark"] [style*="background: #eaf0f7"]{background:rgba(80,130,220,.2)!important}
+html[data-theme="dark"] [style*="background:#fff8ec"],html[data-theme="dark"] [style*="background: #fff8ec"],html[data-theme="dark"] [style*="background:#fff3e0"],html[data-theme="dark"] [style*="background: #fff3e0"],html[data-theme="dark"] [style*="background:#fff1d6"],html[data-theme="dark"] [style*="background: #fff1d6"],html[data-theme="dark"] [style*="background:#f6efe1"],html[data-theme="dark"] [style*="background: #f6efe1"],html[data-theme="dark"] [style*="background:#fdf4ec"],html[data-theme="dark"] [style*="background: #fdf4ec"],html[data-theme="dark"] [style*="background:#fdf9e8"],html[data-theme="dark"] [style*="background: #fdf9e8"],html[data-theme="dark"] [style*="background:#fff8e1"],html[data-theme="dark"] [style*="background: #fff8e1"],html[data-theme="dark"] [style*="background:#f7f1e6"],html[data-theme="dark"] [style*="background: #f7f1e6"]{background:rgba(201,150,60,.16)!important}
+html[data-theme="dark"] [style*="background:#fff5f5"],html[data-theme="dark"] [style*="background: #fff5f5"],html[data-theme="dark"] [style*="background:#fdecec"],html[data-theme="dark"] [style*="background: #fdecec"],html[data-theme="dark"] [style*="background:#fbe3e3"],html[data-theme="dark"] [style*="background: #fbe3e3"],html[data-theme="dark"] [style*="background:#f8ece9"],html[data-theme="dark"] [style*="background: #f8ece9"],html[data-theme="dark"] [style*="background:#fdf0f0"],html[data-theme="dark"] [style*="background: #fdf0f0"],html[data-theme="dark"] [style*="background:#fff8f8"],html[data-theme="dark"] [style*="background: #fff8f8"]{background:rgba(192,86,74,.18)!important}
+html[data-theme="dark"] [style*="linear-gradient(135deg,#f"],html[data-theme="dark"] [style*="linear-gradient(135deg,#e"],html[data-theme="dark"] [style*="linear-gradient(#f3f8f4"],html[data-theme="dark"] [style*="linear-gradient(#f"],html[data-theme="dark"] [style*="linear-gradient(110deg,#f"]{background:var(--gray5)!important}
+html[data-theme="dark"] [style*="linear-gradient(135deg,#eef6ff"]{background:rgba(80,130,220,.14)!important}
+html[data-theme="dark"] [style*="color:#16181b"],html[data-theme="dark"] [style*="color:#1a1a1a"],html[data-theme="dark"] [style*="color:#222"],html[data-theme="dark"] [style*="color:#333"],html[data-theme="dark"] [style*="color:#444"],html[data-theme="dark"] [style*="color:#1f2328"]{color:var(--tx)!important}
+html[data-theme="dark"] [style*="color:#555"],html[data-theme="dark"] [style*="color:#666"],html[data-theme="dark"] [style*="color:#6b776c"],html[data-theme="dark"] [style*="color:#888"],html[data-theme="dark"] [style*="color:#999"],html[data-theme="dark"] [style*="color:#4b5a4d"]{color:var(--mu)!important}
+html[data-theme="dark"] [style*="color:#1d4a30"],html[data-theme="dark"] [style*="color:#1d5a36"],html[data-theme="dark"] [style*="color:#1b5e20"],html[data-theme="dark"] [style*="color:#37714a"],html[data-theme="dark"] [style*="color:#1d7a3e"],html[data-theme="dark"] [style*="color:#2e7d32"]{color:#8fd1a5!important}
+html[data-theme="dark"] [style*="color:#7a4a00"],html[data-theme="dark"] [style*="color:#9a5a00"],html[data-theme="dark"] [style*="color:#9a6a00"],html[data-theme="dark"] [style*="color:#b07a10"],html[data-theme="dark"] [style*="color:#8a6d00"]{color:#e6b866!important}
+html[data-theme="dark"] [style*="color:#8a1c1c"],html[data-theme="dark"] [style*="color:#b42318"],html[data-theme="dark"] [style*="color:#c62828"],html[data-theme="dark"] [style*="color:#b71c1c"]{color:#f08a80!important}
+html[data-theme="dark"] [style*="color:#1f4a86"],html[data-theme="dark"] [style*="color:#2f60ab"],html[data-theme="dark"] [style*="color:#1565c0"]{color:#8fb2ea!important}
+html[data-theme="dark"] [style*="#e3e6e0"],html[data-theme="dark"] [style*="#a9c8f5"],html[data-theme="dark"] [style*="#f0cf9a"],html[data-theme="dark"] [style*="#cfe5d0"],html[data-theme="dark"] [style*="#b8c2b9"],html[data-theme="dark"] [style*="#e0e3dd"],html[data-theme="dark"] [style*="#f5c0c0"],html[data-theme="dark"] [style*="#f0a0a0"]{border-color:var(--bo)!important}
+html[data-theme="dark"] .p-new{color:#8fb2ea}html[data-theme="dark"] .p-work{color:#e6b866}html[data-theme="dark"] .p-pack{color:#e6b866}html[data-theme="dark"] .p-ready{color:#8fd1a5}html[data-theme="dark"] .p-verified,html[data-theme="dark"] .p-sent,html[data-theme="dark"] .p-partial{color:#c9b3ea}html[data-theme="dark"] .p-defer{color:#8ed3c8}html[data-theme="dark"] .p-cancel{color:#f08a80}
+html[data-theme="dark"] [style*="color:#3d4a3f"],html[data-theme="dark"] [style*="color:#5b6066"],html[data-theme="dark"] [style*="color:#3a3f45"],html[data-theme="dark"] [style*="color:#33373c"],html[data-theme="dark"] [style*="color:#4a4f55"]{color:var(--tx2)!important}
+html[data-theme="dark"] svg [stroke="#eef0ec"],html[data-theme="dark"] svg [stroke="#e3e6e0"],html[data-theme="dark"] svg [stroke="#f0f2ee"],html[data-theme="dark"] svg [stroke="#eee"]{stroke:rgba(255,255,255,.09)}
+html[data-theme="dark"] svg [fill="#fff"],html[data-theme="dark"] svg [fill="#ffffff"]{fill:var(--card)}
+html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[fill="#16181b"],html[data-theme="dark"] svg text[fill="#444"]{fill:var(--tx2)}
+
+}
 </style>
 </head>
 <body>
@@ -796,6 +846,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
     <div class="gs"><label for="gsInp" style="position:absolute;left:-9999px">Пошук по таблиці</label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="position:absolute;left:11px;top:11px;width:16px;height:16px;stroke-width:2;color:var(--mu);pointer-events:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsInp" type="search" placeholder="Артикул, № замовлення, клієнт, штрихкод…  ( / )" autocomplete="off" spellcheck="false" oninput="gsInput()" onfocus="gsInput()" onblur="gsBlurSoon()" onkeydown="gsKey(event)"><div id="gsDrop" style="display:none"></div></div>
     <div class="tb-right">
       <div class="upd"><span class="udot pend" id="updDot"></span><span id="updTxt">Завантаження...</span></div>
+      <button class="btn sm" id="themeBtn" onclick="cycleTheme()" title="Тема: день / ніч / як у системі">🌓</button>
       <button class="btn sm" onclick="reloadPanel()">🔄 Оновити</button>
     </div>
   </div>
@@ -1051,10 +1102,22 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
           Живий голос, розуміє українську. Ключ зберігається на сервері (Apps Script → Script Properties → <b>GEMINI_API_KEY</b>), у браузер не потрапляє.
           Безкоштовний ліміт малий — генерується потроху, вже готові записи пропускаються, тож твої власні записи не зачіпаються.
         </div>
-        <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;background:var(--card);border:1px solid var(--bo);border-radius:12px;padding:10px 12px">
+          <b style="font-size:13.5px">Голос оголошень:</b>
+          <div style="display:inline-flex;border:1.5px solid var(--bo2);border-radius:999px;overflow:hidden">
+            <button type="button" id="vpF" onclick="setVoiceProfile('f')" style="border:none;padding:7px 14px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">👩 Жіночий</button>
+            <button type="button" id="vpM" onclick="setVoiceProfile('m')" style="border:none;padding:7px 14px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">👨 Чоловічий</button>
+          </div>
+          <span id="vpHint" style="font-size:12px;color:var(--mu)"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin-bottom:12px">
           <div>
-            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">Голос</label>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">👩 Жіночий голос</label>
             <select id="gemVoice" class="si" style="width:100%;padding:8px 10px;font-size:13px"></select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">👨 Чоловічий голос</label>
+            <select id="gemVoiceM" class="si" style="width:100%;padding:8px 10px;font-size:13px"></select>
           </div>
           <div>
             <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">Манера (необовʼязково). Якщо почуєш інструкцію в записі — очисть це поле</label>
@@ -1181,7 +1244,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='26.10.2026 · бот Gemini';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='26.10.2026 · зайвий прихід';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -1858,7 +1921,12 @@ var _recChunks=[];
 var _currentRecTarget=null;
 
 // Локальне (швидке) збереження в IndexedDB + асинхронна синхронізація з Google Drive
-async function voiceSave(key,blob,skipDriveSync){
+// ===== Два набори голосу: 👩 жіночий (звичайні ключі) і 👨 чоловічий (ключ + «~m») =====
+function vProfile(){try{return getVoicePrefs().gender==='m'?'m':'f';}catch(e){return 'f';}}
+function vIsRaw(key){return /~m$/.test(String(key||''));}
+function vKey(key){return (vProfile()==='m'&&!vIsRaw(key))?key+'~m':key;}
+async function voiceSave(key,blob,skipDriveSync,raw){
+  if(!raw)key=vKey(key);
   var db=await openVoiceCache();if(!db)return;
   // 1) Зберігаємо локально (миттєво)
   await new Promise(function(resolve){
@@ -1877,7 +1945,13 @@ async function voiceSave(key,blob,skipDriveSync){
   }
 }
 
-async function voiceLoad(key){
+// mode: (нічого) — свій набір, а якщо запису ще нема — з іншого; 'strict' — лише свій набір; 'raw' — рівно цей ключ
+async function voiceLoad(key,mode){
+  if(mode==='raw'||vIsRaw(key))return voiceLoadExact(key);
+  if(vProfile()==='m'){var bm=await voiceLoadExact(key+'~m');if(bm||mode==='strict')return bm;}
+  return voiceLoadExact(key);
+}
+async function voiceLoadExact(key){
   var db=await openVoiceCache();if(!db)return null;
   return new Promise(function(resolve){
     try{
@@ -1889,7 +1963,8 @@ async function voiceLoad(key){
   });
 }
 
-async function voiceDelete(key){
+async function voiceDelete(key,raw){
+  if(!raw)key=vKey(key);
   var db=await openVoiceCache();if(!db)return;
   // 1) Локально
   await new Promise(function(resolve){
@@ -1978,11 +2053,11 @@ async function syncVoicesFromDrive(progressCb){
   for(var i=0;i<driveFiles.length;i++){
     var df=driveFiles[i];
     if(progressCb)progressCb(i+1,driveFiles.length,df.key);
-    var local=await voiceLoad(df.key);
+    var local=await voiceLoad(df.key,'raw');
     if(local)continue;
     var blob=await downloadVoiceFromDrive(df.key);
     if(blob){
-      await voiceSave(df.key,blob,true);
+      await voiceSave(df.key,blob,true,true);
       await markAsSynced(df.key);
       downloaded++;
     }
@@ -2094,7 +2169,7 @@ async function renderDigitsGrid(){
   var html='';
   for(var d=0;d<=9;d++){
     var key='digit-'+d;
-    var has=await voiceLoad(key);
+    var has=await voiceLoad(key,'strict');
     if(has)progress++;
     var ds=String(d);
     html+='<div class="dig-card'+(has?' done':'')+'" data-key="'+key+'">'
@@ -2147,7 +2222,7 @@ async function renderClientVoices(){
   for(var i=0;i<filtered.length;i++){
     var n=filtered[i];
     var key='name-'+n.name;
-    var has=await voiceLoad(key);
+    var has=await voiceLoad(key,'strict');
     if(has)progress++;
     rows+='<div class="cl-voice-row">'
       +'<div class="cl-name">'+esc(n.name)+'</div>'
@@ -2619,7 +2694,7 @@ async function ttsGenerateAll(category){
     
     // Перевіряємо чи є локально
     if(skipExisting){
-      var exists=await voiceLoad(k);
+      var exists=await voiceLoad(k,'strict');
       if(exists){
         skipped++;
         ttsLog('⏭ '+k+' — вже є, пропускаю');
@@ -2666,17 +2741,27 @@ async function ttsGenerateAll(category){
 //  Повертається PCM 16 біт → додаємо WAV-заголовок → зберігаємо як інші записи (браузер + Drive).
 // ============================================================
 var GEM_VOICES=[['Kore','жіночий · впевнений'],['Zephyr','жіночий · яскравий'],['Leda','жіночий · молодий'],['Aoede','жіночий · легкий'],['Sulafat','жіночий · теплий'],
-  ['Puck','чоловічий · бадьорий'],['Charon','чоловічий · діловий'],['Orus','чоловічий · твердий'],['Iapetus','чоловічий · чіткий'],['Fenrir','чоловічий · емоційний']];
+  ['Charon','чоловічий · діловий'],['Puck','чоловічий · бадьорий'],['Orus','чоловічий · твердий'],['Iapetus','чоловічий · чіткий'],['Fenrir','чоловічий · емоційний']];
 var GEM_STYLE_DEFAULT='';   // без інструкції: модель інколи зачитувала її вголос
 var GEM_STYLE_OLD='Скажи українською природно, спокійно і доброзичливо, як диспетчер складу';
 var gemStop=false,gemBusy=false;
-function gemPrefs(){var p=getVoicePrefs();var st=(p.gemStyle!=null?p.gemStyle:GEM_STYLE_DEFAULT);if(st===GEM_STYLE_OLD)st='';return {voice:p.gemVoice||'Kore',style:st,auto:p.autoEngine||(localStorage.getItem(ELEVEN_KEY_STORAGE)?'eleven':'gemini')};}
+function gemPrefs(){var p=getVoicePrefs();var st=(p.gemStyle!=null?p.gemStyle:GEM_STYLE_DEFAULT);if(st===GEM_STYLE_OLD)st='';return {voice:(p.gender==='m'?(p.gemVoiceM||'Charon'):(p.gemVoice||'Kore')),voiceF:p.gemVoice||'Kore',voiceM:p.gemVoiceM||'Charon',style:st,auto:p.autoEngine||(localStorage.getItem(ELEVEN_KEY_STORAGE)?'eleven':'gemini')};}
 function loadGeminiSettings(){
   var p=gemPrefs();var vs=document.getElementById('gemVoice'),st=document.getElementById('gemStyle'),ae=document.getElementById('gemAutoEngine');
-  if(vs){vs.innerHTML=GEM_VOICES.map(function(v){return '<option value="'+v[0]+'"'+(v[0]===p.voice?' selected':'')+'>'+v[0]+' — '+v[1]+'</option>';}).join('');vs.onchange=function(){var q=getVoicePrefs();q.gemVoice=vs.value;saveVoicePrefs(q);};}
+  if(vs){vs.innerHTML=GEM_VOICES.filter(function(v){return /жіноч/.test(v[1]);}).map(function(v){return '<option value="'+v[0]+'"'+(v[0]===p.voiceF?' selected':'')+'>'+v[0]+' — '+v[1].replace(/^жіночий · /,'')+'</option>';}).join('');vs.onchange=function(){var q=getVoicePrefs();q.gemVoice=vs.value;saveVoicePrefs(q);};}
+  var vm=document.getElementById('gemVoiceM');
+  if(vm){vm.innerHTML=GEM_VOICES.filter(function(v){return /чолов/.test(v[1]);}).map(function(v){return '<option value="'+v[0]+'"'+(v[0]===p.voiceM?' selected':'')+'>'+v[0]+' — '+v[1].replace(/^чоловічий · /,'')+'</option>';}).join('');vm.onchange=function(){var q=getVoicePrefs();q.gemVoiceM=vm.value;saveVoicePrefs(q);};}
+  renderVoiceProfile();
   if(st){st.value=p.style;st.placeholder='необовʼязково, напр.: calm and friendly (краще порожньо — характер задає голос)';st.onchange=function(){var q=getVoicePrefs();q.gemStyle=st.value.trim();saveVoicePrefs(q);};}
   if(ae){ae.value=p.auto;ae.onchange=function(){var q=getVoicePrefs();q.autoEngine=ae.value;saveVoicePrefs(q);};}
 }
+function renderVoiceProfile(){var m=vProfile()==='m';var f=document.getElementById('vpF'),mm=document.getElementById('vpM'),h=document.getElementById('vpHint');
+  if(f){f.style.background=m?'transparent':'var(--green)';f.style.color=m?'var(--tx2)':'#fff';}
+  if(mm){mm.style.background=m?'var(--blue)':'transparent';mm.style.color=m?'#fff':'var(--tx2)';}
+  if(h)h.textContent='Для кожного голосу — свій набір записів. Кнопки генерації нижче створюють набір для вибраного голосу; поки запису бракує — звучить інший.';}
+function setVoiceProfile(g){var q=getVoicePrefs();q.gender=g==='m'?'m':'f';saveVoicePrefs(q);renderVoiceProfile();
+  toast(g==='m'?'Оголошення — 👨 чоловічим голосом':'Оголошення — 👩 жіночим голосом','ok',2200);
+  try{renderDigitsGrid();renderClientVoices();}catch(e){}}
 function gemLog(msg,type){var box=document.getElementById('gemLog');if(!box)return;box.style.display='block';var color=type==='err'?'#c62828':(type==='ok'?'#1b5e20':'#444');box.innerHTML+='<div style="color:'+color+'"><span style="color:#999">'+new Date().toLocaleTimeString('uk-UA')+'</span> '+esc(msg)+'</div>';box.scrollTop=box.scrollHeight;}
 function gemSetProgress(t){var el=document.getElementById('gemProgress');if(el)el.textContent=t;}
 // Чистимо краї запису: Gemini інколи додає в кінці шум «як рація».
@@ -2719,22 +2804,22 @@ async function gemCleanTails(){
   gemSetProgress('⏳ Чищу хвости в '+keys.length+' записах…');var done=0,same=0;
   for(var i=0;i<keys.length;i++){
     try{
-      var b=await voiceLoad(keys[i]);if(!b)continue;var u=new Uint8Array(await b.arrayBuffer());
+      var b=await voiceLoad(keys[i],'raw');if(!b)continue;var u=new Uint8Array(await b.arrayBuffer());
       var off=-1;for(var p=12;p<Math.min(u.length-8,200);p++){if(u[p]===100&&u[p+1]===97&&u[p+2]===116&&u[p+3]===97){off=p;break;}}   // 'data'
       if(off<0||u[34]!==16||u[22]!==1){same++;continue;}
       var rate=u[24]|(u[25]<<8)|(u[26]<<16)|(u[27]<<24),len=Math.min(u.length-off-8,u[off+4]|(u[off+5]<<8)|(u[off+6]<<16)|(u[off+7]<<24));
       var parts=[];for(var q=off+8;q<off+8+len;q+=8192)parts.push(String.fromCharCode.apply(null,u.subarray(q,Math.min(off+8+len,q+8192))));
       var bin=parts.join('');var t=pcmTrim(bin,rate);
       if(t.length>=bin.length-rate*0.02){same++;continue;}   // нічого суттєвого не обрізано
-      await voiceSave(keys[i],wavFromBin(t,rate));done++;
+      await voiceSave(keys[i],wavFromBin(t,rate),false,true);done++;
     }catch(e){same++;}
   }
   gemSetProgress('✅ Почищено '+done+' записів'+(same?' · без змін: '+same:''));gemLog('🧹 Хвости почищено: '+done,'ok');
   if(done)toast('Почищено '+done+' записів від шуму в кінці','ok',3500);
 }
-async function gemGenerateOne(text){
+async function gemGenerateOne(text,voice){
   var p=gemPrefs();
-  var res=await callScriptPost('geminiTts',{text:text,voice:p.voice,style:p.style});
+  var res=await callScriptPost('geminiTts',{text:text,voice:voice||p.voice,style:p.style});
   if(!res||!res.ok){var e=new Error((res&&res.error)||'Gemini: немає відповіді');e.code=res&&res.code;throw e;}
   return pcmB64ToWavBlob(res.pcm,res.rate||24000);
 }
@@ -2751,15 +2836,15 @@ async function gemListGeminiKeys(){
     req.onsuccess=function(){var c=req.result;if(!c){resolve(out);return;}var v=c.value||{};if(String(v.key||'').indexOf('rec:')===0&&v.blob&&/wav/i.test(v.blob.type||''))out.push(String(v.key).slice(4));c.continue();};
     req.onerror=function(){resolve(out);};}catch(e){resolve([]);}});
 }
-function gemTextForKey(k){if(TTS_DIGITS[k])return TTS_DIGITS[k];if(TTS_NUMBERS[k])return TTS_NUMBERS[k];if(TTS_PHRASES[k])return TTS_PHRASES[k];if(TTS_WORDS[k])return TTS_WORDS[k];if(k.indexOf('name-')===0)return k.slice(5);return '';}
+function gemTextForKey(k){k=String(k).replace(/~m$/,'');if(TTS_DIGITS[k])return TTS_DIGITS[k];if(TTS_NUMBERS[k])return TTS_NUMBERS[k];if(TTS_PHRASES[k])return TTS_PHRASES[k];if(TTS_WORDS[k])return TTS_WORDS[k];if(k.indexOf('name-')===0)return k.slice(5);return '';}
 async function gemRedoGemini(){
   var keys=await gemListGeminiKeys();
   if(!keys.length){gemSetProgress('Записів від Gemini ще нема');return;}
   if(!confirm('Переробити '+keys.length+' записів, які раніше зробив Gemini?\nТвої власні записи й ElevenLabs не зачіпаються.'))return;
   var todo={};keys.forEach(function(k){var t=gemTextForKey(k);if(t)todo[k]=t;});
-  return gemGenerateAll('custom',todo,true);
+  return gemGenerateAll('custom',todo,true,true);
 }
-async function gemGenerateAll(category,customTodo,forceRegen){
+async function gemGenerateAll(category,customTodo,forceRegen,rawKeys){
   if(gemBusy){toast('Генерація вже йде','in');return;}
   var todo=customTodo?Object.assign({},customTodo):{};
   if(category==='digits'||category==='all')Object.assign(todo,TTS_DIGITS);
@@ -2775,10 +2860,10 @@ async function gemGenerateAll(category,customTodo,forceRegen){
   for(var i=0;i<keys.length;i++){
     if(gemStop){gemLog('⏹ Зупинено','err');break;}
     var k=keys[i],text=todo[k];
-    if(!regen){var ex=await voiceLoad(k);if(ex){skipped++;continue;}}
+    if(!regen){var ex=await voiceLoad(k,'strict');if(ex){skipped++;continue;}}
     gemSetProgress('⏳ '+(i+1)+'/'+keys.length+': «'+text+'» · ✓'+done+' ⏭'+skipped+' ✗'+failed);
     try{
-      var blob=await gemGenerateOne(text);await voiceSave(k,blob);done++;gemLog('✓ '+k+' ('+Math.round(blob.size/1024)+' КБ)','ok');
+      var pg=gemPrefs();var blob=await gemGenerateOne(text,rawKeys?(vIsRaw(k)?pg.voiceM:pg.voiceF):null);await voiceSave(k,blob,false,!!rawKeys);done++;gemLog('✓ '+k+' ('+Math.round(blob.size/1024)+' КБ)','ok');
       await new Promise(function(r){setTimeout(r,pause);});
     }catch(e){
       if(e.code==='quota_min'){gemLog('… ліміт за хвилину — чекаю 30 с і повторюю','err');pause=21000;await new Promise(function(r){setTimeout(r,30000);});i--;continue;}
@@ -3310,6 +3395,17 @@ async function sendAiQuestion(){
   aiBusy=false;var b2=G('aiSend');if(b2)b2.disabled=false;
   renderAiMessages();
 }
+
+// ===== ТЕМА: ☀️ день / 🌙 ніч / 🌓 як у системі =====
+function applyTheme(){var m='auto';try{m=localStorage.getItem('theme')||'auto';}catch(e){}
+  var dark=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  var b=G('themeBtn');if(b)b.textContent=m==='dark'?'🌙 Ніч':(m==='light'?'☀️ День':'🌓 Авто');
+  var mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content',dark?'#16191c':'#ffffff');}
+function cycleTheme(){var m='auto';try{m=localStorage.getItem('theme')||'auto';}catch(e){}var next=m==='light'?'dark':(m==='dark'?'auto':'light');try{localStorage.setItem('theme',next);}catch(e){}applyTheme();
+  toast(next==='dark'?'Тема: ніч':(next==='light'?'Тема: день':'Тема: як у системі'),'in',1500);try{if(G('page-analytics')&&G('page-analytics').classList.contains('on'))renderAnalytics();}catch(e){}}
+try{window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);}catch(e){}
+document.addEventListener('DOMContentLoaded',applyTheme);setTimeout(applyTheme,0);
 
 // ===== LOAD =====
 // Жорстке перезавантаження даних панелі: чистимо локальний кеш і тягнемо свіже з таблиці (без кешу браузера).
@@ -7997,6 +8093,65 @@ function anSeasonCsv(){
     .concat([[]]).concat([['Артикул','Товар','Уп зараз','Шт зараз','Сума зараз, €','Уп '+season,'Шт '+season,'Сума '+season+', €']]).concat(S.prods.map(function(x){return [x.art,x.name,x.c?x.c.packs:0,x.c?x.c.pcs:0,x.c?Math.round(x.c.sum):0,x.p?x.p.packs:0,x.p?x.p.pcs:0,x.p?Math.round(x.p.sum):0];}));
   var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='sezon_vs_'+String(season).replace(/\s+/g,'_')+'.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);
 }
+// ---- Прийшло, але не потрібно: прихід без замовлення, більше ніж замовлено, для відмов / «не їде», не той артикул ----
+function anExtraIncome(r){
+  var susp={};try{suspiciousIncome().forEach(function(x){susp[x.row]=1;});}catch(e){}
+  var bucket={},rows=[];
+  var add=function(key,base){var B=bucket[key]=bucket[key]||Object.assign({pcs:0,units:0,boxes:{},ops:{},last:null,first:null,inPeriod:false},base);return B;};
+  income.forEach(function(x){
+    if(x.type==='на перефасовку'||susp[x.row])return;var d=parseUaDate(x.date);var a=nk(x.art);if(!a)return;
+    var n=x.qty||1,pk=x.packQty||furyPackOf(a)||0,pcs=pk*n;
+    var key=x.orderNum?('o|'+nk(x.orderNum)+'|'+a):('g|'+a);
+    var B=add(key,{kind:x.orderNum?'order':'general',art:a,name:x.name||'',order:x.orderNum?nk(x.orderNum):''});
+    B.pcs+=pcs;B.units+=n;if(x.barcode)B.boxes[x.barcode]=1;var op=String(x.operator||'').replace(/ · к-сть за фурою/,'').trim();if(op)B.ops[op]=1;
+    if(d){if(!B.last||d>B.last)B.last=d;if(!B.first||d<B.first)B.first=d;if(anIn(d,r))B.inPeriod=true;}
+    if(!B.name&&x.name)B.name=x.name;
+  });
+  Object.keys(bucket).forEach(function(k){
+    var B=bucket[k];if(!B.inPeriod&&(r.from||r.to))return;
+    if(B.kind==='general'){rows.push({reason:'без замовлення',art:B.art,name:B.name,extraPcs:B.pcs,extraUnits:B.units,got:B.pcs,need:0,order:'',client:'',status:'',last:B.last,ops:Object.keys(B.ops),boxes:Object.keys(B.boxes)});return;}
+    var o=orders.find(function(x){return nk(x.num)===B.order;});var its=(items[B.order]||[]).filter(function(it){return nk(it.art)===B.art;});
+    var reason='',need=0;
+    if(o&&sk(o.status)==='cancel')reason='замовлення — відмова';
+    else if(!its.length){var inMix=(items[B.order]||[]).some(function(it){var mx=mixOf(it.art);return mx&&mx.comps.some(function(c){return nk(c.flor)===B.art;});});if(inMix)return;reason='артикула нема в замовленні';}
+    else{its.forEach(function(it){var t=targetQty(B.art,it)||0;var bl=issueBlocks(B.order,B.art);var sh=issueShip(issueOf(B.order,B.art));if(bl)t=0;else if(sh){var pk2=furyPackOf(B.art)||1;t=Math.min(t,sh*pk2);}need+=t;});
+      if(B.pcs<=need)return;reason=need===0&&issueBlocks(B.order,B.art)?'позиція «не їде»':'більше, ніж замовлено';}
+    var pkU=furyPackOf(B.art)||0,extra=B.pcs-need;
+    rows.push({reason:reason,art:B.art,name:B.name||(its[0]&&its[0].name)||'',extraPcs:extra,extraUnits:pkU?Math.round(extra/pkU*10)/10:extra,got:B.pcs,need:need,order:B.order,client:o?o.name:'',status:o?o.status:'',oid:o?o.id:'',last:B.last,ops:Object.keys(B.ops),boxes:Object.keys(B.boxes)});
+  });
+  rows.forEach(function(x){var pr=priceOf(x.art,(items[x.order]||[]).filter(function(it){return nk(it.art)===x.art;})[0]||{},x.order)||(typeof anList!=='undefined'&&anList[x.art])||0;var pk=furyPackOf(x.art)||1;x.val=pr?pr*(x.extraPcs/pk):0;x.uah=/^\d{6}$/.test(x.art);});
+  return rows;
+}
+function anExtraHtml(r){
+  var all=anExtraIncome(r);if(!all.length)return anCard('📥','Прийшло, але не потрібно',esc(r.label),'<div style="color:var(--mu);padding:8px">Зайвого приходу нема 👍</div>');
+  var flt=anState.exFlt||'all';var cnt=function(x){return all.filter(function(y){return y.reason===x;}).length;};
+  var reasons=['без замовлення','більше, ніж замовлено','замовлення — відмова','позиція «не їде»','артикула нема в замовленні'];
+  var list=all.filter(function(x){return flt==='all'||x.reason===flt;});
+  anSortState('extra','extraPcs',-1);
+  list=anSortArr(list,'extra',{art:function(x){return x.art;},name:function(x){return x.name;},extraPcs:function(x){return x.extraPcs;},extraUnits:function(x){return x.extraUnits;},reason:function(x){return x.reason;},order:function(x){return x.order;},client:function(x){return x.client;},last:function(x){return x.last;},val:function(x){return x.val;}});
+  var fb=function(v,l,n){var on=flt===v;return '<button type="button" onclick="anState.exFlt=\''+v+'\';renderAnalytics()" style="padding:5px 11px;border-radius:999px;border:1.5px solid '+(on?'#37714a':'var(--bo2)')+';background:'+(on?'var(--green-l)':'var(--card)')+';color:var(--tx);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">'+l+' ('+n+')</button>';};
+  var rc={'без замовлення':'#9a6a00','більше, ніж замовлено':'#b42318','замовлення — відмова':'#7e5aa0','позиція «не їде»':'#b42318','артикула нема в замовленні':'#2f60ab'};
+  var td='padding:6px 8px;border-bottom:1px solid #f0f2ee;white-space:nowrap';
+  var totPcs=list.reduce(function(t,x){return t+x.extraPcs;},0),totE=list.filter(function(x){return !x.uah;}).reduce(function(t,x){return t+x.val;},0),totU=list.filter(function(x){return x.uah;}).reduce(function(t,x){return t+x.val;},0);
+  var body='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+fb('all','Усе',all.length)+reasons.filter(function(x){return cnt(x);}).map(function(x){return fb(x,x[0].toUpperCase()+x.slice(1),cnt(x));}).join('')+'</div>'
+    +'<div style="font-size:12.5px;color:var(--tx2);margin-bottom:8px">Зайвого: <b>'+anFmt(totPcs)+' шт</b>'+(totE?' · ≈ <b>'+anEur(totE)+'</b>':'')+(totU?' · ≈ <b>'+anFmt(Math.round(totU))+' грн</b>':'')+' · рахується за сканами на «Прийомі» '+esc(r.label)+'</div>'
+    +'<div style="overflow:auto;max-height:480px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f4f5f2">'
+    +anTh('extra','art','Артикул')+anTh('extra','name','Товар')+anTh('extra','extraPcs','Зайве, шт','right')+anTh('extra','extraUnits','≈ уп/ящ','right')+anTh('extra','reason','Чому зайве')+anTh('extra','order','Замовлення')+anTh('extra','client','Клієнт')+anTh('extra','last','Останній скан')+anTh('extra','val','≈ Вартість','right')+'<th style="text-align:left;padding:6px 8px">Ящики (штрихкоди)</th></tr></thead><tbody>'
+    +list.slice(0,anState.exAll?list.length:80).map(function(x){return '<tr><td style="'+td+';font-family:var(--mono)">'+esc(x.art)+'</td><td style="'+td+';white-space:normal;min-width:160px">'+esc(x.name)+'</td><td style="'+td+';text-align:right;font-weight:800">'+anFmt(x.extraPcs)+'</td><td style="'+td+';text-align:right">'+(x.extraUnits!==x.extraPcs?x.extraUnits:'—')+'</td>'
+      +'<td style="'+td+'"><span style="color:'+(rc[x.reason]||'var(--tx2)')+';font-weight:700">'+esc(x.reason)+'</span>'+(x.need&&x.reason==='більше, ніж замовлено'?'<div style="font-size:11px;color:var(--mu)">треба '+anFmt(x.need)+', прийшло '+anFmt(x.got)+'</div>':'')+'</td>'
+      +'<td style="'+td+'">'+(x.oid?'<a href="#" onclick="nav(\'orders\');selectOrder(\''+x.oid+'\');return false;" style="color:var(--blue);font-family:var(--mono)">'+esc(x.order)+'</a>':(x.order?esc(x.order):'<span style="color:var(--mu)">—</span>'))+(x.status?'<div style="font-size:11px;color:var(--mu)">'+esc(x.status)+'</div>':'')+'</td>'
+      +'<td style="'+td+'">'+esc(x.client||'')+'</td><td style="'+td+'">'+anDT(x.last)+(x.ops.length?'<div style="font-size:11px;color:var(--mu)">'+esc(x.ops.slice(0,2).join(', '))+'</div>':'')+'</td>'
+      +'<td style="'+td+';text-align:right">'+(x.val?(x.uah?anFmt(Math.round(x.val))+' грн':anEur(x.val)):'—')+'</td>'
+      +'<td style="'+td+';font-family:var(--mono);font-size:11px;color:var(--tx2)" title="'+esc(x.boxes.join(', '))+'">'+(x.boxes.length?esc(x.boxes.slice(0,3).join(', '))+(x.boxes.length>3?' +'+(x.boxes.length-3):''):'—')+'</td></tr>';}).join('')
+    +'</tbody></table></div>'+(list.length>80&&!anState.exAll?'<div style="text-align:center;margin-top:8px"><button class="btn sm" type="button" onclick="anState.exAll=true;renderAnalytics()">Показати всі ('+list.length+')</button></div>':'');
+  return anCard('📥','Прийшло, але не потрібно','без замовлення · більше, ніж замовлено · відмови й «не їде» · '+esc(r.label),body,'<button class="btn sm" type="button" onclick="anExtraCsv()">⬇ CSV</button>');
+}
+function anExtraCsv(){
+  var list=anExtraIncome(anRange());var q=function(v){v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var rows=[['Артикул','Товар','Зайве, шт','≈ уп/ящ','Чому зайве','Треба, шт','Прийшло, шт','Замовлення','Клієнт','Статус','Останній скан','Хто приймав','Штрихкоди ящиків','≈ Вартість','Валюта']]
+    .concat(list.map(function(x){return [x.art,x.name,x.extraPcs,x.extraUnits,x.reason,x.need,x.got,x.order,x.client,x.status,x.last?x.last.toLocaleString('uk-UA').slice(0,17):'',x.ops.join(', '),x.boxes.join(', '),Math.round(x.val*100)/100,x.uah?'грн':'€'];}));
+  var bl=new Blob(['\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n')],{type:'text/csv;charset=utf-8'});var el=document.createElement('a');el.href=URL.createObjectURL(bl);el.download='zayvyi_pryhid.csv';document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove();},500);
+}
 function renderAnalytics(){
   var el=G('anBody');if(!el)return;
   var money=curUser().role!=='worker';if(!money&&anState.metric==='sum')anState.metric='packs';
@@ -8039,6 +8194,7 @@ function renderAnalytics(){
   h+=anCard('📈','Динаміка відправлень',(anDaily(r)?'по днях':'по місяцях')+' · '+esc(r.label),'<div style="display:flex;gap:6px;margin:-4px 0 8px">'+mBtn('packs','Упаковки')+mBtn('orders','Замовлення')+(money?mBtn('sum','Сума'):'')+'</div>'+anTrend(a.series,b?b.series:null,anState.metric,anDaily(r),isS,isS?'сезон '+anState.cmpSeason:'попередній'));
   h+='<div style="margin-top:14px">'+anDaysHtml(r,money)+'</div>';
   h+='<div style="margin-top:14px">'+anPackHtml(r)+'</div>';
+  h+='<div style="margin-top:14px" id="anExtra">'+anExtraHtml(r)+'</div>';
   // Топ товарів / клієнтів
   var merge=!!anState.merge;var sortK=money&&anState.metric==='sum'?'sum':(merge?'pcs':'packs');
   var prodMap=merge?anMerge(a.prod):a.prod;
