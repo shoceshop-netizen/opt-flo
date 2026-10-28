@@ -716,9 +716,9 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 }
 /* ===== Заставка OPT: напис зʼявляється → розсипається на крапки → крізь них проступає головний екран ===== */
 #introScreen{position:fixed;inset:0;z-index:99998;overflow:hidden;cursor:pointer;font-family:var(--font);background:transparent}
-#introScreen .in-bg{position:absolute;inset:0;transition:opacity .9s ease;
+#introScreen .in-bg{position:absolute;inset:0;transition:opacity 1.3s ease;
   background:radial-gradient(42% 46% at 18% 22%,rgba(255,196,221,.55),transparent 70%),radial-gradient(46% 50% at 84% 78%,rgba(196,234,210,.6),transparent 70%),radial-gradient(30% 30% at 78% 18%,rgba(255,236,214,.45),transparent 70%),radial-gradient(90% 80% at 50% 50%,#fffdfd 0%,#fdf8fa 60%,#f6fbf8 100%);animation:inBg .22s ease-out both}
-#introScreen .in-ui{position:absolute;inset:0;transition:opacity .35s ease}
+#introScreen .in-ui{position:absolute;inset:0;transition:opacity .5s ease}
 #introScreen.dissolving{pointer-events:none}
 #introScreen.dissolving .in-bg{opacity:0}
 #introScreen.dissolving .in-ui{opacity:0}
@@ -733,9 +733,9 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 #introScreen .in-tick.t2 span{animation-direction:reverse}
 @keyframes inTk{to{opacity:.5}}
 @keyframes inMq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-#introScreen .in-badge{position:absolute;left:5vw;bottom:calc(12vh + env(safe-area-inset-bottom,0px));width:clamp(74px,9vw,118px);height:clamp(74px,9vw,118px);opacity:0;animation:inTk .4s .9s forwards,inSpin 7s .9s linear infinite}
+#introScreen .in-badge{position:absolute;left:5vw;bottom:calc(12vh + env(safe-area-inset-bottom,0px));width:clamp(74px,9vw,118px);height:clamp(74px,9vw,118px);opacity:0;animation:inTk .5s 1.2s forwards,inSpin 7s 1.2s linear infinite}
 @keyframes inSpin{to{transform:rotate(360deg)}}
-#introScreen .in-sub{position:absolute;left:0;right:0;top:calc(50% + clamp(46px,7vw,92px));text-align:center;color:#6fb58a;font-weight:700;font-size:clamp(12px,1.6vw,18px);letter-spacing:.42em;opacity:0;animation:inSub .9s .75s ease-out forwards}
+#introScreen .in-sub{position:absolute;left:0;right:0;top:calc(50% + clamp(46px,7vw,92px));text-align:center;color:#6fb58a;font-weight:700;font-size:clamp(12px,1.6vw,18px);letter-spacing:.42em;opacity:0;animation:inSub 1.1s 1.0s ease-out forwards}
 @keyframes inSub{from{opacity:0;letter-spacing:.9em}to{opacity:.95;letter-spacing:.42em}}
 #introScreen .in-static{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',var(--font);font-weight:300;font-size:clamp(70px,15vw,190px);color:#5fb382}
 #introScreen.reduce .in-static{display:flex}
@@ -1279,7 +1279,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='27.10.2026 · заставка OPT зелена';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='28.10.2026 · наліпки: копія і кнопка';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -1359,6 +1359,7 @@ function showLogin(){
   } else {
     ls.style.display='flex';
   }
+  try{if(sessionStorage.getItem('logoutReason')==='idle'){sessionStorage.removeItem('logoutReason');var le=G('loginErr'),lm=G('loginErrM');var msg='Ви вийшли автоматично: '+IDLE_MIN+' хв без дій';if(le){le.style.color='#9a6a00';le.textContent=msg;}if(lm){lm.style.color='#9a6a00';lm.textContent=msg;}}}catch(e){}
   try{var lastU=localStorage.getItem('lastLogin')||'';if(G('loginUser'))G('loginUser').value=lastU;var lastE=localStorage.getItem('lastLoginEmail')||'';if(G('loginEmail'))G('loginEmail').value=lastE;}catch(e){}
   var lm='pw';try{lm=localStorage.getItem('loginMode')||'pw';}catch(e){}loginMode(lm);
   if(G('loginEmail'))G('loginEmail').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();loginMailStep();}};
@@ -1482,6 +1483,7 @@ function getDeviceName(){
 
 function showApp(){
   bootDone();
+  try{idleStart();}catch(e){}
   // Показуємо UI — але НЕ чіпаємо модалки (їх display керується inline-style)
   document.querySelectorAll('body > *').forEach(function(el){
     if(el.tagName==='SCRIPT'||el.tagName==='STYLE')return;
@@ -1510,7 +1512,7 @@ function showApp(){
 // Потім напис зліва направо розсипається на крапки, вони розлітаються, а крізь них проступає головний екран.
 // Мелодія синтезується в браузері. Клік або будь-яка клавіша — пропустити.
 function introSoundOn(){try{return localStorage.getItem('introSound')!=='0';}catch(e){return true;}}
-var INTRO_DISSOLVE=1.75;   // коли починає розсипатися (с)
+var INTRO_DISSOLVE=3.0;   // коли починає розсипатися (с) — напис встигають роздивитись
 function introMelody(){
   try{
     var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;var ctx=new AC();if(ctx.state==='suspended')ctx.resume();
@@ -1526,9 +1528,9 @@ function introMelody(){
     var pad=function(notes,at,len,vol){notes.forEach(function(n,k){var t=T+at,o=ctx.createOscillator(),g=ctx.createGain(),f=ctx.createBiquadFilter();o.type='triangle';o.frequency.value=hz(n);o.detune.value=k%2?7:-7;f.type='lowpass';f.frequency.value=1400;
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+len*0.3);g.gain.setValueAtTime(vol,t+len*0.55);g.gain.exponentialRampToValueAtTime(0.0005,t+len);o.connect(f);f.connect(g);g.connect(m);g.connect(rv);o.start(t);o.stop(t+len+0.1);});};
     // 1) напис зʼявляється: подих, мʼякий удар, акорд, дзвіночок
-    noise(0.05,0.55,'bandpass',400,3200,0.04);tone({f:150,f2:42,gl:0.2,at:0.3,v:0.42,d:0.35});pad([48,55,60,64,71],0.3,2.6,0.035);bell(84,0.32,0.09);bell(91,0.38,0.06);
+    noise(0.05,0.55,'bandpass',400,3200,0.04);tone({f:150,f2:42,gl:0.2,at:0.3,v:0.42,d:0.35});pad([48,55,60,64,71],0.3,INTRO_DISSOLVE+0.4,0.035);bell(84,0.32,0.09);bell(91,0.38,0.06);bell(88,1.5,0.05);
     // 2) мʼякий біт, поки напис стоїть
-    var bt=0.234;for(var s2=1;s2<6;s2++){var at=0.3+s2*bt;if(s2%2===0)tone({f:140,f2:45,gl:0.16,at:at,v:0.26,d:0.25});noise(at,0.05,'highpass',8000,null,0.045,0.001);}
+    var bt=0.234,nb=Math.floor((INTRO_DISSOLVE-0.35)/bt);for(var s2=1;s2<=nb;s2++){var at=0.3+s2*bt,fade=1-0.5*s2/nb;if(s2%2===0)tone({f:140,f2:45,gl:0.16,at:at,v:0.26*fade,d:0.25});noise(at,0.05,'highpass',8000,null,0.045*fade,0.001);}
     // 3) розсип: «піщаний» шелест і переливи вгору
     var D=INTRO_DISSOLVE;noise(D,1.1,'bandpass',900,7000,0.06,0.25);for(var q=0;q<12;q++)bell([84,86,88,91,93,96,98,100,103,105,108,110][q],D+0.05+q*0.055,0.035);
     return {stop:function(){try{m.gain.cancelScheduledValues(ctx.currentTime);m.gain.setValueAtTime(m.gain.value,ctx.currentTime);m.gain.linearRampToValueAtTime(0,ctx.currentTime+0.35);setTimeout(function(){ctx.close();},500);}catch(e){}}};
@@ -1543,18 +1545,18 @@ function introCanvas(cv,el,onDissolve){
   var im=ox.getImageData(0,0,o.width,o.height).data,pts=[],st=Math.max(2,Math.round(fs/110)),minX=1e9,maxX=-1e9;
   for(var yy=0;yy<o.height;yy+=st)for(var xx=0;xx<o.width;xx+=st)if(im[(yy*o.width+xx)*4+3]>110){pts.push([xx,yy]);if(xx<minX)minX=xx;if(xx>maxX)maxX=xx;}
   if(pts.length>2800){pts.sort(function(){return Math.random()-0.5;});pts=pts.slice(0,2800);}
-  var cols=['#9fdab5','#6cc08e','#8fd1a5','#46a26f','#c4ead2','#7fc79a','#f4a3c6','#f7bcd6'],span=Math.max(1,maxX-minX),D0=INTRO_DISSOLVE,DS=0.7;   // пастельні зелені крапки з рожевими іскрами
+  var cols=['#9fdab5','#6cc08e','#8fd1a5','#46a26f','#c4ead2','#7fc79a','#f4a3c6','#f7bcd6'],span=Math.max(1,maxX-minX),D0=INTRO_DISSOLVE,DS=1.0;   // пастельні зелені крапки з рожевими іскрами
   var P=pts.map(function(p){var a=-Math.PI/2+(Math.random()-0.35)*1.9;return {x:p[0],y:p[1],s:(0.7+Math.random()*1.1)*d,c:cols[Math.floor(Math.random()*cols.length)],
-    rel:D0+((p[0]-minX)/span)*DS+Math.random()*0.08,vx:Math.cos(a)*(0.35+Math.random()*0.9)+0.35,vy:Math.sin(a)*(0.35+Math.random()*0.9),sw:Math.random()*6.28,life:0.75+Math.random()*0.6};});
+    rel:D0+((p[0]-minX)/span)*DS+Math.random()*0.08,vx:Math.cos(a)*(0.35+Math.random()*0.9)+0.35,vy:Math.sin(a)*(0.35+Math.random()*0.9),sw:Math.random()*6.28,life:1.0+Math.random()*0.7};});
   var grad=x.createLinearGradient(0,cy-fs*0.45,0,cy+fs*0.45);grad.addColorStop(0,'#9fdab5');grad.addColorStop(0.5,'#6cc08e');grad.addColorStop(1,'#46a26f');
   var t0=performance.now(),ease=function(t){return 1-Math.pow(1-t,3);},clamp=function(v){return v<0?0:v>1?1:v;},fired=false;
   var drawText=function(alpha,w,sx,clipX){x.save();if(clipX!=null){x.beginPath();x.rect(clipX,0,cv.width,cv.height);x.clip();}x.globalAlpha=alpha;x.translate(cx,cy);x.scale(sx,1);x.font=font(w);x.textAlign='center';x.textBaseline='middle';
     x.shadowColor='rgba(108,192,142,.32)';x.shadowBlur=20*d;x.fillStyle=grad;x.fillText('OPT',0,0);x.restore();};
   (function fr(){if(!document.body.contains(el))return;var t=(performance.now()-t0)/1000;x.clearRect(0,0,cv.width,cv.height);
     // 1) поява: з дуже тонкого (100) до 300, ширина 86% → 100%
-    var sIn=ease(clamp((t-0.15)/0.8)),w=Math.round(100+(WF-100)*sIn),sx=0.86+0.14*sIn;
+    var sIn=ease(clamp((t-0.15)/1.2)),w=Math.round(100+(WF-100)*sIn),sx=0.86+0.14*sIn;
     // контурні відлуння
-    if(t<D0+0.2)[0,0.12,0.24].forEach(function(dl){var e2=clamp((t-0.75-dl)/0.9);if(e2<=0||e2>=1)return;x.save();x.globalAlpha=(1-e2)*0.6;x.strokeStyle='#f4a3c6';x.lineWidth=1.1*d;x.font=font(WF);x.textAlign='center';x.textBaseline='middle';x.strokeText('OPT',cx,cy-fs*0.42*ease(e2));x.restore();});
+    if(t<D0+0.2)[0,0.15,0.3].forEach(function(dl){var e2=clamp((t-1.0-dl)/1.25);if(e2<=0||e2>=1)return;x.save();x.globalAlpha=(1-e2)*0.6;x.strokeStyle='#f4a3c6';x.lineWidth=1.1*d;x.font=font(WF);x.textAlign='center';x.textBaseline='middle';x.strokeText('OPT',cx,cy-fs*0.42*ease(e2));x.restore();});
     // 2) напис — цілий до розсипу, далі лишається лише права, ще не розсипана частина
     var sweep=t<D0?null:minX+(span+8*d)*clamp((t-D0)/DS);
     if(t>=D0&&!fired){fired=true;if(onDissolve)onDissolve();}
@@ -1563,7 +1565,7 @@ function introCanvas(cv,el,onDissolve){
     if(t>=D0)for(var i=0;i<P.length;i++){var p=P[i];if(t<p.rel)continue;var age=t-p.rel,k=age/p.life;if(k>=1)continue;
       var px=p.x+p.vx*age*cv.width*0.22+Math.sin(age*4+p.sw)*6*d,py=p.y+p.vy*age*cv.height*0.3-age*age*cv.height*0.04;
       x.globalAlpha=(1-k)*(1-k);x.fillStyle=p.c;x.beginPath();x.arc(px,py,p.s*(1-0.5*k),0,6.283);x.fill();}
-    x.globalAlpha=1;if(t<D0+DS+1.6)requestAnimationFrame(fr);})();
+    x.globalAlpha=1;if(t<D0+DS+2.0)requestAnimationFrame(fr);})();
 }
 function playIntro(done){
   var finished=false,fin=function(){if(finished)return;finished=true;if(typeof done==='function')done();};
@@ -1580,16 +1582,16 @@ function playIntro(done){
   var mel=introSoundOn()?introMelody():null,closed=false;
   var key=function(){close(true);};
   // розсип почався: під крапками вже готуємо головний екран, фон і написи згасають
-  var dissolve=function(){if(closed)return;el.classList.add('dissolving');fin();setTimeout(function(){close(false);},2300);};
+  var dissolve=function(){if(closed)return;el.classList.add('dissolving');fin();setTimeout(function(){close(false);},2900);};
   var close=function(skip){if(closed)return;closed=true;document.removeEventListener('keydown',key);if(skip){if(mel)mel.stop();el.classList.add('out');}
     fin();setTimeout(function(){el.remove();},skip?470:0);};
-  var started=false,go=function(){if(started||closed)return;started=true;if(!reduce)introCanvas(el.querySelector('canvas'),el,dissolve);else setTimeout(function(){el.classList.add('dissolving');fin();setTimeout(function(){close(false);},900);},900);};
+  var started=false,go=function(){if(started||closed)return;started=true;if(!reduce)introCanvas(el.querySelector('canvas'),el,dissolve);else setTimeout(function(){el.classList.add('dissolving');fin();setTimeout(function(){close(false);},1000);},1800);};
   if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load("300 100px 'Bricolage Grotesque'"),document.fonts.load("100 100px 'Bricolage Grotesque'")]).then(go,go);setTimeout(go,450);}else go();
   document.addEventListener('keydown',key);
   G('inSnd').onclick=function(e){e.stopPropagation();var on=!introSoundOn();try{localStorage.setItem('introSound',on?'1':'0');}catch(_){}this.textContent=on?'🔊 звук':'🔇 без звуку';if(!on&&mel){mel.stop();mel=null;}else if(on&&!mel){mel=introMelody();}};
   G('inOff').onclick=function(e){e.stopPropagation();try{localStorage.setItem('introOff','1');}catch(_){}toast('Заставку вимкнено. Повернути — «▶ заставка» внизу бічного меню','in',3500);close(true);};
   el.addEventListener('click',function(){close(true);});
-  setTimeout(function(){if(!el.classList.contains('dissolving'))dissolve();},3200);   // запобіжник
+  setTimeout(function(){if(!el.classList.contains('dissolving'))dissolve();},4600);   // запобіжник
 }
 
 // ===== WELCOME SCREEN =====
@@ -1680,6 +1682,43 @@ async function fetchSheet(name,range){
 function getSessionToken(){
   try{var x=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');return (x&&x.token)?x.token:'';}catch(e){return '';}
 }
+// ===== АВТОВИХІД: 30 хв без дій людини =====
+// Дія — рух/клік миші, дотик, клавіша (у тому числі сканер штрихкодів), прокрутка. Автооновлення даних — не дія.
+// За 1 хв до виходу — попередження «Ви тут?». Сервер теж перевіряє: 30 хв без дій — сесія недійсна.
+var IDLE_MIN=30,IDLE_WARN_SEC=60,_idleWarned=false,_idleLastSave=0,_idleTimer=null;
+function idleLast(){try{return Number(localStorage.getItem('lastAct')||0)||Date.now();}catch(e){return Date.now();}}
+function idleMark(){var now=Date.now();if(now-_idleLastSave<4000&&!_idleWarned)return;_idleLastSave=now;try{localStorage.setItem('lastAct',String(now));}catch(e){}
+  if(_idleWarned)idleHideWarn();
+  // повідомити сервер «я тут» не частіше ніж раз на 2 хв
+  var lt=0;try{lt=Number(localStorage.getItem('lastTouch')||0);}catch(e){}
+  if(now-lt>2*60000&&getSessionToken&&getSessionToken()){try{localStorage.setItem('lastTouch',String(now));}catch(e){}callScriptPost('touch',{}).catch?0:0;}}
+function idleHideWarn(){_idleWarned=false;var w=G('idleWarn');if(w)w.remove();}
+function idleShowWarn(left){
+  var w=G('idleWarn');if(!w){w=document.createElement('div');w.id='idleWarn';w.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(10,20,14,.45);display:flex;align-items:center;justify-content:center;padding:20px';
+    w.innerHTML='<div style="background:var(--card);color:var(--tx);border-radius:18px;padding:22px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="font-size:38px;margin-bottom:6px">⏳</div><div style="font-size:17px;font-weight:800;margin-bottom:6px">Ви тут?</div><div style="font-size:14px;color:var(--mu);margin-bottom:16px">Через <b id="idleLeft"></b> с — вихід з акаунту: '+IDLE_MIN+' хв без дій.</div><button type="button" class="btn pr" style="width:100%;min-height:46px;font-size:15px" onclick="idleMark()">Я тут — продовжити</button></div>';
+    document.body.appendChild(w);}
+  _idleWarned=true;var l=G('idleLeft');if(l)l.textContent=Math.max(0,Math.ceil(left));
+}
+async function idleLogout(){
+  idleHideWarn();try{sessionStorage.setItem('logoutReason','idle');}catch(e){}
+  try{await Promise.race([callScriptPost('logout',{}),new Promise(function(r){setTimeout(r,1500);})]);}catch(e){}
+  try{localStorage.removeItem(AUTH_KEY);}catch(e){}location.reload();
+}
+function idleTick(){
+  var sess=null;try{sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}if(!sess||!sess.token){idleHideWarn();return;}
+  var idle=(Date.now()-idleLast())/1000,limit=IDLE_MIN*60;
+  if(idle>=limit){idleLogout();return;}
+  if(idle>=limit-IDLE_WARN_SEC)idleShowWarn(limit-idle);else if(_idleWarned)idleHideWarn();
+}
+function idleStart(){
+  try{localStorage.setItem('lastAct',String(Date.now()));}catch(e){}
+  ['mousedown','keydown','touchstart','wheel','pointerdown'].forEach(function(ev){document.addEventListener(ev,idleMark,{capture:true,passive:true});});
+  var mm=0;document.addEventListener('mousemove',function(){var n=Date.now();if(n-mm>5000){mm=n;idleMark();}},{capture:true,passive:true});
+  document.addEventListener('scroll',function(){idleMark();},{capture:true,passive:true});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)idleTick();});
+  if(_idleTimer)clearInterval(_idleTimer);_idleTimer=setInterval(idleTick,5000);
+}
+
 function handleSessionExpired(){
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
   try{toast('Сесія завершилась — увійдіть знову','wa',4000);}catch(e){}
@@ -1699,7 +1738,7 @@ async function callScript(action,data){
     var text=await r.text();
     var res;
     try{res=JSON.parse(text);}catch(e){return{ok:false,msg:'Invalid JSON: '+text.substring(0,100)};}
-    if(res&&res.needLogin&&action!=='login'){handleSessionExpired();return{ok:false,needLogin:true};}
+    if(res&&res.needLogin&&action!=='login'){if(res.idle){try{sessionStorage.setItem('logoutReason','idle');}catch(e){}}handleSessionExpired();return{ok:false,needLogin:true};}
     if(res&&res.forbidden){toast('Недостатньо прав: це може зробити старший або адміністратор','wa',3500);}
     return res;
   }catch(e){return{ok:false,msg:e.message};}
@@ -1720,7 +1759,7 @@ async function callScriptPost(action,data){
     var text=await r.text();
     var res;
     try{res=JSON.parse(text);}catch(e){return{ok:false,msg:'Invalid JSON: '+text.substring(0,100)};}
-    if(res&&res.needLogin&&action!=='login'){handleSessionExpired();return{ok:false,needLogin:true};}
+    if(res&&res.needLogin&&action!=='login'){if(res.idle){try{sessionStorage.setItem('logoutReason','idle');}catch(e){}}handleSessionExpired();return{ok:false,needLogin:true};}
     if(res&&res.forbidden){toast('Недостатньо прав: це може зробити старший або адміністратор','wa',3500);}
     return res;
   }catch(e){return{ok:false,msg:e.message};}
@@ -3409,6 +3448,7 @@ function nav(p){
   [].forEach.call(document.querySelectorAll('.mtab button'),function(b){b.classList.toggle('on',b.dataset.p===p||(p==='orders'&&b.dataset.p==='orders'));});
   if(p==='ai'){setTimeout(initAiPage,100);setTimeout(function(){try{aiLoadOpts();}catch(e){}},120);}
   if(p==='dash'){renderDash(getCounts());}
+  if(p==='pick'){try{pickNotesStart();}catch(e){}}else{try{pickNotesStop();}catch(e){}}
   if(p==='repack'){renderRepackDash();}
   if(p==='verify'){renderVerifyPage();}
   if(p==='packdash'){renderPackDash();}
@@ -7540,6 +7580,79 @@ function renderPickPage(){
   el.innerHTML=h;pickFocus();
 }
 function pickClientsTxt(r){var pc={},ord=[];(r.rows||[]).forEach(function(x){var c=x.client||x.orderNum;if(pc[c]==null){pc[c]=0;ord.push(c);}pc[c]+=x.qty||0;});return ord.map(function(c){return esc(c)+' '+pc[c]+' уп';}).join(', ');}
+// ===== ВКАЗІВКИ ВАНТАЖНИКУ: супер-адмін пише на картці товару → термінал отримує за кілька секунд (звук, вібрація, вікно) =====
+var pickNotesMap={},pickNotesVer='',pickNotesTimer=null,pickNoteEditKey=null,pickNotesBusy=false;
+var PICK_NOTE_CHIPS=['Взяти з запасу','Не брати — погана якість','Замінити на …','Відкласти — візьмемо пізніше','Покласти окремо й підписати','Підійди до мене'];
+function pkNoteKey(list,art){return String(list).trim()+'|'+nk(art);}
+function pickNotesFor(lists,art){var out=[];(lists||[]).forEach(function(L){var n=pickNotesMap[pkNoteKey(L,art)];if(n)out.push(n);});return out;}
+function pickNoteSeen(n){try{var s=JSON.parse(sessionStorage.getItem('pkNotesSeen')||'{}');return !!s[n.id+'|'+n.at];}catch(e){return false;}}
+function pickNoteMarkSeen(n){try{var s=JSON.parse(sessionStorage.getItem('pkNotesSeen')||'{}');s[n.id+'|'+n.at]=1;sessionStorage.setItem('pkNotesSeen',JSON.stringify(s));}catch(e){}}
+function pickNotesOn(){return !!(G('page-pick')&&G('page-pick').classList.contains('on')&&pickState.list);}
+async function pickNotesPoll(force){
+  if(pickNotesBusy||!pickNotesOn()||document.hidden)return;pickNotesBusy=true;
+  try{
+    var res=await callScriptPost('pickNotes',{lists:(pickState.lists||[]).join(','),ver:force?'':pickNotesVer});
+    if(!res||!res.ok||res.same)return;
+    pickNotesVer=String(res.ver||'');var map={};(res.notes||[]).forEach(function(n){map[pkNoteKey(n.list,n.art)]=n;});pickNotesMap=map;
+    var mine=curUser().role!=='admin';
+    var fresh=(res.notes||[]).filter(function(n){return n.status==='нова'&&!pickNoteSeen(n);});
+    fresh.forEach(pickNoteMarkSeen);
+    if(mine&&fresh.length)pickNoteAlert(fresh);
+    if(!(pickNoteEditKey&&G('pkNoteTa')))renderPickPage();
+  }catch(e){}finally{pickNotesBusy=false;}
+}
+function pickNotesStart(){if(pickNotesTimer)clearInterval(pickNotesTimer);pickNotesTimer=setInterval(function(){pickNotesPoll(false);},6000);pickNotesPoll(true);}
+function pickNotesStop(){if(pickNotesTimer){clearInterval(pickNotesTimer);pickNotesTimer=null;}}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&pickNotesOn())pickNotesPoll(false);});
+function pickNoteAlert(list){
+  try{beepAlert();}catch(e){}try{if(navigator.vibrate)navigator.vibrate([250,120,250,120,400]);}catch(e){}
+  var old=G('pkNoteModal');if(old)old.remove();
+  var w=document.createElement('div');w.id='pkNoteModal';w.style.cssText='position:fixed;inset:0;z-index:99980;background:rgba(20,16,4,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+  w.innerHTML='<div style="background:#fffaf0;border:3px solid #e0a526;border-radius:20px;padding:18px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)">'
+    +'<div style="font-size:13px;font-weight:800;color:#8a5a00;letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px">📝 Нова вказівка</div>'
+    +list.map(function(n){return '<div style="margin-bottom:12px"><div style="font-size:16px;font-weight:800;color:#1d1d1f">'+esc(n.name||n.art)+'</div><div style="font-size:12px;color:#7a6a40">список №'+esc(n.list)+' · '+esc(n.by||'')+' · '+esc(String(n.at||'').slice(11,16))+'</div><div style="margin-top:6px;font-size:20px;font-weight:800;line-height:1.3;color:#3a2a00">'+esc(n.text)+'</div></div>';}).join('')
+    +'<button type="button" class="btn pr" style="width:100%;min-height:54px;font-size:17px;border-radius:14px" onclick="pickNoteAckAll()">✓ Зрозумів</button></div>';
+  document.body.appendChild(w);w._ids=list.map(function(n){return n.id;});
+}
+async function pickNoteAckAll(){var w=G('pkNoteModal');var ids=(w&&w._ids)||[];if(w)w.remove();for(var i=0;i<ids.length;i++){await pickNoteAck(ids[i],true);}renderPickPage();try{pickFocus();}catch(e){}}
+async function pickNoteAck(id,quiet){
+  Object.keys(pickNotesMap).forEach(function(k){if(pickNotesMap[k].id===id){pickNotesMap[k].status='прочитано';pickNotesMap[k].readBy=curUser().name;}});
+  var r=await callScriptPost('pickNoteAck',{id:id});if(r&&r.ok)pickNotesVer=String(r.ver||pickNotesVer);
+  if(!quiet)renderPickPage();
+}
+function pickNoteBlock(r,ls){
+  var notes=pickNotesFor(ls,r.art),admin=curUser().role==='admin',k=ls.join(',')+'|'+r.art,h='';
+  notes.forEach(function(n){
+    h+='<div style="margin-top:8px;background:#fff4d6;border:2px solid #e8b84a;border-radius:12px;padding:10px 12px">'
+      +'<div style="font-size:11.5px;font-weight:800;color:#8a5a00">📝 ВКАЗІВКА · '+esc(n.by||'')+' · '+esc(String(n.at||'').slice(11,16))+(ls.length>1?' · №'+esc(n.list):'')+'</div>'
+      +'<div style="margin-top:4px;font-size:17px;font-weight:800;color:#3a2a00;line-height:1.3">'+esc(n.text)+'</div>'
+      +(admin?'<div style="margin-top:4px;font-size:12px;font-weight:700;color:'+(n.status==='прочитано'?'#1d6b3a':'#9a6a00')+'">'+(n.status==='прочитано'?'✓ прочитав '+esc(n.readBy||'')+' '+esc(String(n.readAt||'').slice(11,16)):'⏳ ще не прочитано')+'</div>'
+        :(n.status==='нова'?'<button type="button" class="btn pr" style="margin-top:8px;min-height:44px;border-radius:10px;width:100%" onclick="pickNoteAck(\''+esc(n.id)+'\')">✓ Зрозумів</button>':'<div style="margin-top:4px;font-size:12px;color:#1d6b3a;font-weight:700">✓ прочитано</div>'))
+      +'</div>';
+  });
+  if(admin){
+    var enc=encodeURIComponent(k);
+    if(pickNoteEditKey===k){
+      var cur=notes[0]?notes[0].text:'';
+      h+='<div style="margin-top:8px;background:#fffaf0;border:1.5px dashed #e8b84a;border-radius:12px;padding:10px">'
+        +'<label for="pkNoteTa" style="font-size:12.5px;font-weight:700;display:block;margin-bottom:6px">Вказівка вантажнику: що робити з цим товаром</label>'
+        +'<textarea id="pkNoteTa" rows="2" maxlength="500" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid var(--bo2);border-radius:10px;font-family:inherit;font-size:15px;resize:vertical">'+esc(cur)+'</textarea>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin:6px 0">'+PICK_NOTE_CHIPS.map(function(c){return '<button type="button" onclick="var t=G(\'pkNoteTa\');t.value=\''+esc(c)+'\';t.focus()" style="padding:5px 9px;border-radius:999px;border:1px solid #e8b84a;background:#fff;font-family:inherit;font-size:12px;cursor:pointer">'+esc(c)+'</button>';}).join('')+'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn pr" style="min-height:42px;border-radius:10px" onclick="pickNoteSave(\''+enc+'\',\''+esc(encodeURIComponent(r.name||''))+'\')">📨 Надіслати</button>'
+        +(notes.length?'<button type="button" class="btn" style="min-height:42px;border-radius:10px" onclick="pickNoteSave(\''+enc+'\',\'\',true)">Прибрати вказівку</button>':'')
+        +'<button type="button" class="btn" style="min-height:42px;border-radius:10px" onclick="pickNoteEditKey=null;renderPickPage()">Скасувати</button></div></div>';
+    }else h+='<button type="button" onclick="pickNoteEditKey=decodeURIComponent(\''+enc+'\');renderPickPage();setTimeout(function(){var t=G(\'pkNoteTa\');if(t)t.focus();},50)" style="margin-top:8px;padding:7px 12px;border-radius:10px;border:1.5px dashed #e8b84a;background:#fffaf0;color:#8a5a00;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">📝 '+(notes.length?'Змінити вказівку':'Вказівка вантажнику')+'</button>';
+  }
+  return h;
+}
+async function pickNoteSave(encKey,encName,clear){
+  var k=decodeURIComponent(encKey),p=k.lastIndexOf('|'),lists=k.slice(0,p),art=k.slice(p+1);
+  var text=clear?'':String((G('pkNoteTa')||{}).value||'').trim();if(!clear&&!text){toast('Напиши вказівку','wa');return;}
+  var res=await callScriptPost('pickNoteSet',{lists:lists,art:art,name:decodeURIComponent(encName||''),text:text});
+  if(res&&res.ok){pickNoteEditKey=null;toast(clear?'Вказівку прибрано':'📨 Надіслано — вантажник побачить за кілька секунд','ok',3000);pickNotesVer='';await pickNotesPoll(true);renderPickPage();}
+  else toast((res&&(res.error||res.msg))||'Не вдалося надіслати','er',4000);
+}
+
 function pickRouteHtml(btn,multi){
   var rows=pickRouteRows();rows.forEach(function(r){if(r.open)r.pal=pickRowPallet(r);});
   var openR=rows.filter(function(r){return r.open;});
@@ -7566,6 +7679,7 @@ function pickRouteHtml(btn,multi){
       var clS=grp.map(function(x){return pickClientsTxt(x)+(ls.length>1||multi?' (№'+esc(x.listNum)+')':'');}).join(' · ');var W='white-space:normal;width:100%;min-width:0';
       return '<div class="pk-row" style="background:#fff;border:2px solid #c98a1a;border-radius:16px;padding:12px;margin-bottom:10px">'
         +'<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:18px;font-weight:800;flex:1;line-height:1.2">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:3px 8px;border-radius:8px;background:#141413;color:#fff;font-size:13px;font-weight:800;white-space:nowrap">'+esc(r.size)+'</span>':'')+'</div>'
+        +pickNoteBlock(r,ls)
         +'<div style="margin-top:6px;font-size:13.5px;color:#7a4a00;font-weight:700">В ящику було мало, інших ящиків цього сорту нема. Візьми з ячейки (фасовано) або познач проблему — уточнити: поїде без цього чи буде заміна.</div>'
         +(r.cells.length?'<div style="margin-top:4px;font-size:12.5px;color:#5a3f8f;font-weight:600">▦ Ячейка: '+r.cells.map(function(c){return esc(c.cell);}).join(', ')+'</div>':'')
         +'<div style="margin-top:6px;font-size:12px;color:var(--tx2)">Потрібно <b>'+packs+' уп'+(r.pack?' · '+need+' шт':'')+'</b> · '+clS+'</div>'
@@ -7580,6 +7694,7 @@ function pickRouteHtml(btn,multi){
     var h2='<div class="pk-row" style="background:#fff;border:2px solid var(--tx);border-radius:16px;padding:12px;margin-bottom:10px">'
       +'<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:18px;font-weight:800;flex:1;line-height:1.2">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:3px 8px;border-radius:8px;background:#141413;color:#fff;font-size:13px;font-weight:800;white-space:nowrap">'+esc(r.size)+'</span>':'')+'</div>'
       +(r.mixArt?'<div style="margin-top:3px;font-size:12px;font-weight:700;color:#5a3f8f">мікс «'+esc(r.mixName)+'» · '+r.comp.per+' шт в упаковці</div>':'')
+      +pickNoteBlock(r,ls)
       +'<div style="margin-top:6px;font-size:14px">'+boxesHtml+'</div>'
       +'<div style="margin-top:6px;font-size:12px;color:var(--tx2);line-height:1.45">Потрібно <b>'+packs+' уп'+(r.pack?' · '+need+' шт':'')+'</b> · '+cl+' · <span style="font-family:\'SF Mono\',Menlo,monospace;color:#5a3f8f">'+esc(r.florList.join(', ')||r.art)+'</span></div>'
       +((li.subst||li.refNote)?'<div style="margin-top:6px;font-size:12px;color:#1f4a86;background:#e8f0fe;border-radius:8px;padding:5px 8px">'+(li.subst?'↻ '+esc(li.subst):'')+(li.refNote?(li.subst?'<br>':'')+'📒 '+esc(li.refNote):'')+'</div>':'')
@@ -7629,7 +7744,7 @@ function pickRouteHtml(btn,multi){
     if(!showR)h+='<button type="button" class="btn" onclick="pickState.showRoute=true;renderPickPage()" style="width:100%;min-height:44px;border-radius:12px;margin-top:10px">Весь маршрут ▾</button>';
     else{
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px"><span style="font-size:11.5px;font-weight:700;color:var(--mu);letter-spacing:.4px;text-transform:uppercase">Маршрут</span>'+(narrow?sb('Згорнути ▴','pickState.showRoute=false;renderPickPage()'):'')+'</div><div style="background:#fff;border:1px solid var(--bo);border-radius:14px;overflow:hidden">';
-      h+=order.map(function(g){var nl=g==='~пізніше'?'Пізніше':(g==='~кінець'?'Мало':(g==='~без розміщення'?'—':g));return '<div onclick="pickNextPallet(\''+esc(g)+'\')" style="display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--gray6);cursor:pointer;'+(g===cur?'background:#f4f6f2':'')+'"><span style="min-width:52px;font-weight:800;font-size:15px">'+esc(nl)+'</span><span style="flex:1;font-size:13px">'+groups[g].map(function(r){return esc(r.name);}).join(', ')+'</span></div>';}).join('');
+      h+=order.map(function(g){var nl=g==='~пізніше'?'Пізніше':(g==='~кінець'?'Мало':(g==='~без розміщення'?'—':g));return '<div onclick="pickNextPallet(\''+esc(g)+'\')" style="display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--gray6);cursor:pointer;'+(g===cur?'background:#f4f6f2':'')+'"><span style="min-width:52px;font-weight:800;font-size:15px">'+esc(nl)+'</span><span style="flex:1;font-size:13px">'+groups[g].map(function(r){return (pickNotesFor([r.listNum],r.art).length?'📝 ':'')+esc(r.name);}).join(', ')+'</span></div>';}).join('');
       var doneAll=rows.filter(function(r){return r.done;});
       if(doneAll.length)h+='<div style="padding:10px 12px;font-size:12.5px;color:var(--green-d)">✓ Відібрано: '+doneAll.map(function(r){return esc(r.name);}).join(', ')+'</div>';
       h+='</div>';
@@ -7792,7 +7907,7 @@ function renderStickersPage(){
   var rows=stickerState.showPrinted?all:todo;
   var stTodo=todo.reduce(function(t,r){return t+r.stickers;},0);
   var opt=function(v,label,on){return '<option value="'+esc(v)+'"'+(on?' selected':'')+'>'+esc(label)+'</option>';};
-  var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><h2 style="font-size:22px;font-weight:800;margin:0">🏷 Друк наліпок</h2><div style="font-size:12.5px;color:var(--mu);margin-top:2px">Вибери список, друкуй наліпки й став галочку — у «Фасовці» зʼявиться «наліпки надруковано».</div></div>'
+  var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><h2 style="font-size:22px;font-weight:800;margin:0">🏷 Друк наліпок</h2><div style="font-size:12.5px;color:var(--mu);margin-top:2px">Вибери список, натисни на артикул — він скопіюється, друкуй наліпки й тисни «Надруковано» справа — у «Фасовці» зʼявиться «наліпки надруковано».</div></div>'
     +'<button type="button" class="btn sm" onclick="loadAll(true).then(renderStickersPage)">↻ Оновити</button></div>';
   h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:12px;margin-bottom:12px">'
     +'<label for="stSel" style="font-size:12px;font-weight:700;color:var(--mu)">СПИСОК</label>'
@@ -7808,18 +7923,25 @@ function renderStickersPage(){
   if(!rows.length){h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:24px;text-align:center;color:var(--mu)">'+(all.length?'✓ Усі наліпки цього списку надруковано':'У цьому списку ще нема відібраного')+'</div>';el.innerHTML=h;return;}
   h+=rows.map(function(r){
     var ak=esc(r.art);
-    return '<div onclick="stickToggle(\''+ak+'\')" style="display:flex;gap:12px;align-items:flex-start;background:'+(r.printed?'#f4fbf4':'#fff')+';border:1.5px solid '+(r.printed?'#b9d3bf':'var(--bo)')+';border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer">'
-      +'<span role="checkbox" aria-checked="'+(r.printed?'true':'false')+'" style="flex:none;width:30px;height:30px;border-radius:8px;border:2px solid '+(r.printed?'var(--g)':'var(--bo2)')+';background:'+(r.printed?'var(--g)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800">'+(r.printed?'✓':'')+'</span>'
+    return '<div style="display:flex;gap:12px;align-items:center;background:'+(r.printed?'#f4fbf4':'#fff')+';border:1.5px solid '+(r.printed?'#b9d3bf':'var(--bo)')+';border-radius:14px;padding:12px;margin-bottom:8px">'
       +'<div style="flex:1;min-width:0">'
-        +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-family:\'SF Mono\',Menlo,monospace;font-weight:700;color:var(--blue)">'+esc(r.art)+'</span><span style="font-size:15.5px;font-weight:800">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:1px 7px;border-radius:7px;background:#141413;color:#fff;font-size:12px;font-weight:800">'+esc(r.size)+'</span>':'')+(r.mix?'<span style="font-size:11px;color:#5a3f8f;font-weight:700">мікс</span>':'')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" onclick="stickCopy(\''+ak+'\',this)" title="Скопіювати артикул" style="display:inline-flex;align-items:center;gap:5px;font-family:\'SF Mono\',Menlo,monospace;font-weight:800;font-size:15px;color:var(--blue);background:var(--blue-l);border:1.5px solid rgba(47,96,171,.25);border-radius:9px;padding:5px 10px;min-height:38px;cursor:pointer;user-select:all">📋 <span>'+esc(r.art)+'</span></button><span style="font-size:15.5px;font-weight:800">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:1px 7px;border-radius:7px;background:#141413;color:#fff;font-size:12px;font-weight:800">'+esc(r.size)+'</span>':'')+(r.mix?'<span style="font-size:11px;color:#5a3f8f;font-weight:700">мікс</span>':'')+'</div>'
         +'<div style="font-size:13px;margin-top:3px"><b style="font-size:17px">'+r.stickers+'</b> '+(r.stickers===1?'наліпка':(r.stickers>1&&r.stickers<5?'наліпки':'наліпок'))+' · '+(r.per||'—')+' шт в '+r.unit+'</div>'
         +'<div style="font-size:12px;color:var(--tx2);margin-top:2px">для '+r.orders.map(function(o){return esc(o.client||('#'+o.num))+' '+(o.left!=null?o.left:o.qty);}).join(', ')+(stickerState.lists.length>1?' · №'+esc(r.orders.map(function(o){return o.list;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', №')):'')+'</div>'
         +(r.printed?'<div style="font-size:12px;color:var(--green-d);font-weight:700;margin-top:3px">✓ надруковано · '+esc(r.printedBy)+'</div>':(r.picked?'':'<div style="font-size:12px;color:#9a5a00;margin-top:3px">'+(r.partial?'відібрано '+esc(r.partial):'ще не відібрано')+'</div>'))
-      +'</div></div>';
+      +'</div>'
+      +'<button type="button" onclick="stickToggle(\''+ak+'\')" aria-pressed="'+(r.printed?'true':'false')+'" title="'+(r.printed?'Натисни ще раз, щоб зняти позначку':'Познач, коли наліпки надруковано')+'" style="flex:none;min-width:142px;min-height:54px;border-radius:12px;font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer;'+(r.printed?'background:var(--g);color:#fff;border:2px solid var(--g)':'background:#fff;color:var(--tx);border:2px solid var(--bo2)')+'">'+(r.printed?'✓ Надруковано':'☐ Надруковано')+'</button>'
+      +'</div>';
   }).join('');
   el.innerHTML=h;
 }
-// галочка «надруковано»: на кожен список, де є цей артикул, — свій запис; повторний натиск знімає
+// копіювати артикул (для програми друку наліпок)
+function stickCopy(art,btn){
+  var t=String(art);var ok=function(){toast('Скопійовано: '+t,'ok',1400);if(btn){var sp=btn.querySelector('span');if(sp){var o=sp.textContent;sp.textContent='скопійовано';btn.style.background='var(--green-l)';setTimeout(function(){sp.textContent=o;btn.style.background='';},900);}}};
+  var fb=function(){var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();ok();};
+  try{if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(ok,fb);else fb();}catch(e){fb();}
+}
+// кнопка «Надруковано»: на кожен список, де є цей артикул, — свій запис; повторний натиск знімає
 function stickToggle(art){
   var a=nk(art);var nums=stickerState.lists||[];var recs=stickRecs(nums,a);
   if(recs.length){recs.forEach(function(p){pickUndoId(p.id);});toast('Позначку «надруковано» знято','in',1800);renderStickersPage();return;}
