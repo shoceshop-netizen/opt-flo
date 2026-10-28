@@ -1279,7 +1279,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='28.10.2026 · наліпки: копія і кнопка';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='28.10.2026 · шт в упаковці';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -3836,6 +3836,9 @@ function siteStatusOf(o){var its=items[o.num]||[];var c={},best='',bn=0;its.forE
 // Фасується ≈ В роботі, Перевірено ≈ Готове — це не розбіжність.
 var SITE_GROUP={new:'new',work:'work',pack:'work',ready:'ready',verified:'ready',partial:'ready',sent:'sent',defer:'defer',cancel:'cancel'};
 function siteStatusMismatch(o){var ss=siteStatusOf(o);if(!ss)return '';var a=SITE_GROUP[sk(o.status)]||sk(o.status),b=SITE_GROUP[sk(ss)]||sk(ss);if(a===b)return '';if(b==='sent')return 'shipped';return 'diff';}
+// активне замовлення, де для якоїсь позиції невідомо «шт в упаковці»
+function packWarnBadge(o){var k=sk(o.status);if(k==='sent'||k==='cancel'||k==='verified')return '';var n=(items[o.num]||[]).filter(function(it){return !packKnown(it.art);}).length;
+  return n?'<span title="Для '+n+' поз. невідомо, скільки штук в упаковці — відкрий замовлення і впиши" style="display:inline-block;background:#fff4d6;color:#8a5a00;border:1px solid #e8b84a;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:7px;white-space:nowrap">⚠ шт/уп? · '+n+'</span>':'';}
 function siteStatusBadge(o,big){var m=siteStatusMismatch(o);if(!m)return '';var ss=siteStatusOf(o);
   return m==='shipped'?'<span title="У гугл-таблиці «вигрузка» замовлення вже «'+esc(ss)+'», а в панелі — «'+esc(o.status||'')+'»" style="display:inline-block;background:#1f4a86;color:#fff;font-size:'+(big?'12':'10.5')+'px;font-weight:800;padding:2px 8px;border-radius:7px;white-space:nowrap">🚚 вже відправлено (вигрузка)</span>'
     :'<span title="Статус у гугл-таблиці «вигрузка» інший" style="display:inline-block;background:#fff1d6;color:#7a4a00;border:1px solid #f0cf9a;font-size:'+(big?'12':'10.5')+'px;font-weight:800;padding:1px 7px;border-radius:7px;white-space:nowrap">≠ у вигрузці: '+esc(ss)+'</span>';}
@@ -4354,7 +4357,7 @@ function renderOrders(){
         +'<div class="oname">'+esc(o.name)+(orderAnomalies(o).length?' <span title="Є неузгодженості — відкрий картку" style="display:inline-block;background:var(--r);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">⚠ '+orderAnomalies(o).length+'</span>':'')+'</div><div class="onum">№ '+esc(o.num)+(oD?' · від '+esc(fmtDM(oD)):'')+(sameAsPrev?' <span style="color:var(--blue);font-weight:600">↳ ще одне замовлення цього клієнта</span>':'')+'</div>'
         +'<div class="oitem">'+(first?('<span class="osku">'+esc(first.art)+'</span>'+esc(first.name)):'—')+(more>0?'<span class="omore">+'+more+' позиц.</span>':'')+'</div>'
       +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+packWarnBadge(o)+'</div>'
     +'</div>';
   });
   window._ordVisible=list.map(function(o){return o.id;});
@@ -4484,7 +4487,8 @@ function selectOrder(id){
     var grandTotalPcs=0;
     var missingStock=0;
     var issueCount=0,partialCount=0;
-    var rowsHtml=its.map(function(it,i){
+    var unknownPack=its.filter(function(it){return !packKnown(it.art);});
+  var rowsHtml=its.map(function(it,i){
       var fu=furyGet(it.art)||null;
       var artF=fu?fu.artFlorium:'—';
       var st=findStockForItem(it.art);
@@ -4531,13 +4535,17 @@ function selectOrder(id){
         +'<td style="text-align:center"><input type="text" inputmode="decimal" value="'+(priceOf(it.art,it,o.num)||'')+'" placeholder="—" onchange="savePrice(\''+esc(it.art)+'\',this.value,\''+esc(String(it.name||'').replace(/[\'\\]/g,''))+'\',this,\''+esc(o.num)+'\')" title="'+(isPieceArt(it.art)?'Ціна за 1 шт, грн (6-значний Арт.Флоріум)':'Ціна за упаковку, €')+', для цього замовлення. Зберігається в аркуш «ціни»" style="width:64px;padding:3px 5px;border:1.5px solid var(--bo2);border-radius:7px;font-family:inherit;font-size:12px;text-align:center;'+(priceOf(it.art,it,o.num)?'background:#e8fdf0':'')+'">'+(isPieceArt(it.art)?'<div style="font-size:10px;color:var(--mu)">грн / шт</div>':'')+'</td>'
         +'<td style="text-align:center">'+collCell+'</td>'
         +'<td style="text-align:center;white-space:nowrap">'+stockBadge+'</td>'
-        +'<td style="text-align:center;color:var(--blue);font-weight:500">'+(packQ||'—')+'</td>'
+        +(pieceA||packQ?'<td style="text-align:center;color:var(--blue);font-weight:500;white-space:nowrap">'+esc(packQ)+(packSrc(it.art)==='manual'?' <a href="#" onclick="packAsk(\''+esc(nk(it.art))+'\');return false;" title="Вписано вручну — змінити" style="font-size:11px;color:var(--mu)">✎ вручну</a>':'')+'</td>'
+          :'<td style="text-align:center;white-space:nowrap"><button type="button" onclick="packAsk(\''+esc(nk(it.art))+'\')" title="У фурі нема «шт в упаковці» — скільки штук в пакеті?" style="padding:5px 9px;border-radius:9px;border:1.5px solid #e0a526;background:#fff4d6;color:#8a5a00;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer">⚠ ? шт · вказати</button></td>')
         +'<td style="text-align:center;color:var(--green-d);font-weight:600">'+(totalPcs||'—')+'</td>'
         +'<td style="font-family:\'SF Mono\',Menlo,monospace;font-size:11px;color:var(--purple)">'+esc(artF)+'</td>'
         +'<td><span style="background:var(--gray6);padding:2px 7px;border-radius:5px;font-size:11px;color:var(--tx3);white-space:nowrap">'+esc(loc)+'</span></td>'
         +'</tr>';
     }).join('');
     body+='<div id="odFilt" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px">'+[['all','Усі'],['need','Не зібрано'],['short','Не вистачає на складі'],['prob','Проблеми']].map(function(x){return '<button class="btn sm" type="button" data-f="'+x[0]+'" onclick="odFilter(\''+x[0]+'\')" style="border-radius:999px">'+x[1]+'</button>';}).join('')+'<span id="odFiltN" style="font-size:11.5px;color:var(--mu);align-self:center;margin-left:auto"></span></div>';
+    if(unknownPack.length)body+='<div style="display:flex;gap:10px;align-items:flex-start;background:#fff4d6;border:1.5px solid #e8b84a;border-radius:12px;padding:10px 12px;margin-bottom:10px;color:#5a3e00">'
+      +'<span style="font-size:20px">⚠</span><div style="font-size:13px;line-height:1.45"><b>Невідомо, скільки штук в упаковці</b> для '+unknownPack.length+' поз.: '+unknownPack.map(function(it){return '<a href="#" onclick="packAsk(\''+esc(nk(it.art))+'\');return false;" style="color:#8a5a00;font-weight:800">'+esc(it.art)+'</a>';}).join(', ')
+      +'. У фурі нема «шт в упаковці», тож панель рахує <b>упаковками</b>, без штук. Натисни артикул або «⚠ ? шт · вказати» в колонці «В уп.» — і впиши, скільки штук у пакеті.</div></div>';
     body+='<div style="overflow:auto;border:1px solid var(--bo);border-radius:10px;background:#fff">'
       +'<table class="dt" style="font-size:13px;width:100%" id="odTbl">'
       +'<thead><tr style="font-size:10px;background:var(--gray6)">'
@@ -6649,7 +6657,19 @@ function getPackQtyRaw(art){
   var fu=furyGet(a)||null;
   if(!fu)return '';
   if(a.charAt(0)==='3')return fu.packBoxQty||'';
-  return fu.packQty||fu.packBoxQty||'';
+  return fu.packQty||'';   // упаковка: лише «шт в упаковці» (N); к-сть у ящику (K) — не підставляємо
+}
+// чи відомо, скільки штук в упаковці (з фури або вписано вручну в довідник)
+function packKnown(art){var a=String(art||'').trim();if(!a||/^\d{6}$/.test(a))return true;return !!(parseInt(getPackQtyRaw(a),10)>0);}
+function packSrc(art){var a=nk(art);if(/^\d{6}$/.test(a))return 'piece';var fu=furyGet(a);if(fu&&fu._refPack)return 'manual';return packKnown(a)?'fury':'none';}
+// вписати «шт в упаковці» вручну → довідник ручний (його бачать і сервер, і всі пристрої)
+async function packAsk(art){
+  var a=nk(art),fu=furyGet(a)||{},nm=(fu.name||artNameOf(a)||'');
+  var cur=parseInt(getPackQtyRaw(a),10)||'';var box=parseInt(fu.packBoxQty,10)||0;
+  var v=prompt('Скільки ШТУК в одній упаковці?\n'+a+(nm?' — '+nm:'')+(box?'\n(для довідки: у ящику з фури — '+box+' шт; це не те саме, що в пакеті)':''),cur);
+  if(v==null)return;v=parseInt(String(v).replace(/\D/g,''),10);if(!(v>0)){toast('Вкажи число більше 0','wa');return;}
+  var ok=await refSave({art:a,pack:v,override:true});
+  if(ok){toast('📦 '+a+': '+v+' шт в упаковці — збережено','ok',2500);try{renderOrders();}catch(e){}try{if(curOrder)renderOrderDetail(curOrder);}catch(e){}}
 }
 function furyPackOf(art){return parseInt(getPackQtyRaw(art),10)||0;}
 // Ціль позиції у СТЕБЛАХ: к-сть ящиків (вигрузка) × упаковка. Якщо упаковки нема в фурі — лишаємо як ящики.
