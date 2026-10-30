@@ -683,6 +683,15 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
   #pickBody{overflow-anchor:none}
   .mtab button[hidden]{display:none!important}
 }
+.digits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.num-card{border:1.5px solid var(--bo);border-radius:12px;padding:8px;background:var(--gray6);display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.num-card.done{background:var(--green-l);border-color:#a8d5b4}
+.num-n{font-size:22px;font-weight:800;text-align:center;line-height:1}
+.num-inp{width:100%;box-sizing:border-box;padding:5px 7px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:12.5px;text-align:center;background:#fff;color:var(--tx)}
+.num-inp.custom{border-color:#e0a526;background:#fff8e6;font-weight:700}
+.num-act{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.num-act button{min-width:30px;height:30px;padding:0 6px;border-radius:8px;border:1px solid var(--bo2);background:#fff;font-size:13px;cursor:pointer;color:var(--tx)}
+.cl-voice-row .num-inp{text-align:left;width:auto;flex:0 1 190px}
 /* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
 @media screen{
 html[data-theme="dark"]{color-scheme:dark;
@@ -1123,10 +1132,10 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
       <div style="background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:20px;margin-bottom:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div>
-            <div style="font-size:16px;font-weight:700">🔢 Цифри 0-9</div>
-            <div style="font-size:12px;color:var(--mu);margin-top:2px">Промов кожну цифру українською (нуль, один, два...)</div>
+            <div style="font-size:16px;font-weight:700">🔢 Числа 0–99</div>
+            <div style="font-size:12px;color:var(--mu);margin-top:2px">Кожне число — окремий запис. Під числом — як вимовляти: зміни (наприклад «оодиин») і натисни 🎙 — збережеться для всіх пристроїв, доки не зміниш знову. ⏺ — записати своїм голосом.</div>
           </div>
-          <div style="font-size:12px;color:var(--mu)"><span id="digitsProgress">0</span> / 10 записано</div>
+          <div style="font-size:12px;color:var(--mu)"><span id="digitsProgress">0</span> / 100 записано</div>
         </div>
         <div class="digits-grid" id="digitsGrid"></div>
       </div>
@@ -1296,7 +1305,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='28.10.2026 · мобільна версія';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='29.10.2026 · числа 0–99 і вимова';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -2393,31 +2402,57 @@ function saveDigitWord(inp){
   if(typeof toast==='function')toast('Цифра '+d+': «'+val+'» збережено','ok',1500);
 }
 
-// Рендер цифр
+// ===== ЯК ВИМОВЛЯТИ: власний текст для кожного запису (цифри, числа, фрази, імена клієнтів) =====
+// Наприклад «один» → «оодиин». Зберігається на сервері (для всіх пристроїв) і локально; діє, доки не зміниш знову.
+var DIGIT_DEFAULT={'0':'нуль','1':'один','2':'два','3':'три','4':'чотири','5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'};
+var voiceTexts={};try{voiceTexts=JSON.parse(localStorage.getItem('voiceTexts')||'{}')||{};}catch(e){voiceTexts={};}
+(function(){try{var o=JSON.parse(localStorage.getItem('DIGIT_WORDS_OVERRIDE')||'null');if(o)Object.keys(o).forEach(function(d){if(DIGIT_DEFAULT[d]&&o[d]&&o[d]!==DIGIT_DEFAULT[d]&&!voiceTexts['digit-'+d])voiceTexts['digit-'+d]=o[d];});}catch(e){}})();
+function voiceText(key,def){var t=voiceTexts[key];return (t&&String(t).trim())?String(t).trim():def;}
+function voiceDefText(key){var k=String(key).replace(/~m$/,'');var m;
+  if((m=k.match(/^digit-(\d)$/)))return DIGIT_DEFAULT[m[1]];
+  if(typeof TTS_NUMBERS!=='undefined'&&TTS_NUMBERS[k])return TTS_NUMBERS[k];
+  if(typeof TTS_PHRASES!=='undefined'&&TTS_PHRASES[k])return TTS_PHRASES[k];
+  if(typeof TTS_WORDS!=='undefined'&&TTS_WORDS[k])return TTS_WORDS[k];
+  if(k.indexOf('name-')===0)return k.slice(5);return '';}
+function voiceTextsApply(obj){if(!obj||typeof obj!=='object')return;voiceTexts=obj;try{localStorage.setItem('voiceTexts',JSON.stringify(obj));}catch(e){}}
+async function voiceTextSave(key,val){
+  var def=voiceDefText(key);val=String(val||'').trim();var next=Object.assign({},voiceTexts);
+  if(!val||val===def)delete next[key];else next[key]=val;voiceTextsApply(next);
+  var r=await callScriptPost('setSetting',{key:'VOICE_TEXTS',value:Object.keys(next).length?JSON.stringify(next):''});
+  if(r&&r.ok)toast((val&&val!==def)?'Вимова «'+val+'» збережена — для всіх пристроїв':'Повернуто стандартний текст «'+def+'»','ok',2200);
+  else toast('Збережено на цьому пристрої; на сервер не вдалось: '+((r&&(r.error||r.msg))||'?'),'wa',3500);
+}
+// перегенерувати ОДИН запис через Gemini — з тим текстом, що зараз у полі
+async function voiceRegenOne(key,btn){
+  var inp=document.querySelector('[data-vkey="'+key.replace(/"/g,'\\"')+'"]');
+  if(inp&&inp.value!==inp.defaultValue&&String(inp.value).trim()!==voiceText(key,voiceDefText(key)))await voiceTextSave(key,inp.value);   // людина змінила поле й одразу тисне 🎙
+  var text=voiceText(key,voiceDefText(key));if(!text){toast('Нема тексту','wa');return;}
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{var b=await gemGenerateOne(text);await voiceSave(key,b);toast('🎙 «'+text+'» згенеровано','ok',1800);try{await playSequence([b]);}catch(e){}}
+  catch(e){toast('Gemini: '+e.message,'er',4000);}
+  if(/^name-/.test(key))renderClientVoices();else renderDigitsGrid();
+}
+
+// Рендер чисел 0–99: кожне число — окремий запис; під числом — як вимовляти (можна змінити)
 async function renderDigitsGrid(){
-  var grid=document.getElementById('digitsGrid');
-  if(!grid)return;
-  var progress=0;
-  var html='';
-  for(var d=0;d<=9;d++){
-    var key='digit-'+d;
-    var has=await voiceLoad(key,'strict');
-    if(has)progress++;
-    var ds=String(d);
-    html+='<div class="dig-card'+(has?' done':'')+'" data-key="'+key+'">'
-      +'<div class="dig-num">'+ds+'</div>'
-      +'<input class="dig-word-inp" value="'+esc(DIGIT_WORDS[ds])+'" data-d="'+ds+'" onchange="saveDigitWord(this)" onkeydown="if(event.key===\'Enter\'){this.blur();}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" title="Натисни, щоб змінити назву" />'
-      +'<div class="dig-actions">'
-        +(has
-          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶ Прослухати</button>'
-            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'digits\')">✕</button>'
-          :'<span style="font-size:11px;color:var(--mu)">— немає</span>')
-      +'</div>'
-    +'</div>';
+  var grid=document.getElementById('digitsGrid');if(!grid)return;
+  var progress=0,html='';
+  for(var n=0;n<100;n++){
+    var key=n<10?'digit-'+n:'num-'+n,def=voiceDefText(key),txt=voiceText(key,def),custom=txt!==def;
+    var has=await voiceLoad(key,'strict');if(has)progress++;
+    html+='<div class="num-card'+(has?' done':'')+'" data-key="'+key+'">'
+      +'<div class="num-n">'+n+'</div>'
+      +'<input class="num-inp'+(custom?' custom':'')+'" data-vkey="'+key+'" value="'+esc(txt)+'" title="Як вимовляти — зміни, наприклад «оодиин», і натисни 🎙" onchange="voiceTextSave(this.getAttribute(\'data-vkey\'),this.value).then(function(){renderDigitsGrid();})" onkeydown="if(event.key===\'Enter\')this.blur()">'
+      +'<div class="num-act">'
+        +(has?'<button type="button" onclick="playRecording(\''+key+'\')" title="Прослухати">▶</button>':'')
+        +'<button type="button" onclick="voiceRegenOne(\''+key+'\',this)" title="Згенерувати Gemini з цим текстом">🎙</button>'
+        +'<button type="button" onclick="startRecording(\''+key+'\',this.closest(\'.num-card\'))" title="Записати своїм голосом">⏺</button>'
+        +(custom?'<button type="button" onclick="voiceTextSave(\''+key+'\',\'\').then(function(){renderDigitsGrid();})" title="Повернути «'+esc(def)+'»">↺</button>':'')
+        +(has?'<button type="button" onclick="deleteRecording(\''+key+'\',\'digits\')" title="Видалити запис">✕</button>':'')
+      +'</div></div>';
   }
   grid.innerHTML=html;
-  var p=document.getElementById('digitsProgress');
-  if(p)p.textContent=progress;
+  var p=document.getElementById('digitsProgress');if(p)p.textContent=progress;
 }
 
 // Рендер списку клієнтів
@@ -2456,15 +2491,17 @@ async function renderClientVoices(){
     var key='name-'+n.name;
     var has=await voiceLoad(key,'strict');
     if(has)progress++;
+    var vt=voiceText(key,n.name),vc=vt!==n.name,ek=esc(key).replace(/'/g,'&#39;');
     rows+='<div class="cl-voice-row">'
       +'<div class="cl-name">'+esc(n.name)+'</div>'
+      +'<input class="num-inp'+(vc?' custom':'')+'" data-vkey="'+esc(key)+'" value="'+esc(vt)+'" placeholder="як вимовляти" title="Як вимовляти імʼя — зміни й натисни 🎙" style="max-width:190px" onchange="voiceTextSave(this.getAttribute(\'data-vkey\'),this.value).then(function(){renderClientVoices();})" onkeydown="if(event.key===\'Enter\')this.blur()">'
       +'<span class="cl-orders">'+n.count+' замовл.</span>'
       +'<span class="cl-status '+(has?'has':'no')+'">'+(has?'✓ записано':'— немає')+'</span>'
       +'<div class="cl-actions">'
-        +(has
-          ?'<button class="dig-btn play" onclick="playRecording(\''+key+'\')">▶</button>'
-            +'<button class="dig-btn" onclick="deleteRecording(\''+key+'\',\'clients\')">✕</button>'
-          :'')
+        +(has?'<button class="dig-btn play" onclick="playRecording(this.dataset.k)" data-k="'+esc(key)+'">▶</button>':'')
+        +'<button class="dig-btn" onclick="voiceRegenOne(this.dataset.k,this)" data-k="'+esc(key)+'" title="Згенерувати Gemini з цим текстом">🎙</button>'
+        +(vc?'<button class="dig-btn" onclick="voiceTextSave(this.dataset.k,\'\').then(function(){renderClientVoices();})" data-k="'+esc(key)+'" title="Повернути імʼя як є">↺</button>':'')
+        +(has?'<button class="dig-btn" onclick="deleteRecording(this.dataset.k,\'clients\')" data-k="'+esc(key)+'">✕</button>':'')
       +'</div>'
     +'</div>';
   }
@@ -2900,6 +2937,7 @@ async function ttsGenerateAll(category){
     names.forEach(function(x){todo['name-'+x.name]=x.name;});
   }
   
+  Object.keys(todo).forEach(function(k){todo[k]=voiceText(k,todo[k]);});   // як вимовляти — власний текст, якщо задано
   var keys=Object.keys(todo);
   if(!keys.length){ttsSetProgress('Нема чого генерувати');return;}
   
@@ -3076,7 +3114,7 @@ async function gemListGeminiKeys(){
     req.onsuccess=function(){var c=req.result;if(!c){resolve(out);return;}var v=c.value||{};if(String(v.key||'').indexOf('rec:')===0&&v.blob&&/wav/i.test(v.blob.type||''))out.push(String(v.key).slice(4));c.continue();};
     req.onerror=function(){resolve(out);};}catch(e){resolve([]);}});
 }
-function gemTextForKey(k){k=String(k).replace(/~m$/,'');if(TTS_DIGITS[k])return TTS_DIGITS[k];if(TTS_NUMBERS[k])return TTS_NUMBERS[k];if(TTS_PHRASES[k])return TTS_PHRASES[k];if(TTS_WORDS[k])return TTS_WORDS[k];if(k.indexOf('name-')===0)return k.slice(5);return '';}
+function gemTextForKey(k){k=String(k).replace(/~m$/,'');var _v=voiceDefText(k);if(_v)return voiceText(k,_v);if(TTS_DIGITS[k])return TTS_DIGITS[k];if(TTS_NUMBERS[k])return TTS_NUMBERS[k];if(TTS_PHRASES[k])return TTS_PHRASES[k];if(TTS_WORDS[k])return TTS_WORDS[k];if(k.indexOf('name-')===0)return k.slice(5);return '';}
 async function gemRedoGemini(){
   var keys=await gemListGeminiKeys();
   if(!keys.length){gemSetProgress('Записів від Gemini ще нема');return;}
@@ -3092,6 +3130,7 @@ async function gemGenerateAll(category,customTodo,forceRegen,rawKeys){
   if(category==='phrases'||category==='all')Object.assign(todo,TTS_PHRASES);
   if(category==='words'||category==='all')Object.assign(todo,TTS_WORDS);
   if(category==='names'||category==='all'){var ns={};(window.orders||[]).forEach(function(o){var nm=o&&o.name?String(o.name).trim():'';if(nm)ns[nm]=(ns[nm]||0)+1;});Object.keys(ns).sort(function(a,b){return ns[b]-ns[a];}).forEach(function(nm){todo['name-'+nm]=nm;});}
+  Object.keys(todo).forEach(function(k){todo[k]=voiceText(k,todo[k]);});   // як вимовляти — власний текст, якщо задано
   var keys=Object.keys(todo);if(!keys.length){gemSetProgress('Нема чого генерувати');return;}
   var regen=forceRegen||!!(document.getElementById('gemRegen')||{}).checked;
   gemBusy=true;gemStop=false;var sb=document.getElementById('gemStopBtn');if(sb)sb.style.display='';
@@ -3786,6 +3825,7 @@ async function loadAll(skipCache){
     if(G('page-verify')&&G('page-verify').classList.contains('on'))renderVerifyPage();
     if(G('page-analytics')&&G('page-analytics').classList.contains('on'))renderAnalytics();
     (function(){try{anCliLinks=JSON.parse((res.settings&&res.settings.CLIENT_LINKS)||'{}')||{};}catch(e){anCliLinks={};}if(typeof anCliReset==='function')anCliReset();})();
+    (function(){try{if(res.settings&&'VOICE_TEXTS' in res.settings&&typeof voiceTextsApply==='function')voiceTextsApply(res.settings.VOICE_TEXTS?JSON.parse(res.settings.VOICE_TEXTS):{});}catch(e){}})();
     (function(){var v=(res.settings&&res.settings.ANOM_FROM)!=null?res.settings.ANOM_FROM:(function(){try{return localStorage.getItem('anomFrom')||'';}catch(e){return '';}})();anomFrom=v?new Date(v+'T00:00:00'):null;try{localStorage.setItem('anomFrom',v||'');}catch(e){}})();
     (function(){var m=refMissing().length;var b=G('bRef');if(b){b.textContent=m;b.style.display=m?'':'none';}if(G('page-ref')&&G('page-ref').classList.contains('on'))renderRefPage();})();
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
@@ -7190,11 +7230,12 @@ async function ttsNameOnDemand(name){
   try{
     var eng=(typeof gemPrefs==='function')?gemPrefs().auto:'eleven';
     if(eng==='off')return null;
-    if(eng==='gemini'){var gb=await gemGenerateOne(name);if(gb)await voiceSave('name-'+name,gb);return gb;}
+    var say=voiceText('name-'+name,name);
+    if(eng==='gemini'){var gb=await gemGenerateOne(say);if(gb)await voiceSave('name-'+name,gb);return gb;}
     var key=localStorage.getItem(ELEVEN_KEY_STORAGE)||'';if(!key)return null;
     var vIn=localStorage.getItem(ELEVEN_VOICE_STORAGE)||'';
     var vid=await ttsResolveVoiceId(vIn,key)||ELEVEN_DEFAULT_VOICE_ID;
-    var blob=await ttsGenerateOne(key,vid,name);
+    var blob=await ttsGenerateOne(key,vid,say);
     if(blob)await voiceSave('name-'+name,blob);
     return blob;
   }catch(e){console.warn('ttsNameOnDemand:',e);return null;}
@@ -7705,6 +7746,70 @@ async function pickNoteSave(encKey,encName,clear){
   else toast((res&&(res.error||res.msg))||'Не вдалося надіслати','er',4000);
 }
 
+// ===== РОЗМІЩЕННЯ «ЗАНОВО»: товару не було на палеті, коли робили список, а потім зʼявився =====
+// Кнопка «🔍 Шукати знову» на картці + автоматична перевірка кожні 45 с для відкритих позицій без місця.
+// Сервер віддає свіжі рядки «товар склад» і «ячейки» лише для цих артикулів — швидко й без перезавантаження всього.
+function pickLocKeys(r){var K=stockKeysOf(r.mixArt&&r.comp?r.comp.flor:r.art);(r.florList||[]).forEach(function(f){K[nk(f)]=1;});String(r.flor||'').split(/[,;\s]+/).map(nk).filter(Boolean).forEach(function(f){K[f]=1;});return Object.keys(K);}
+function pickMergeStock(res,keys){
+  var K={};keys.forEach(function(k){K[nk(k)]=1;});
+  var sig=function(arr){return arr.map(function(x){return x.boxId+'@'+x.location+'#'+x.bulbs+'/'+x.boxStatus;}).sort().join('|');};
+  var oldMine=stock.filter(function(x){return K[nk(x.art)];}),rest=stock.filter(function(x){return !K[nk(x.art)];});
+  parseStock(res.stock||[]);var fresh=stock;stock=rest.concat(fresh);
+  var oc=cellsByFlor,ocSig=JSON.stringify(keys.map(function(k){return oc[nk(k)]||[];}));
+  parseCells(res.cells||[]);var nc=cellsByFlor,mg={};Object.keys(oc).forEach(function(f){if(!K[f])mg[f]=oc[f];});Object.keys(nc).forEach(function(f){mg[f]=nc[f];});cellsByFlor=mg;
+  var ncSig=JSON.stringify(keys.map(function(k){return mg[nk(k)]||[];}));
+  pickBump();return sig(oldMine)!==sig(fresh)||ocSig!==ncSig;
+}
+function pickLineNow(L,art){return (pickLines(L)||[]).find(function(x){return x.art===art;});}
+function pickLocText(ln){return ln.locsAvail&&ln.locsAvail.length?ln.locsAvail.map(function(l){return l.loc;}).slice(0,3).join(', '):(ln.cells&&ln.cells.length?'ячейка '+ln.cells[0].cell:'');}
+async function pickSearchAgain(art,listNum,btn){
+  var r=pickLineNow(listNum,art);if(!r){toast('Не знайшов позицію','wa');return;}
+  var keys=pickLocKeys(r);if(btn){btn.disabled=true;btn.textContent='🔍 Шукаю на складі…';}
+  var res=await callScriptPost('stockNow',{keys:keys.join(',')});
+  if(!res||!res.ok){toast((res&&(res.error||res.msg))||'Не вдалося перевірити склад','er',3500);if(btn){btn.disabled=false;btn.textContent='🔍 Шукати знову';}return;}
+  pickMergeStock(res,keys);var ln=pickLineNow(listNum,art),where=ln?pickLocText(ln):'';
+  if(where){toast('📍 Знайдено: '+where,'ok',4000);try{beep('ok');}catch(e){}}else toast('Поки нема на складі. Перевіряю сам кожні 45 с','in',3500);
+  var el=G('pickBody');if(el)el._lastHtml=null;renderPickPage();
+}
+var _pickLocBusy=false;
+async function pickAutoLocate(){
+  if(_pickLocBusy||document.hidden)return;var pg=G('page-pick');if(!pg||!pg.classList.contains('on')||!pickState.list)return;
+  var need=[];(pickState.lists||[]).forEach(function(L){(pickLines(L)||[]).forEach(function(ln){if(!ln.done&&!ln.missing&&!ln.locsAvail.length&&!ln.cells.length)need.push(ln);});});
+  if(!need.length)return;var keys={};need.forEach(function(ln){pickLocKeys(ln).forEach(function(k){keys[k]=1;});});
+  _pickLocBusy=true;
+  try{
+    var res=await callScriptPost('stockNow',{keys:Object.keys(keys).join(',')});
+    if(res&&res.ok&&pickMergeStock(res,Object.keys(keys))){
+      var found=need.map(function(o){return pickLineNow(o.listNum,o.art);}).filter(function(ln){return ln&&pickLocText(ln);});
+      if(found.length){try{beep('ok');}catch(e){}try{if(navigator.vibrate)navigator.vibrate([80,60,80]);}catch(e){}
+        toast('📍 Зʼявилось розміщення: '+found.slice(0,2).map(function(ln){return ln.name+' → '+pickLocText(ln);}).join('; ')+(found.length>2?' і ще '+(found.length-2):''),'ok',6000);}
+      var el=G('pickBody');if(el)el._lastHtml=null;renderPickPage();
+    }
+  }catch(e){}finally{_pickLocBusy=false;}
+}
+if(!window._pickLocInit){window._pickLocInit=true;setInterval(pickAutoLocate,45000);}
+// ===== СПИСОК ВІДІБРАНОГО =====
+var pickDoneOpen=null;
+function pickDoneListHtml(rows){
+  var done=rows.filter(function(r){return r.done;});if(!done.length)return '';
+  var narrow=window.innerWidth<640;var open=pickDoneOpen!=null?pickDoneOpen:!narrow;
+  done.sort(function(a,b){var ta=(a.counting[a.counting.length-1]||{}).at||'',tb=(b.counting[b.counting.length-1]||{}).at||'';return tb.localeCompare(ta);});
+  var h='<div style="margin-top:12px;background:#fff;border:1px solid var(--bo);border-radius:14px;overflow:hidden">'
+    +'<button type="button" onclick="pickDoneOpen='+(!open)+';renderPickPage()" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;border:none;background:#f3faf4;font-family:inherit;cursor:pointer;text-align:left">'
+    +'<span style="font-weight:800;color:var(--green-d);font-size:14px">✓ Відібрано · '+done.length+' поз.</span><span style="flex:1"></span><span style="color:var(--mu);font-size:13px">'+(open?'згорнути ▴':'показати ▾')+'</span></button>';
+  if(open)h+=done.map(function(r){
+      var last=r.counting[r.counting.length-1]||{};var places={};r.counting.forEach(function(p){var pl=String(p.place||'').trim()||(p.type==='ячейка'?'ячейка':'');if(pl)places[pl]=1;});
+      var boxes=r.counting.filter(function(p){return p.box;}).length,manual=r.counting.filter(function(p){return p.type==='відібрано';}).length;
+      var how=(boxes?boxes+' ящ.':'')+(manual?(boxes?' + ':'')+'вручну':'')+(r.counting.some(function(p){return p.type==='заміна';})?' · заміна':'');
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--gray6)">'
+        +'<span style="color:var(--green-d);font-weight:800">✓</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;line-height:1.3">'+esc(r.name)+'</div>'
+        +'<div style="font-size:12px;color:var(--mu);margin-top:2px">'+esc(r.mixArt||r.art)+' · '+r.packs+' уп'+(how?' · '+esc(how):'')+(Object.keys(places).length?' · з '+esc(Object.keys(places).join(', ')):'')+(last.op?' · '+esc(last.op):'')+(last.at?' · '+esc(String(last.at).slice(11,16)):'')+((pickState.lists||[]).length>1?' · №'+esc(r.listNum):'')+'</div></div>'
+        +'<button type="button" onclick="pickRowUndo(\''+esc(r.art)+'\',\''+esc(r.listNum)+'\')" title="Скасувати останню позначку цієї позиції" style="flex:none;padding:6px 10px;border-radius:9px;border:1px solid var(--bo2);background:#fff;font-family:inherit;font-size:12.5px;cursor:pointer">↶</button></div>';
+    }).join('');
+  return h+'</div>';
+}
+
 function pickRouteHtml(btn,multi){
   var rows=pickRouteRows();rows.forEach(function(r){if(r.open)r.pal=pickRowPallet(r);});
   var openR=rows.filter(function(r){return r.open;});
@@ -7747,6 +7852,7 @@ function pickRouteHtml(btn,multi){
       +'<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:18px;font-weight:800;flex:1;line-height:1.2">'+esc(r.name)+'</span>'+(r.size?'<span style="padding:3px 8px;border-radius:8px;background:#141413;color:#fff;font-size:13px;font-weight:800;white-space:nowrap">'+esc(r.size)+'</span>':'')+'</div>'
       +(r.mixArt?'<div style="margin-top:3px;font-size:12px;font-weight:700;color:#5a3f8f">мікс «'+esc(r.mixName)+'» · '+r.comp.per+' шт в упаковці</div>':'')
       +pickNoteBlock(r,ls)
+      +((!r.locsAvail||!r.locsAvail.length)&&(!r.cells||!r.cells.length)?'<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" onclick="pickSearchAgain(\''+esc(r.art)+'\',\''+esc(r.listNum)+'\',this)" style="padding:8px 14px;min-height:42px;border-radius:10px;border:1.5px solid #2f60ab;background:#eef3fb;color:#1f4a86;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer">🔍 Шукати знову</button><span style="font-size:11.5px;color:var(--mu)">розміщення нема — склад перевіряється сам кожні 45 с</span></div>':'')
       +'<div style="margin-top:6px;font-size:14px">'+boxesHtml+'</div>'
       +'<div style="margin-top:6px;font-size:12px;color:var(--tx2);line-height:1.45">Потрібно <b>'+packs+' уп'+(r.pack?' · '+need+' шт':'')+'</b> · '+cl+' · <span style="font-family:\'SF Mono\',Menlo,monospace;color:#5a3f8f">'+esc(r.florList.join(', ')||r.art)+'</span></div>'
       +((li.subst||li.refNote)?'<div style="margin-top:6px;font-size:12px;color:#1f4a86;background:#e8f0fe;border-radius:8px;padding:5px 8px">'+(li.subst?'↻ '+esc(li.subst):'')+(li.refNote?(li.subst?'<br>':'')+'📒 '+esc(li.refNote):'')+'</div>':'')
@@ -7797,11 +7903,10 @@ function pickRouteHtml(btn,multi){
     else{
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px"><span style="font-size:11.5px;font-weight:700;color:var(--mu);letter-spacing:.4px;text-transform:uppercase">Маршрут</span>'+(narrow?sb('Згорнути ▴','pickState.showRoute=false;renderPickPage()'):'')+'</div><div style="background:#fff;border:1px solid var(--bo);border-radius:14px;overflow:hidden">';
       h+=order.map(function(g){var nl=g==='~пізніше'?'Пізніше':(g==='~кінець'?'Мало':(g==='~без розміщення'?'—':g));return '<div onclick="pickNextPallet(\''+esc(g)+'\')" style="display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--gray6);cursor:pointer;'+(g===cur?'background:#f4f6f2':'')+'"><span style="min-width:52px;font-weight:800;font-size:15px">'+esc(nl)+'</span><span style="flex:1;font-size:13px">'+groups[g].map(function(r){return (pickNotesFor([r.listNum],r.art).length?'📝 ':'')+esc(r.name);}).join(', ')+'</span></div>';}).join('');
-      var doneAll=rows.filter(function(r){return r.done;});
-      if(doneAll.length)h+='<div style="padding:10px 12px;font-size:12.5px;color:var(--green-d)">✓ Відібрано: '+doneAll.map(function(r){return esc(r.name);}).join(', ')+'</div>';
       h+='</div>';
     }
   }
+  h+=pickDoneListHtml(rows);
   if(pickState.lastIds.length)h+='<div style="margin-top:10px">'+sb('↶ Скасувати останнє','pickUndoLast()')+'</div>';
   var nums=pickState.lists||[];var closedAll=nums.length&&nums.every(function(n){return pickListClosed(n);});
   if(nums.length===1&&pickListClosed(nums[0]))h+='<div style="margin-top:12px;background:#eef0ec;border:1px solid var(--bo);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13px"><span style="flex:1">Список закрито</span>'+sb('Відкрити знову','pickReopenList(\''+esc(nums[0])+'\')')+'</div>';
