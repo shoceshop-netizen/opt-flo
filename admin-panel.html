@@ -692,6 +692,14 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .num-act{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
 .num-act button{min-width:30px;height:30px;padding:0 6px;border-radius:8px;border:1px solid var(--bo2);background:#fff;font-size:13px;cursor:pointer;color:var(--tx)}
 .cl-voice-row .num-inp{text-align:left;width:auto;flex:0 1 190px}
+@media(min-width:769px){.sb #meGif,.sb #voiceDock{transition:opacity .15s ease}.sb:not(:hover) #meGif,.sb:not(:hover) #voiceDock{opacity:0;pointer-events:none}}
+.tb-gif{flex:0 1 auto;margin:0 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;pointer-events:none;user-select:none}
+.tb .gs{flex:1 0 auto;width:min(560px,32vw)}
+.tb-gif img{height:54px;width:auto;max-width:100%;object-fit:contain;image-rendering:pixelated;display:block}
+.tb-gif .tb-hi{font-weight:800;font-size:14px;color:var(--tx2);white-space:nowrap;transition:opacity .8s ease}
+.tb-gif .tb-hi.fade{opacity:0}
+.tb-gif:empty{flex:0 0 0}
+@media(max-width:900px){.tb-gif{display:none!important}}
 /* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
 @media screen{
 html[data-theme="dark"]{color-scheme:dark;
@@ -902,6 +910,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
     <button class="mb" onclick="sbToggle()">☰</button>
     <span class="tb-title" id="pgTitle">Замовлення</span>
     <div class="gs"><label for="gsInp" style="position:absolute;left:-9999px">Пошук по таблиці</label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="position:absolute;left:11px;top:11px;width:16px;height:16px;stroke-width:2;color:var(--mu);pointer-events:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsInp" type="search" placeholder="Артикул, № замовлення, клієнт, штрихкод…  ( / )" autocomplete="off" spellcheck="false" oninput="gsInput()" onfocus="gsInput()" onblur="gsBlurSoon()" onkeydown="gsKey(event)"><div id="gsDrop" style="display:none"></div></div>
+    <div id="tbGif" class="tb-gif" aria-hidden="true"></div>
     <div class="tb-right">
       <div class="upd"><span class="udot pend" id="updDot"></span><span id="updTxt">Завантаження...</span></div>
       <button class="btn sm" id="themeBtn" onclick="cycleTheme()" title="Тема: день / ніч / як у системі">🌓</button>
@@ -1305,7 +1314,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='29.10.2026 · числа 0–99 і вимова';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='29.10.2026 · GIF у верхній панелі';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -1620,9 +1629,89 @@ function playIntro(done){
   setTimeout(function(){if(!el.classList.contains('dissolving'))dissolve();},4600);   // запобіжник
 }
 
+// ===== АНІМАЦІЯ (GIF) КОЖНОГО КОРИСТУВАЧА: вітання після входу + маленька «жива» картинка в меню =====
+// Файли — на Google Drive (завантажує супер-адмін у «Користувачі»); на кожному пристрої кешуються, тож тягнуться один раз.
+async function avatarCacheGet(login){var db=await openVoiceCache();if(!db)return null;return new Promise(function(res){try{var rq=db.transaction('audio','readonly').objectStore('audio').get('gif:'+login);rq.onsuccess=function(){res(rq.result||null);};rq.onerror=function(){res(null);};}catch(e){res(null);}});}
+async function avatarCachePut(login,blob,v){var db=await openVoiceCache();if(!db)return;return new Promise(function(res){try{var tx=db.transaction('audio','readwrite');tx.objectStore('audio').put({key:'gif:'+login,blob:blob,v:v,ts:Date.now()});tx.oncomplete=res;tx.onerror=res;}catch(e){res();}});}
+async function avatarCacheDel(login){var db=await openVoiceCache();if(!db)return;try{db.transaction('audio','readwrite').objectStore('audio').delete('gif:'+login);}catch(e){}}
+function b64ToBlob(b64,mime){var bin=atob(b64),n=bin.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:mime||'image/gif'});}
+var _avatarUrl=null,_avatarFor='';
+async function avatarUrlFor(login,knownV){
+  var cached=await avatarCacheGet(login),v=knownV;
+  if(v==null){try{var me=await callScript('me',{});if(me&&me.ok)v=me.gifV||0;}catch(e){}}
+  if(v==null)v=cached?cached.v:0;
+  if(!v){if(cached)avatarCacheDel(login);return null;}
+  if(cached&&cached.v===v&&cached.blob)return URL.createObjectURL(cached.blob);
+  var r=await callScriptPost('avatarGet',{login:login});if(!r||!r.ok||r.none||!r.b64)return null;
+  var blob=b64ToBlob(r.b64,r.mime);await avatarCachePut(login,blob,r.v);return URL.createObjectURL(blob);
+}
+async function avatarLoadMine(){
+  var u=curUser();if(!u||!u.login)return null;
+  if(_avatarFor===u.login&&_avatarUrl)return _avatarUrl;
+  var url=await avatarUrlFor(u.login,null);_avatarUrl=url;_avatarFor=u.login;renderMeGif();return url;
+}
+var _avatarGreet=false;
+function renderMeGif(){
+  var box=G('tbGif');if(!box)return;
+  if(!_avatarUrl){box.innerHTML='';return;}
+  var img=box.querySelector('img');
+  if(!img||img.getAttribute('src')!==_avatarUrl){box.innerHTML='<img src="'+_avatarUrl+'" alt="">';}   // той самий файл — не чіпаємо, анімація не перезапускається
+  var hi=box.querySelector('.tb-hi');
+  if(_avatarGreet&&!hi){var u=curUser(),h=new Date().getHours(),w=h<11?'Доброго ранку':(h<17?'Привіт':(h<22?'Доброго вечора':'Доброї ночі'));
+    var sp=document.createElement('span');sp.className='tb-hi';sp.textContent=w+', '+(u.name||u.login)+'! 👋';box.appendChild(sp);
+    setTimeout(function(){sp.classList.add('fade');},6000);setTimeout(function(){sp.remove();},7000);_avatarGreet=false;}
+}
+function avatarGreet(){_avatarGreet=true;if(_avatarUrl)renderMeGif();else avatarLoadMine();}
+async function showUserGif(force){
+  var u=curUser();if(!u||!u.login)return;
+  var url=_avatarUrl&&_avatarFor===u.login?_avatarUrl:await avatarLoadMine();if(!url)return;
+  var old=G('userGifCard');if(old)old.remove();
+  var h=new Date().getHours(),hi=h<11?'Доброго ранку':(h<17?'Привіт':(h<22?'Доброго вечора':'Доброї ночі'));
+  var w=document.createElement('div');w.id='userGifCard';
+  w.style.cssText='position:fixed;inset:0;z-index:99970;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(16,22,18,.28);opacity:0;transition:opacity .35s ease;cursor:pointer';
+  w.innerHTML='<div style="background:var(--card);border-radius:22px;padding:18px 18px 14px;max-width:min(92vw,760px);box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center">'
+    +'<img src="'+url+'" alt="" style="display:block;max-width:100%;max-height:52vh;margin:0 auto;image-rendering:pixelated">'
+    +'<div style="font-size:20px;font-weight:800;margin-top:12px">'+hi+', '+esc(u.name||u.login)+'! 👋</div>'
+    +'<div style="font-size:12.5px;color:var(--mu);margin-top:4px">торкнись, щоб продовжити</div></div>';
+  document.body.appendChild(w);requestAnimationFrame(function(){w.style.opacity='1';});
+  var close=function(){w.style.opacity='0';setTimeout(function(){w.remove();},360);document.removeEventListener('keydown',close);};
+  w.addEventListener('click',close);document.addEventListener('keydown',close);
+  setTimeout(close,force?8000:6000);
+}
+// «Користувачі»: завантажити / прибрати анімацію
+function avatarPick(login){
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/gif,image/png,image/webp,image/jpeg';
+  inp.onchange=async function(){
+    var f=inp.files&&inp.files[0];if(!f)return;if(f.size>3*1024*1024){toast('Файл більший за 3 МБ — зменш GIF','er',4000);return;}
+    toast('⏳ Завантажую «'+f.name+'»…','in',2500);
+    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(String(r.result).split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});
+    var r=await callScriptPost('avatarUpload',{login:login,b64:b64,mime:f.type||'image/gif'});
+    if(r&&r.ok){toast('🎞 Анімацію для «'+login+'» збережено ('+r.kb+' КБ)','ok',3000);await avatarCachePut(login,f,r.v);if(curUser().login===login){_avatarUrl=URL.createObjectURL(f);_avatarFor=login;renderMeGif();}usersCache=null;renderUsersPage();}
+    else toast('Не вдалося: '+((r&&(r.error||r.msg))||'?'),'er',4500);
+  };
+  inp.click();
+}
+async function avatarRemove(login){
+  if(!confirm('Прибрати анімацію для «'+login+'»?'))return;
+  var r=await callScriptPost('avatarDelete',{login:login});
+  if(r&&r.ok){await avatarCacheDel(login);if(curUser().login===login){_avatarUrl=null;renderMeGif();}toast('Анімацію прибрано','ok',2000);usersCache=null;renderUsersPage();}
+  else toast('Не вдалося','er');
+}
+async function avatarPreview(login){
+  var url=await avatarUrlFor(login,(usersGifs[login]||{}).v||null);if(!url){toast('Анімації нема','wa');return;}
+  var w=document.createElement('div');w.style.cssText='position:fixed;inset:0;z-index:99970;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);cursor:pointer;padding:16px';
+  w.innerHTML='<div style="background:var(--card);border-radius:18px;padding:14px"><img src="'+url+'" style="display:block;max-width:min(90vw,760px);max-height:70vh;image-rendering:pixelated"></div>';
+  w.onclick=function(){w.remove();};document.body.appendChild(w);
+}
+var usersGifs={};
+function avatarCell(login){var g=usersGifs[login];
+  return '<td style="white-space:nowrap;font-size:12px">'+(g?'<a href="#" onclick="avatarPreview(\''+esc(login)+'\');return false;">🎞 '+(g.kb||'')+' КБ</a> <a href="#" onclick="avatarPick(\''+esc(login)+'\');return false;" title="Замінити">↻</a> <a href="#" onclick="avatarRemove(\''+esc(login)+'\');return false;" title="Прибрати" style="color:var(--mu)">✕</a>'
+    :'<a href="#" onclick="avatarPick(\''+esc(login)+'\');return false;">＋ GIF</a>')+'</td>';}
+
 // ===== WELCOME SCREEN =====
 function showWelcomeScreen(){
-  playIntro(function(){try{nav(homePage());}catch(e){}});return;
+  avatarLoadMine();   // починаємо тягнути GIF, поки йде заставка
+  playIntro(function(){try{nav(homePage());}catch(e){}setTimeout(avatarGreet,900);});return;
 }
 function showWelcomeScreenOld(){
   if(G('welcomeScreen'))return;
@@ -7948,6 +8037,7 @@ function pageAllowed(p){var r=curUser().role;if(ROLE_PAGES[r])return ROLE_PAGES[
 function homePage(){var r=curUser().role;if(ROLE_PAGES[r])return ROLE_PAGES[r][0];return pageAllowed('dash')?'dash':'orders';}
 function applyRoleUI(){
   try{renderVoiceDock();}catch(e){}
+  try{if(curUser().login&&_avatarFor!==curUser().login){_avatarUrl=null;var tg=G('tbGif');if(tg)tg.innerHTML='';avatarLoadMine();}else renderMeGif();}catch(e){}
   try{[].forEach.call(document.querySelectorAll('.mtab button[data-p]'),function(b){var p=b.getAttribute('data-p');if(p==='find'||p==='more')return;b.hidden=!pageAllowed(p);});}catch(e){}
   var u=curUser();document.body.classList.remove('role-admin','role-manager','role-worker','role-viewer','role-packer');document.body.classList.add('role-'+(u.role||'admin'));
   var vb=G('viewerBadge');if(u.role==='viewer'){if(!vb){vb=document.createElement('div');vb.id='viewerBadge';vb.textContent='👁 Режим перегляду — змінювати нічого не можна';vb.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:9000;background:#1f4a86;color:#fff;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none';document.body.appendChild(vb);}}else if(vb)vb.remove();
@@ -7974,7 +8064,7 @@ async function usersToggleAdminPw(off){
 async function renderUsersPage(){
   var el=G('usersBody');if(!el)return;
   if(!usersCache){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--mu)">Завантажую…</div>';
-    var r=await callScriptPost('usersList',{});if(!r||!r.ok){el.innerHTML='<div style="padding:20px;color:var(--r)">'+esc((r&&r.error)||'Не вдалося завантажити')+'</div>';return;}usersCache=r.users||[];usersOwner=r.ownerEmail||'';usersAdminPwOff=!!r.adminPwOff;usersAdminPwSet=!!r.adminPwSet;}
+    var r=await callScriptPost('usersList',{});if(!r||!r.ok){el.innerHTML='<div style="padding:20px;color:var(--r)">'+esc((r&&r.error)||'Не вдалося завантажити')+'</div>';return;}usersCache=r.users||[];usersOwner=r.ownerEmail||'';usersAdminPwOff=!!r.adminPwOff;usersAdminPwSet=!!r.adminPwSet;usersGifs=r.gifs||{};}
   var roleSel=function(id,cur){return '<select id="'+id+'" style="padding:7px 8px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-height:38px">'+['worker','packer','viewer','manager','admin'].map(function(k){return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+ROLE_LABEL[k]+'</option>';}).join('')+'</select>';};
   var inp=function(id,val,ph,type,w){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" autocomplete="off" style="width:'+(w||'100%')+';box-sizing:border-box;padding:7px 9px;border:1.5px solid var(--bo2);border-radius:8px;font-family:inherit;font-size:13px;min-height:38px">';};
   var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px"><div><h2 style="font-size:24px;font-weight:700;letter-spacing:-.5px;margin:0">👥 Користувачі</h2>'
@@ -7989,9 +8079,9 @@ async function renderUsersPage(){
     +'<label style="font-size:12px;color:var(--mu)">Пароль (необовʼязково, якщо є пошта)'+inp('unPass','','щонайменше 4 символи','password')+'</label>'
     +'<button class="btn pr" type="button" onclick="userAddNew()" style="min-height:38px">+ Додати</button></div>'
     +'<div style="font-size:11.5px;color:var(--mu);margin-top:8px;line-height:1.55"><b>вантажник</b> — прийом, перескановка, товари, довідник, відбір, наліпки, фасовка. <b>фасувальник</b> — дашборд фасовки, фасування (списки), відбір, наліпки, фасовка. Обидва бачать лише активні замовлення, без грошей, аналітики й старих замовлень. <b>адмін</b> — усе, крім «Користувачі», фасування, прийому, перескановки, наліпок, голосів, фасовки й вигрузки. <b>перегляд</b> — бачить, але нічого не змінює. <b>супер-адмін</b> — усе.<br>Паролі зберігаються лише як посилений хеш на сервері — їх не видно ні в таблиці, ні в коді, ні тут. Пароль: щонайменше 6 символів (краще 8+).</div></div>';
-  h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px;overflow:auto"><table class="dt" style="width:100%;font-size:13px"><thead><tr><th>Логін</th><th>Імʼя</th><th>Пошта (вхід кодом)</th><th>Роль</th><th style="text-align:center">Активний</th><th>Останній вхід</th><th></th></tr></thead><tbody>'
-    +'<tr style="background:#f4f6f2"><td style="font-family:\'SF Mono\',Menlo,monospace">admin</td><td>Адмін <span style="color:var(--mu);font-size:12px">(ти)</span></td><td style="font-size:12.5px">'+esc(usersOwner||'—')+'</td><td>адміністратор</td><td style="text-align:center">✓</td><td style="color:var(--mu)">—</td><td style="font-size:12px">'+(usersAdminPwOff?'<span style="color:var(--g);font-weight:700">вхід «admin» вимкнено</span> <a href="#" onclick="usersToggleAdminPw(false);return false;">увімкнути</a>':'<a href="#" onclick="adminSetPw();return false;" style="font-weight:700">🔑 '+(usersAdminPwSet?'змінити пароль':'задати новий пароль (старий із коду перестане діяти)')+'</a> · <a href="#" onclick="usersToggleAdminPw(true);return false;">вимкнути вхід «admin»</a>')+'</td></tr>'
-    +(usersCache.length?usersCache.map(function(u,i){return '<tr><td style="font-family:\'SF Mono\',Menlo,monospace">'+esc(u.login)+'</td><td>'+inp('uName'+i,u.name)+'</td><td>'+inp('uEmail'+i,u.email||'','немає','email')+'</td><td>'+roleSel('uRole'+i,u.role)+'</td><td style="text-align:center"><input id="uAct'+i+'" type="checkbox"'+(u.active?' checked':'')+' aria-label="Активний" style="width:18px;height:18px"></td><td style="color:var(--mu);font-size:12px">'+esc(u.lastLogin||'—')+'</td><td style="white-space:nowrap"><button class="btn sm" type="button" onclick="userSaveRow('+i+')">Зберегти</button> <button class="btn sm" type="button" onclick="userResetPw('+i+')">Пароль</button> <button class="btn sm" type="button" onclick="userDel('+i+')" aria-label="Видалити">✕</button></td></tr>';}).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:14px">Працівників ще нема — додай першого вище</td></tr>')
+  h+='<div style="background:#fff;border:1px solid var(--bo);border-radius:14px;padding:14px 16px;overflow:auto"><table class="dt" style="width:100%;font-size:13px"><thead><tr><th>Логін</th><th>Імʼя</th><th>Пошта (вхід кодом)</th><th>Роль</th><th style="text-align:center">Активний</th><th>Останній вхід</th><th title="Зʼявляється, коли людина заходить у панель">Анімація</th><th></th></tr></thead><tbody>'
+    +'<tr style="background:#f4f6f2"><td style="font-family:\'SF Mono\',Menlo,monospace">admin</td><td>Адмін <span style="color:var(--mu);font-size:12px">(ти)</span></td><td style="font-size:12.5px">'+esc(usersOwner||'—')+'</td><td>адміністратор</td><td style="text-align:center">✓</td><td style="color:var(--mu)">—</td>'+avatarCell('admin')+'<td style="font-size:12px">'+(usersAdminPwOff?'<span style="color:var(--g);font-weight:700">вхід «admin» вимкнено</span> <a href="#" onclick="usersToggleAdminPw(false);return false;">увімкнути</a>':'<a href="#" onclick="adminSetPw();return false;" style="font-weight:700">🔑 '+(usersAdminPwSet?'змінити пароль':'задати новий пароль (старий із коду перестане діяти)')+'</a> · <a href="#" onclick="usersToggleAdminPw(true);return false;">вимкнути вхід «admin»</a>')+'</td></tr>'
+    +(usersCache.length?usersCache.map(function(u,i){return '<tr><td style="font-family:\'SF Mono\',Menlo,monospace">'+esc(u.login)+'</td><td>'+inp('uName'+i,u.name)+'</td><td>'+inp('uEmail'+i,u.email||'','немає','email')+'</td><td>'+roleSel('uRole'+i,u.role)+'</td><td style="text-align:center"><input id="uAct'+i+'" type="checkbox"'+(u.active?' checked':'')+' aria-label="Активний" style="width:18px;height:18px"></td><td style="color:var(--mu);font-size:12px">'+esc(u.lastLogin||'—')+'</td>'+avatarCell(u.login)+'<td style="white-space:nowrap"><button class="btn sm" type="button" onclick="userSaveRow('+i+')">Зберегти</button> <button class="btn sm" type="button" onclick="userResetPw('+i+')">Пароль</button> <button class="btn sm" type="button" onclick="userDel('+i+')" aria-label="Видалити">✕</button></td></tr>';}).join(''):'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:14px">Працівників ще нема — додай першого вище</td></tr>')
     +'</tbody></table></div>';
   el.innerHTML=h;
 }
