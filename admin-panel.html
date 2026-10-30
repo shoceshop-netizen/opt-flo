@@ -666,6 +666,23 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .page.on>*{flex-shrink:0;}
 #page-repack.on{display:block!important;overflow-y:auto!important;overflow-x:hidden;height:100%;}
 
+/* ===== Мобільна версія: виправлення ===== */
+@media(max-width:768px){
+  /* бічне меню — над нижньою панеллю, на всю видиму висоту (100vh на телефоні «ховає» низ під адресним рядком) */
+  .sb{top:0!important;bottom:0!important;height:auto!important;z-index:1200!important;padding-bottom:env(safe-area-inset-bottom,0px);overflow:hidden}
+  .sb .sb-nav{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .sb .sb-foot{opacity:1!important}
+  .mob-ov{z-index:1190!important}
+}
+@media(max-width:640px){
+  .main{padding-bottom:calc(74px + env(safe-area-inset-bottom,0px))!important}
+  /* відбір на весь екран: без нижньої панелі (назад — стрілка ← угорі), низ не ховається */
+  body.pick-full .mtab{display:none!important}
+  body.pick-full .main{padding-bottom:env(safe-area-inset-bottom,0px)!important}
+  body.pick-full #pickBody{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))!important}
+  #pickBody{overflow-anchor:none}
+  .mtab button[hidden]{display:none!important}
+}
 /* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
 @media screen{
 html[data-theme="dark"]{color-scheme:dark;
@@ -867,7 +884,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 <nav class="mtab" aria-label="Розділи">
   <button type="button" data-p="scan" onclick="nav('scan')"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>Прийом</button>
   <button type="button" data-p="pick" onclick="nav('pick')"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Відбір</button>
-  <button type="button" data-p="orders" onclick="goVerify()"><svg viewBox="0 0 24 24"><path d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path d="M9 14l2 2 4-4"/></svg>Перевірка</button>
+  <button type="button" data-p="verify" onclick="nav('verify')"><svg viewBox="0 0 24 24"><path d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path d="M9 14l2 2 4-4"/></svg>Перевірка</button>
   <button type="button" data-p="find" onclick="nav('find');setTimeout(function(){var g=G('gsInp');if(g)g.focus();},80)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Пошук</button>
   <button type="button" data-p="more" onclick="sbToggle()"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Ще</button>
 </nav>
@@ -1279,7 +1296,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='28.10.2026 · шт в упаковці';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='28.10.2026 · мобільна версія';   // міняється з кожною версією — видно в меню і на екрані входу
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -3388,13 +3405,16 @@ var combinedAllItems=[]; // незмінений повний список дл�
 // Термінал зі сканером (Datalogic тощо): сканер друкує як клавіатура, тож екранна клавіатура лише заважає.
 // На сенсорних пристроях за замовчуванням поля скану без екранної клавіатури; кнопка «⌨» вмикає її для ручного вводу.
 function isTouchDev(){return ('ontouchstart' in window)||(navigator.maxTouchPoints>0);}
+// термінали зі сканером (Datalogic, Zebra, Honeywell, Urovo…) — режим сканера; звичайний телефон — режим телефона
+function devIsTerminal(){return /Datalogic|Memor|Skorpio|Joya|Falcon|Zebra|\bTC[0-9]{2}|\bMC[0-9]{2}|Honeywell|EDA[0-9]{2}|\bCT[0-9]{2}|Urovo|Newland|Chainway|iData|Sunmi|Point ?Mobile|\bPM[0-9]{2}|Unitech|Cipherlab|M3 ?Mobile/i.test(navigator.userAgent||'');}
+function kbModeGet(){var m='';try{m=localStorage.getItem('kbMode')||'';}catch(e){}if(m)return m;return (isTouchDev()&&!devIsTerminal())?'manual':'scanner';}
 function applyKbMode(){
-  var scanner=(localStorage.getItem('kbMode')||'scanner')==='scanner';
+  var scanner=kbModeGet()==='scanner';
   ['scInp','vmInput','pkInp'].forEach(function(id){var el=G(id);if(!el)return;var want=scanner?'none':'text';if(el.getAttribute('inputmode')!==want){el.setAttribute('inputmode',want);if(document.activeElement===el){el.blur();setTimeout(function(){el.focus();},30);}}});
   var b=G('kbTgl');if(b){b.style.display=isTouchDev()?'':'none';b.textContent=scanner?'⌨ показати клавіатуру':'⌨ сховати клавіатуру (режим сканера)';}
 }
 function toggleKb(){
-  localStorage.setItem('kbMode',(localStorage.getItem('kbMode')||'scanner')==='scanner'?'manual':'scanner');applyKbMode();
+  localStorage.setItem('kbMode',kbModeGet()==='scanner'?'manual':'scanner');applyKbMode();try{if(G('page-pick')&&G('page-pick').classList.contains('on'))renderPickPage();}catch(e){}
   var el=G('scInp');if(el){el.blur();setTimeout(function(){el.focus();},60);}
 }
 function init(){
@@ -7578,7 +7598,8 @@ function renderPickPage(){
     +'<button type="button" class="btn sm" onclick="try{localStorage.removeItem(\'pickOperator\')}catch(e){};renderPickPage()" title="Хто відбирає" style="border-radius:999px">'+esc(op)+'</button></div>';
   var qn=pickQPending();
   if(qn)h+='<div style="background:#fff3e0;border:1.5px solid #f0cf9a;border-radius:12px;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;color:#7a4a00;font-size:13px;font-weight:600"><span style="flex:1">⏳ Не відправлено: '+qn+' — дошлю, щойно буде звʼязок</span><button type="button" class="btn sm" onclick="pickQFlush()">Повторити</button></div>';
-  h+='<label for="pkInp" style="position:absolute;left:-9999px">Скануй ящик</label><input id="pkInp" class="s-inp" placeholder="Скануй ящик…" autocomplete="off" spellcheck="false" enterkeyhint="go" inputmode="'+((localStorage.getItem('kbMode')||'scanner')==='scanner'?'none':'text')+'" style="margin-bottom:8px">';
+  h+='<label for="pkInp" style="position:absolute;left:-9999px">Скануй ящик</label><input id="pkInp" class="s-inp" placeholder="Скануй ящик…" autocomplete="off" spellcheck="false" enterkeyhint="go" inputmode="'+(kbModeGet()==='scanner'?'none':'text')+'" style="margin-bottom:8px">'
+    +'<div style="display:flex;justify-content:flex-end;margin:-4px 0 8px"><button type="button" onclick="toggleKb()" style="border:none;background:transparent;color:var(--mu);font-family:inherit;font-size:12px;padding:4px 6px;cursor:pointer">'+(kbModeGet()==='scanner'?'📟 режим сканера · перемкнути на 📱 телефон':'📱 режим телефона · перемкнути на 📟 сканер')+'</button></div>';
   if(pickState.mode&&pickState.mode.type==='заміна'){var lnm=pickRowFind(pickState.mode.art,pickState.mode.listNum);h+='<div style="background:#e8f0fe;border:1.5px solid #9db8e8;border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div style="flex:1;font-size:14px;color:#1f4a86"><b>Заміна:</b> скануй ящик, який береш замість «'+esc(lnm?lnm.name:'')+'»</div><button type="button" class="btn sm" onclick="pickCancelMode()">Скасувати</button></div>';}
   var rcA=pickState.recent&&Date.now()<pickState.recent.until?pickState.recent:null;
   if(rcA){
@@ -7595,13 +7616,23 @@ function renderPickPage(){
       +(fb.subst?'<div style="display:flex;gap:8px;margin-top:8px">'+btn('Записати як заміну','pickAsSubst()',false,'flex:1')+'</div>':'')
       +(fb.extra?'<div style="display:flex;gap:8px;margin-top:8px">'+btn('Все одно записати','pickForce()',false,'flex:1')+'</div>':'')
       +'</div>';}
-  if(!pickState.list){h+=pickOverviewHtml();el.innerHTML=h;pickFocus();return;}
+  if(!pickState.list){h+=pickOverviewHtml();pickSetHtml(el,h);pickFocus();return;}
   h+=pickRouteHtml(btn,multi);
-  el.innerHTML=h;pickFocus();
+  pickSetHtml(el,h);pickFocus();
+}
+// перемалювати «Відбір» без стрибків: однаковий вміст — не чіпаємо; інакше зберігаємо прокрутку і текст у полі
+function pickSetHtml(el,h){
+  if(!el._wiredSet){el._wiredSet=true;el.addEventListener('click',function(){el._lastHtml=null;},true);el.addEventListener('input',function(){el._lastHtml=null;},true);}   // після дій людини — малюємо наново
+  if(el._lastHtml===h)return;el._lastHtml=h;
+  var sc=[el,G('page-pick'),document.scrollingElement].filter(Boolean).map(function(x){return [x,x.scrollTop];});
+  var inp=G('pkInp'),val=inp?inp.value:'',had=inp&&document.activeElement===inp;
+  el.innerHTML=h;
+  sc.forEach(function(p){if(p[0].scrollTop!==p[1])p[0].scrollTop=p[1];});
+  var ni=G('pkInp');if(ni&&val)ni.value=val;if(ni&&had)try{ni.focus({preventScroll:true});}catch(e){}
 }
 function pickClientsTxt(r){var pc={},ord=[];(r.rows||[]).forEach(function(x){var c=x.client||x.orderNum;if(pc[c]==null){pc[c]=0;ord.push(c);}pc[c]+=x.qty||0;});return ord.map(function(c){return esc(c)+' '+pc[c]+' уп';}).join(', ');}
 // ===== ВКАЗІВКИ ВАНТАЖНИКУ: супер-адмін пише на картці товару → термінал отримує за кілька секунд (звук, вібрація, вікно) =====
-var pickNotesMap={},pickNotesVer='',pickNotesTimer=null,pickNoteEditKey=null,pickNotesBusy=false;
+var pickNotesMap={},pickNotesVer='',pickNotesVm='',pickNotesTimer=null,pickNoteEditKey=null,pickNotesBusy=false;
 var PICK_NOTE_CHIPS=['Взяти з запасу','Не брати — погана якість','Замінити на …','Відкласти — візьмемо пізніше','Покласти окремо й підписати','Підійди до мене'];
 function pkNoteKey(list,art){return String(list).trim()+'|'+nk(art);}
 function pickNotesFor(lists,art){var out=[];(lists||[]).forEach(function(L){var n=pickNotesMap[pkNoteKey(L,art)];if(n)out.push(n);});return out;}
@@ -7613,12 +7644,13 @@ async function pickNotesPoll(force){
   try{
     var res=await callScriptPost('pickNotes',{lists:(pickState.lists||[]).join(','),ver:force?'':pickNotesVer});
     if(!res||!res.ok||res.same)return;
-    pickNotesVer=String(res.ver||'');var map={};(res.notes||[]).forEach(function(n){map[pkNoteKey(n.list,n.art)]=n;});pickNotesMap=map;
+    pickNotesVer=String(res.ver==null?'':res.ver);var map={};(res.notes||[]).forEach(function(n){map[pkNoteKey(n.list,n.art)]=n;});
+    var sig=JSON.stringify(res.notes||[]);var changed=sig!==pickNotesVm;pickNotesVm=sig;pickNotesMap=map;
     var mine=curUser().role!=='admin';
     var fresh=(res.notes||[]).filter(function(n){return n.status==='нова'&&!pickNoteSeen(n);});
     fresh.forEach(pickNoteMarkSeen);
     if(mine&&fresh.length)pickNoteAlert(fresh);
-    if(!(pickNoteEditKey&&G('pkNoteTa')))renderPickPage();
+    if(changed&&!(pickNoteEditKey&&G('pkNoteTa')))renderPickPage();
   }catch(e){}finally{pickNotesBusy=false;}
 }
 function pickNotesStart(){if(pickNotesTimer)clearInterval(pickNotesTimer);pickNotesTimer=setInterval(function(){pickNotesPoll(false);},6000);pickNotesPoll(true);}
@@ -7786,8 +7818,9 @@ function pickFocus(){
     inp.oninput=function(){var now=Date.now();var dt=now-lastT;lastT=now;clearTimeout(tm);if(!inp.value.trim())return;tm=setTimeout(go,dt<100?160:10000);};
   }
   applyKbMode();
+  if(kbModeGet()!=='scanner')return;   // телефон: не відкриваємо клавіатуру самі — поле активне, коли людина в нього тапне
   var ae=document.activeElement;if(ae&&ae!==inp&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&G('pickBody').contains(ae))return;
-  setTimeout(function(){if(G('page-pick')&&G('page-pick').classList.contains('on')&&!(pickState.cellsFor||pickState.missFor))inp.focus();},30);
+  setTimeout(function(){if(G('page-pick')&&G('page-pick').classList.contains('on')&&!(pickState.cellsFor||pickState.missFor))inp.focus({preventScroll:true});},30);
 }
 
 // ============================================================
@@ -7810,6 +7843,7 @@ function pageAllowed(p){var r=curUser().role;if(ROLE_PAGES[r])return ROLE_PAGES[
 function homePage(){var r=curUser().role;if(ROLE_PAGES[r])return ROLE_PAGES[r][0];return pageAllowed('dash')?'dash':'orders';}
 function applyRoleUI(){
   try{renderVoiceDock();}catch(e){}
+  try{[].forEach.call(document.querySelectorAll('.mtab button[data-p]'),function(b){var p=b.getAttribute('data-p');if(p==='find'||p==='more')return;b.hidden=!pageAllowed(p);});}catch(e){}
   var u=curUser();document.body.classList.remove('role-admin','role-manager','role-worker','role-viewer','role-packer');document.body.classList.add('role-'+(u.role||'admin'));
   var vb=G('viewerBadge');if(u.role==='viewer'){if(!vb){vb=document.createElement('div');vb.id='viewerBadge';vb.textContent='👁 Режим перегляду — змінювати нічого не можна';vb.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:9000;background:#1f4a86;color:#fff;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none';document.body.appendChild(vb);}}else if(vb)vb.remove();
   [].forEach.call(document.querySelectorAll('.ni[id^="nav-"]'),function(el){var p=el.id.replace('nav-','');el.style.display=pageAllowed(p)?'':'none';});
