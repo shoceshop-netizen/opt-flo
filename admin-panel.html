@@ -117,7 +117,7 @@ body{font-family:var(--font);font-size:15px;color:var(--tx);background:var(--bg)
 .ni-ic{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sb-tx-mu);transition:color .15s;}
 .ni-ic svg{width:18px;height:18px;stroke-width:1.75;}
 .nb{margin-left:auto;font-size:10.5px;font-weight:600;font-family:var(--mono);font-feature-settings:'tnum';padding:1px 7px;border-radius:7px;min-width:20px;text-align:center;flex-shrink:0;}
-.nb-g{background:var(--green);color:#fff;}
+.nb-g{background:var(--green);color:#fff;}.nb-r{background:#d24b4b;color:#fff}
 .nb-y{background:var(--orange);color:#fff;}
 .nb-b{background:var(--blue);color:#fff;}
 .ni.on .nb{background:#fff;color:var(--sb-active);}
@@ -742,6 +742,17 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .pl-modal{position:fixed;inset:0;z-index:9000;background:rgba(10,16,12,.45);display:flex;align-items:center;justify-content:center;padding:16px}
 .pl-mbox{background:var(--card);color:var(--tx);border-radius:18px;padding:18px;width:100%;max-width:900px;max-height:92vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.3)}
 @media(max-width:640px){.pl-wrap{padding:12px}.pl-grid{grid-template-columns:1fr}.pl-slot{min-height:58px;padding:4px 5px}.pl-slot .pl-nm{font-size:10.5px}}
+/* ===== Посилки НП ===== */
+.np-b{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid;white-space:nowrap}
+.np-card{margin:6px 0 10px;padding:10px 12px;border:1px solid var(--bo2);border-radius:12px;background:var(--card);font-size:13px}
+.np-card .np-b{margin-bottom:6px}
+.np-r{display:flex;gap:10px;padding:3px 0}.np-r span{color:var(--mu);min-width:150px}
+.np-t{width:100%;border-collapse:collapse;font-size:13.5px}
+.np-l{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#b42318;text-decoration:none;border:1px solid #f0c4c0;border-radius:8px;padding:2px 7px;margin-left:6px;background:#fff;white-space:nowrap}
+.np-l:hover{background:#fde2e0}
+.np-t th{text-align:left;font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.3px;padding:8px;border-bottom:1px solid var(--bo2)}
+.np-t td{padding:8px;border-bottom:1px solid var(--gray6);vertical-align:top}
+.np-t tr:hover td{background:var(--gray6)}
 /* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
 @media screen{
 html[data-theme="dark"]{color-scheme:dark;
@@ -912,6 +923,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
     <div class="ni on" id="nav-dash" onclick="nav('dash')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="ni-lbl">Дашборд</span></div>
     <div class="ni" id="nav-analytics" onclick="nav('analytics')"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span><span class="ni-lbl">Аналітика</span></div>
     <div class="ni" id="nav-orders"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span><span class="ni-lbl">Замовлення</span><span class="nb nb-g" id="bAll">0</span></div>
+    <div class="ni" id="nav-parcels"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span><span class="ni-lbl">Посилки НП</span><span class="nb nb-r" id="bNp" style="display:none">0</span></div>
     <div class="ni" id="nav-packdash"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 15l3-3 3 2 5-6"/></svg></span><span class="ni-lbl">Дашборд фасовки</span></div>
     <div class="ni" id="nav-picker"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span><span class="ni-lbl">Фасування</span><span class="nb nb-y" id="bPick">0</span></div>
     <div class="ni" id="nav-scan"><span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></span><span class="ni-lbl">Прийом</span><span class="nb nb-b" id="bScan">0</span></div>
@@ -966,6 +978,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
   <div class="page" id="page-verify"></div>
   <div class="page" id="page-packdash"></div>
   <div class="page" id="page-pallets"></div>
+  <div class="page" id="page-parcels"></div>
   <div class="page" id="page-orders">
     <div class="stats-row">
       <div class="stat-item" onclick="setFilter('new')"><div class="stat-num c-new" id="sNew">—</div><div class="stat-lbl">Нових</div></div>
@@ -1357,7 +1370,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='02.11.2026 · сесія лише у вкладці';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='02.11.2026 · посилки НП';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
 var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts'];
@@ -1878,6 +1891,69 @@ function plPrint(){
   var f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
   var d=f.contentWindow.document;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><style>'+css+'\nbody{background:#fff;padding:16px;font-family:Geist,Arial,sans-serif}.no-print{display:none!important}.pl-mbox{box-shadow:none!important;max-width:none!important}</style></head><body>'+box.outerHTML+'</body></html>');d.close();
   setTimeout(function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove();},1500);},300);
+}
+
+// ===== 📦 ПОСИЛКИ НОВОЇ ПОШТИ: статус за ТТН (дані з сервера; ключ НП у браузер не потрапляє) =====
+var npRows={},npInfo={},npFilter='',npQ='',npBusy=false;
+var NP_G={transit:['🚚','в дорозі','#1f5fa8','#e3eefb'],branch:['📦','на відділенні','#8a5a00','#fff2cc'],received:['✅','отримано','#1e7a3c','#e2f4e8'],refused:['↩️','відмова','#b42318','#fde2e0'],return:['↩️','повернення','#b42318','#fde2e0'],problem:['⚠️','невдала доставка','#8a5a00','#fff2cc'],notfound:['❓','не знайдено','#5f6d64','#eef1ee'],deleted:['🗑','видалено','#5f6d64','#eef1ee'],created:['📝','створено, ще не передано','#5f6d64','#eef1ee']};
+function npAllowed(){var r=curUser().role;return r!=='worker'&&r!=='packer';}
+async function loadNp(){
+  if(!npAllowed())return;
+  try{var r=await callScript('npStatuses',{});if(!r||!r.ok)return;npApply(r);}catch(e){}
+}
+function npApply(r){
+  npRows={};(r.rows||[]).forEach(function(x){var t=String(x[0]).replace(/\D/g,'');if(t)npRows[t]={ttn:t,num:x[1],text:x[2],code:x[3],g:x[4]||'transit',since:x[5],branch:x[6],pay:x[7],recv:x[8],city:x[9],wh:x[10],upd:x[11]};});
+  npInfo={hasKey:!!r.hasKey,lastRun:r.lastRun||'',lastErr:r.lastErr||''};
+  try{if(G('page-orders')&&G('page-orders').classList.contains('on'))renderOrders();if(G('page-parcels')&&G('page-parcels').classList.contains('on'))renderParcels();}catch(e){}
+  npNavBadge();
+}
+function npTrackUrl(ttn){var t=String(ttn||'').replace(/\D/g,'');return t?'https://novaposhta.ua/tracking/?cargo_number='+t:'';}
+function npTrackLink(ttn){var u=npTrackUrl(ttn);return u?'<a class="np-l" href="'+u+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Відкрити відстеження на сайті Нової Пошти">🔎 НП</a>':'';}
+function npOf(o){var t=String(o&&o.ttn||'').replace(/\D/g,'');return t?npRows[t]||null:null;}
+function npDays(s){var m=String(s||'').match(/^(\d{2})\.(\d{2})\.(\d{4})/);if(!m)return 0;return Math.floor((Date.now()-new Date(+m[3],+m[2]-1,+m[1]).getTime())/86400000);}
+function npPayStarted(p){var m=String(p&&p.pay||'').match(/^(\d{2})\.(\d{2})\.(\d{4})/);return !!m&&new Date(+m[3],+m[2]-1,+m[1]).getTime()<=Date.now();}
+function npLabel(p){var g=NP_G[p.g]||NP_G.transit,t=g[1];
+  if(p.g==='branch'){var d=npDays(p.branch);t+=d?' · '+d+' дн.':'';}
+  if(p.g==='received'&&p.recv)t+=' '+String(p.recv).slice(0,5);
+  return t;}
+function npBadge(o){
+  if(!npAllowed())return '';var p=npOf(o);if(!p)return '';var g=NP_G[p.g]||NP_G.transit,warn=p.g==='branch'&&(npDays(p.branch)>=5||npPayStarted(p));
+  var col=warn?'#b42318':g[2],bg=warn?'#fde2e0':g[3];
+  return '<span class="np-b" style="color:'+col+';background:'+bg+';border-color:'+col+'" title="'+esc(p.text+(p.city?' · '+p.city:'')+(p.wh?' · '+p.wh:'')+(p.pay?' · платне зберігання з '+p.pay:''))+'">'+g[0]+' '+esc(npLabel(p))+'</span>';
+}
+function npCardHtml(o){
+  if(!npAllowed())return '';var p=npOf(o);
+  if(!p)return o.ttn?'<div class="np-card" style="color:var(--mu)">📦 Статус посилки ще не отримано'+(npInfo.hasKey?' — оновиться автоматично':'')+'</div>':'';
+  var rows=[['Статус НП',esc(p.text)],['Місто / відділення',esc([p.city,p.wh].filter(Boolean).join(' · '))],['На відділенні з',esc(p.branch)],['Платне зберігання з',p.pay?('<b style="color:'+(npPayStarted(p)?'#b42318':'inherit')+'">'+esc(p.pay)+'</b>'):''],['Отримано',esc(p.recv)],['Перевірено',esc(p.upd)]].filter(function(r){return r[1];});
+  return '<div class="np-card">'+npBadge(o)+rows.map(function(r){return '<div class="np-r"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';}).join('')+'</div>';
+}
+function npNavBadge(){var b=G('bNp');if(!b)return;var n=Object.keys(npRows).filter(function(t){var p=npRows[t];return p.g==='branch'&&npDays(p.branch)>=3||p.g==='refused'||p.g==='return'||p.g==='problem';}).length;b.textContent=n;b.style.display=n?'':'none';}
+async function npRefreshNow(){
+  if(npBusy)return;npBusy=true;renderParcels();toast('Питаю Нову Пошту…','in',1500);
+  try{var r=await callScriptPost('npRefresh',{});if(r&&r.ok){npApply(r);var f=r.refresh;toast(r.note?r.note:(f?('Перевірено '+(f.checked||0)+', змінилось '+(f.changed||0)):'Готово'),'ok',2500);}else toast('Не вдалося: '+((r&&(r.error||r.msg))||'?'),'er',4000);}
+  finally{npBusy=false;renderParcels();}
+}
+function renderParcels(){
+  var el=G('page-parcels');if(!el)return;
+  var role=curUser().role,canRefresh=role==='admin'||role==='manager'||role==='super-admin';
+  var byNum={};(orders||[]).forEach(function(o){byNum[String(o.num)]=o;});
+  var L=Object.keys(npRows).map(function(t){var p=npRows[t],o=byNum[String(p.num)];return {p:p,o:o};});
+  var cnt=function(fn){return L.filter(function(x){return fn(x.p);}).length;};
+  var F={transit:function(p){return p.g==='transit'||p.g==='created';},branch:function(p){return p.g==='branch';},late:function(p){return p.g==='branch'&&npDays(p.branch)>=3;},received:function(p){return p.g==='received';},back:function(p){return p.g==='refused'||p.g==='return';},problem:function(p){return p.g==='problem'||p.g==='notfound'||p.g==='deleted';}};
+  var tiles=[['transit','🚚 В дорозі'],['branch','📦 На відділенні'],['late','⏰ На відділенні ≥ 3 дн.'],['received','✅ Отримано'],['back','↩️ Відмови й повернення'],['problem','⚠️ Проблеми']];
+  var q=npQ.trim().toLowerCase();
+  var list=L.filter(function(x){if(npFilter&&!F[npFilter](x.p))return false;if(!q)return true;return (x.p.ttn+' '+x.p.num+' '+(x.o?x.o.name:'')+' '+x.p.city+' '+x.p.text).toLowerCase().indexOf(q)>=0;});
+  var rank={problem:0,refused:1,return:1,branch:2,transit:3,created:4,notfound:0,deleted:5,received:6};
+  list.sort(function(a,b){return (rank[a.p.g]-rank[b.p.g])||(npDays(b.p.branch)-npDays(a.p.branch))||String(b.p.num).localeCompare(String(a.p.num));});
+  var h='<div style="padding:18px 20px"><div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px"><div style="flex:1"><div style="font-size:22px;font-weight:800">📦 Посилки Нової Пошти</div><div style="font-size:13px;color:var(--mu)">Статус за ТТН із замовлень. '+(npInfo.lastRun?'Оновлено '+esc(npInfo.lastRun)+' · ':'')+'автоматично кожні 2 години.'+(npInfo.lastErr?' <span style="color:#b42318">Помилка НП: '+esc(npInfo.lastErr)+'</span>':'')+'</div></div>'
+    +(canRefresh?'<button class="btn sm" onclick="npRefreshNow()" '+(npBusy?'disabled':'')+'>'+(npBusy?'⏳ Перевіряю…':'🔄 Оновити зараз')+'</button>':'')+'</div>';
+  if(!npInfo.hasKey)h+='<div style="background:#fff4d6;border:1px solid #e8b84a;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;margin-bottom:12px"><b>Потрібен API-ключ Нової Пошти.</b> Його не вводять у панель — він зберігається лише на сервері: Apps Script → ⚙️ «Налаштування проєкту» → «Властивості скрипта» → додати <code>NP_API_KEY</code> (і за бажання <code>NP_PHONE</code> — телефон відправника). Потім у редакторі один раз запустити функцію <code>setupNovaPoshta</code>.</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:12px">'+tiles.map(function(t){var n=cnt(F[t[0]]),on=npFilter===t[0];return '<button type="button" onclick="npFilter=(npFilter===\''+t[0]+'\'?\'\':\''+t[0]+'\');renderParcels()" style="text-align:left;border:1.5px solid '+(on?'#37714a':'var(--bo2)')+';background:'+(on?'#e6f3ea':'var(--card)')+';border-radius:14px;padding:10px 12px;cursor:pointer;font-family:inherit;color:var(--tx)"><div style="font-size:12.5px;color:var(--mu)">'+t[1]+'</div><div style="font-size:24px;font-weight:800">'+n+'</div></button>';}).join('')+'</div>';
+  h+='<input type="search" placeholder="№ замовлення, клієнт, ТТН, місто…" value="'+esc(npQ)+'" oninput="npQ=this.value;clearTimeout(window._npT);window._npT=setTimeout(function(){renderParcels();var i=document.querySelector(\'#page-parcels input[type=search]\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)" style="width:100%;max-width:520px;height:42px;border:1.5px solid var(--bo2);border-radius:12px;padding:0 14px;font-family:inherit;font-size:15px;margin-bottom:10px;background:var(--card);color:var(--tx)">';
+  if(!list.length)h+='<div style="padding:30px;text-align:center;color:var(--mu)">'+(L.length?'Нічого не знайдено':'Ще нема даних про посилки')+'</div>';
+  else h+='<div style="overflow-x:auto"><table class="np-t"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>ТТН</th><th>Статус</th><th>Місто / відділення</th><th>Деталі</th></tr></thead><tbody>'+list.slice(0,500).map(function(x){var p=x.p,o=x.o;
+      return '<tr'+(o?' onclick="selectOrder(\''+o.id+'\')" style="cursor:pointer"':'')+'><td class="mo">'+esc(p.num||'—')+'</td><td>'+esc(o?o.name:'')+'</td><td class="mo">'+esc(p.ttn)+' <button class="cpbtn" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+p.ttn+'\');toast(\'ТТН скопійовано\',\'ok\',1500)">📋</button> '+npTrackLink(p.ttn)+'</td><td>'+npBadge(o||{ttn:p.ttn})+'</td><td>'+esc([p.city,p.wh].filter(Boolean).join(' · '))+'</td><td style="font-size:12px;color:var(--mu)">'+esc(p.text)+(p.pay?'<br>платне зберігання з '+esc(p.pay):'')+'</td></tr>';}).join('')+'</tbody></table></div>';
+  el.innerHTML=h+'</div>';
 }
 
 // ===== WELCOME SCREEN =====
@@ -3746,7 +3822,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={pallets:'Схема палет',verify:'Перескановка',packdash:'Дашборд фасовки',dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',analytics:'Аналітика',stickers:'Друк наліпок',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
+var TITLES={parcels:'Посилки Нової Пошти',pallets:'Схема палет',verify:'Перескановка',packdash:'Дашборд фасовки',dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',analytics:'Аналітика',stickers:'Друк наліпок',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   if(typeof pageAllowed==='function'&&!pageAllowed(p))p=homePage();
   document.body.classList.remove('pick-full');
@@ -3773,6 +3849,7 @@ function nav(p){
   if(p==='verify'){renderVerifyPage();}
   if(p==='packdash'){renderPackDash();}
   if(p==='pallets'){renderPalletsPage();}
+  if(p==='parcels'){renderParcels();loadNp();}
 }
 function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
@@ -4068,6 +4145,7 @@ async function loadAll(skipCache){
     parseVerified(res.verified||[]);
     parsePicks(res.picks||[]);parseCells(res.cells||[]);parseMixes(res.mixes||[]);if(res.pricelist&&res.pricelist.length)parsePriceList(res.pricelist);if(res.sales&&res.sales.length)parseSales(res.sales);if(res.archive&&res.archive.length)parseArchive(res.archive);if(res.statusLog)parseStatusLog(res.statusLog);if(res.verifyTimes)parseVerifyTimes(res.verifyTimes);
     window._dataAt=Date.now();
+    try{loadNp();}catch(eNp){}
     if(G('page-pick')&&G('page-pick').classList.contains('on'))renderPickPage();
     if(G('page-stickers')&&G('page-stickers').classList.contains('on'))renderStickersPage();
     if(G('page-packdash')&&G('page-packdash').classList.contains('on'))renderPackDash();
@@ -4665,7 +4743,7 @@ function renderOrders(){
         +'<div class="oname">'+esc(o.name)+(orderAnomalies(o).length?' <span title="Є неузгодженості — відкрий картку" style="display:inline-block;background:var(--r);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">⚠ '+orderAnomalies(o).length+'</span>':'')+'</div><div class="onum">№ '+esc(o.num)+(oD?' · від '+esc(fmtDM(oD)):'')+(sameAsPrev?' <span style="color:var(--blue);font-weight:600">↳ ще одне замовлення цього клієнта</span>':'')+'</div>'
         +'<div class="oitem">'+(first?('<span class="osku">'+esc(first.art)+'</span>'+esc(first.name)):'—')+(more>0?'<span class="omore">+'+more+' позиц.</span>':'')+'</div>'
       +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+packWarnBadge(o)+'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+packWarnBadge(o)+npBadge(o)+'</div>'
     +'</div>';
   });
   window._ordVisible=list.map(function(o){return o.id;});
@@ -4892,7 +4970,7 @@ function selectOrder(id){
     body+='<div style="padding:32px;text-align:center;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:14px">Немає позицій</div><div style="font-size:12px;margin-top:4px">Додайте дані в аркуш «вигрузка»</div></div>';
   }
   body+=`<div class="sc-title">🚚 Доставка</div><div class="ig">`;
-  if(o.ttn)body+=`<div class="ic sp"><div class="ic-l">ТТН</div><div class="ttn-r"><span class="ic-v mo">${esc(o.ttn)}</span><button class="cpbtn" onclick="navigator.clipboard.writeText('${esc(o.ttn)}');toast('ТТН скопійовано','ok',2000)">📋</button></div></div>`;
+  if(o.ttn)body+=`<div class="ic sp"><div class="ic-l">ТТН</div><div class="ttn-r"><span class="ic-v mo">${esc(o.ttn)}</span><button class="cpbtn" onclick="navigator.clipboard.writeText('${esc(o.ttn)}');toast('ТТН скопійовано','ok',2000)">📋</button>${npAllowed()?npTrackLink(o.ttn):''}</div></div>`+npCardHtml(o);
   if(o.address)body+=`<div class="ic sp"><div class="ic-l">Адреса</div><div class="ic-v">${esc(o.address)}</div></div>`;
   if(o.declared)body+=`<div class="ic"><div class="ic-l">Огол. вартість</div><div class="ic-v">${esc(o.declared)}</div></div>`;
   if(o.extra)body+=`<div class="ic"><div class="ic-l">Додаток</div><div class="ic-v">${esc(o.extra)}</div></div>`;
