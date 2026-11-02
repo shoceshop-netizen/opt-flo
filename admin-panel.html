@@ -700,6 +700,48 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .tb-gif .tb-hi.fade{opacity:0}
 .tb-gif:empty{flex:0 0 0}
 @media(max-width:900px){.tb-gif{display:none!important}}
+/* ===== Схема палет ===== */
+.pl-wrap{padding:18px 20px}
+.pl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.pl-title{font-size:22px;font-weight:800}
+.pl-sub{font-size:13px;color:var(--mu);margin-top:2px;max-width:720px}
+.pl-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.pl-tools input{flex:1 1 260px;min-width:200px;height:42px;padding:0 14px;border:1.5px solid var(--bo2);border-radius:12px;font-family:inherit;font-size:15px;background:var(--card);color:var(--tx)}
+.pl-k{height:42px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bo2);background:var(--card);color:var(--tx);font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+.pl-k span{color:var(--mu);font-weight:600;margin-left:3px}
+.pl-k.on{border-color:var(--green);background:var(--green-l)}
+.pl-sum{font-size:12.5px;color:var(--mu);margin:2px 0 12px}
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+.pl-card{background:var(--card);border:1px solid var(--bo);border-radius:16px;padding:14px 14px 12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.pl-ch{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.pl-pn{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.pl-meta{font-size:12.5px;color:var(--mu);flex:1}
+.pl-zoom{border:1px solid var(--bo2);background:var(--card);border-radius:8px;width:34px;height:30px;cursor:pointer;font-size:15px;color:var(--tx)}
+.pl-stack{display:flex;flex-direction:column;gap:4px}
+.pl-layer{display:grid;grid-template-columns:14px repeat(5,1fr);gap:4px;align-items:stretch}
+.pl-ln{font-size:10px;color:var(--mu);display:flex;align-items:center;justify-content:center;font-weight:700}
+.pl-slot{position:relative;min-height:64px;border:2px solid #999;border-left-width:6px;border-radius:8px;padding:5px 6px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;font-family:inherit;color:#1d1d1f;cursor:pointer;overflow:hidden;min-width:0}
+.pl-slot.big{min-height:104px;padding:8px 9px}
+.pl-slot .pl-nm{font-size:11.5px;font-weight:700;line-height:1.2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.pl-slot.big .pl-nm{font-size:14px;-webkit-line-clamp:4}
+.pl-slot .pl-ft{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 4px;margin-top:3px}
+.pl-slot .pl-art{font-family:var(--mono);font-size:10px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-slot b{font-size:12px;white-space:nowrap}
+.pl-slot.big b{font-size:15px}.pl-slot.big .pl-art{font-size:12px}
+.pl-slot.hit{outline:3px solid #f5b400;outline-offset:1px;box-shadow:0 0 0 6px rgba(245,180,0,.25)}
+.pl-slot.dim{opacity:.32}
+.pl-empty{border:2px dashed #c9a24a!important;background:repeating-linear-gradient(45deg,rgba(201,162,74,.08) 0 6px,transparent 6px 12px);color:#a07a1e;font-size:11px;font-weight:700;align-items:center;justify-content:center;cursor:default}
+.pl-none{border:none;background:transparent;cursor:default}
+.pl-base{position:relative;height:16px;margin:4px 0 0 18px;border-radius:3px;background:linear-gradient(#c79a5e,#a8773f);border:2px solid #6f4a22}
+.pl-base i{position:absolute;bottom:-9px;width:22px;height:9px;background:#8a5f30;border:2px solid #6f4a22;border-top:none;border-radius:0 0 3px 3px}
+.pl-base i:nth-child(1){left:6%}.pl-base i:nth-child(2){left:calc(50% - 12px)}.pl-base i:nth-child(3){right:6%}
+.pl-leg{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.pl-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 9px;border-radius:999px;background:var(--gray6);cursor:pointer;max-width:100%}
+.pl-chip i{width:12px;height:12px;border-radius:3px;border:2px solid;flex:none}
+.pl-emptyall{padding:40px;text-align:center;color:var(--mu)}
+.pl-modal{position:fixed;inset:0;z-index:9000;background:rgba(10,16,12,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.pl-mbox{background:var(--card);color:var(--tx);border-radius:18px;padding:18px;width:100%;max-width:900px;max-height:92vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+@media(max-width:640px){.pl-wrap{padding:12px}.pl-grid{grid-template-columns:1fr}.pl-slot{min-height:58px;padding:4px 5px}.pl-slot .pl-nm{font-size:10.5px}}
 /* ===== ТЕМНА ТЕМА (html[data-theme=dark]) ===== */
 @media screen{
 html[data-theme="dark"]{color-scheme:dark;
@@ -923,6 +965,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
   <div class="page" id="page-repack"></div>
   <div class="page" id="page-verify"></div>
   <div class="page" id="page-packdash"></div>
+  <div class="page" id="page-pallets"></div>
   <div class="page" id="page-orders">
     <div class="stats-row">
       <div class="stat-item" onclick="setFilter('new')"><div class="stat-num c-new" id="sNew">—</div><div class="stat-lbl">Нових</div></div>
@@ -1314,7 +1357,12 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='29.10.2026 · GIF у верхній панелі';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='02.11.2026 · сесія лише у вкладці';   // міняється з кожною версією — видно в меню і на екрані входу
+// БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
+// Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
+var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts'];
+function wipeLocalPII(){try{PII_KEYS.forEach(function(k){localStorage.removeItem(k);});Object.keys(localStorage).forEach(function(k){if(/^fl_cache/.test(k))localStorage.removeItem(k);});}catch(e){}}
+wipeLocalPII();
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
 function dataMode(){try{return localStorage.getItem('dataMode')||'auto';}catch(e){return 'auto';}}
@@ -1329,11 +1377,16 @@ function renderDataModeBox(){var el=G('dataModeBox');if(!el)return;var lite=data
 // ===== AUTH — відключено =====
 // ===== AUTH =====
 var AUTH_KEY='florium_session_v1';
+// БЕЗПЕКА: сесія живе лише поки відкрита вкладка/браузер (sessionStorage). Закрили браузер — вийшли.
+// Сесії, що лишились у localStorage від старих версій (могли залишитись на чужому компʼютері), відкликаємо й стираємо.
+var AUTH_STORE=(function(){try{sessionStorage.setItem('_t','1');sessionStorage.removeItem('_t');return sessionStorage;}catch(e){return localStorage;}})();
+(function(){try{if(AUTH_STORE===localStorage)return;var old=localStorage.getItem(AUTH_KEY);if(!old)return;localStorage.removeItem(AUTH_KEY);
+  var t=(JSON.parse(old)||{}).token;if(t&&typeof SCRIPT_URL!=='undefined')fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logout',token:t})}).catch(function(){});}catch(e){}})();
 
 function checkAuth(){
   // Перевіряємо токен у localStorage
   var sess=null;
-  try{sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}
+  try{sess=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');}catch(e){}
   
   if(sess&&sess.token&&sess.expiresAt&&Date.now()<sess.expiresAt){
     // Токен валідний — заходимо
@@ -1428,7 +1481,7 @@ async function loginMailStep(){
       btn.textContent='Вхід…';
       var res=await callScriptPost('loginEmailVerify',{email:em,code:code,device:getDeviceName(),userAgent:navigator.userAgent});
       if(res&&res.ok&&res.token){
-        localStorage.setItem(AUTH_KEY,JSON.stringify({token:res.token,expiresAt:res.expiresAt,loggedAt:Date.now(),user:res.user||{login:'admin',name:'Адмін',role:'admin'}}));
+        AUTH_STORE.setItem(AUTH_KEY,JSON.stringify({token:res.token,expiresAt:res.expiresAt,loggedAt:Date.now(),user:res.user||{login:'admin',name:'Адмін',role:'admin'}}));
         var ls=G('loginScreen');if(ls)ls.remove();showApp();
         showWelcomeScreen();
         return;
@@ -1465,7 +1518,7 @@ async function doLogin(){
     
     if(res&&res.ok&&res.token){
       // Зберігаємо сесію
-      localStorage.setItem(AUTH_KEY,JSON.stringify({
+      AUTH_STORE.setItem(AUTH_KEY,JSON.stringify({
         token:res.token,
         expiresAt:res.expiresAt,
         loggedAt:Date.now(),
@@ -1496,7 +1549,7 @@ function logout(){
   if(!confirm('Вийти з адмін-панелі?'))return;
   // Відкликаємо токен на сервері (не блокуємо вихід)
   try{callScript('logout',{});}catch(e){}
-  localStorage.removeItem(AUTH_KEY);
+  AUTH_STORE.removeItem(AUTH_KEY);wipeLocalPII();
   setTimeout(function(){location.reload();},200);
 }
 
@@ -1708,6 +1761,125 @@ function avatarCell(login){var g=usersGifs[login];
   return '<td style="white-space:nowrap;font-size:12px">'+(g?'<a href="#" onclick="avatarPreview(\''+esc(login)+'\');return false;">🎞 '+(g.kb||'')+' КБ</a> <a href="#" onclick="avatarPick(\''+esc(login)+'\');return false;" title="Замінити">↻</a> <a href="#" onclick="avatarRemove(\''+esc(login)+'\');return false;" title="Прибрати" style="color:var(--mu)">✕</a>'
     :'<a href="#" onclick="avatarPick(\''+esc(login)+'\');return false;">＋ GIF</a>')+'</td>';}
 
+// ===== СХЕМА ПАЛЕТ: реальні ящики з «товар склад», шарами по 5; місця закріплені (забрали ящик — місце лишається порожнім) =====
+var PL_PER_LAYER=5;
+var plState={q:'',kind:'pal',slots:null,stock:null,at:0,loading:false,pending:{},saveT:null,open:null,hi:''};
+var PL_COLORS=[['#ffd6e7','#e05592'],['#d6ecff','#3a7bd5'],['#dcf5d4','#3e9a4f'],['#fff0bf','#c99a14'],['#e8dcff','#7b55c7'],['#ffe0cc','#e0782f'],['#d2f4f0','#249b8c'],['#f7d9ff','#b04fc9'],['#e4edc4','#7c9a2a'],['#ffd9d9','#d24b4b'],['#d9e0ff','#4b5fd2'],['#f1e4cf','#a67a3e'],['#cff0ff','#1f95c4'],['#ececec','#6d6d78']];
+function plColor(art){var h=0,s=String(art||'');for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return PL_COLORS[h%PL_COLORS.length];}
+function plKind(loc){loc=String(loc||'').trim();if(/^\d{1,5}$/.test(loc))return 'pal';if(/^\d+(-\d+){2,}$/.test(loc))return 'cell';return 'other';}
+function plRowObj(r){if(!r||!String(r[0]||'').trim())return null;return {art:String(r[0]).trim(),boxId:String(r[1]||'').trim(),qty:parseInt(r[2]||0)||0,name:String(r[3]||'').trim(),size:String(r[4]||'').trim(),supplier:String(r[5]||'').trim(),location:String(r[6]||'').trim(),bulbs:parseInt(r[7]||0)||0,leftRaw:(r[7]==null?'':String(r[7]).trim()),date:String(r[8]||'').trim(),boxStatus:String(r[9]||'').trim()};}
+function plDateKey(s){var m=String(s||'').match(/(\d{2})\.(\d{2})\.(\d{4})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);return m?(m[3]+m[2]+m[1]+(m[4]||'00').padStart(2,'0')+(m[5]||'00')+(m[6]||'00')):'99999999999999';}
+async function plLoad(){
+  if(plState.loading)return;plState.loading=true;renderPalletsPage();
+  try{var lite=dataLite();var r=await callScriptPost('palletsData',{withStock:lite?'1':''});
+    if(r&&r.ok){plState.slots=r.slots||{};plState.stock=lite?(r.stock||[]).map(plRowObj).filter(Boolean):null;plState.at=Date.now();}
+    else toast('Не вдалося завантажити схему: '+((r&&(r.error||r.msg))||'?'),'er',4000);
+  }catch(e){}
+  plState.loading=false;renderPalletsPage();
+}
+// ящики на кожному місці: що є зараз (+ закріплені місця)
+function plBuild(){
+  var src=plState.stock||stock||[],by={};
+  src.forEach(function(b){if(!b||!b.location||!boxOnPallet(b))return;(by[b.location]=by[b.location]||[]).push(b);});
+  var out=[];
+  Object.keys(by).forEach(function(P){
+    var boxes=by[P].sort(function(a,b){return plDateKey(a.date).localeCompare(plDateKey(b.date))||String(a.boxId).localeCompare(String(b.boxId));});
+    var on={};boxes.forEach(function(b){if(b.boxId)on[b.boxId]=b;});
+    var saved=(plState.slots&&plState.slots[P])||[];
+    var slots=saved.map(function(id){return id&&on[id]?id:null;}),used={};slots.forEach(function(id){if(id)used[id]=1;});
+    boxes.forEach(function(b){var id=b.boxId||('?'+b.art+b.date);if(used[id])return;var k=slots.indexOf(null);if(k>=0)slots[k]=id;else slots.push(id);used[id]=1;if(!b.boxId)on[id]=b;});
+    while(slots.length&&slots[slots.length-1]==null)slots.pop();
+    if(plState.slots&&JSON.stringify(slots)!==JSON.stringify(saved)&&curUser().role!=='viewer')plState.pending[P]=slots;
+    out.push({p:P,kind:plKind(P),slots:slots,on:on,n:boxes.length});
+  });
+  out.sort(function(a,b){var na=parseInt(a.p,10),nb=parseInt(b.p,10);if(!isNaN(na)&&!isNaN(nb)&&String(na)===a.p&&String(nb)===b.p)return na-nb;return a.p.localeCompare(b.p,'uk',{numeric:true});});
+  return out;
+}
+function plSaveSoon(){
+  if(plState.saveT)clearTimeout(plState.saveT);
+  plState.saveT=setTimeout(async function(){
+    var ks=Object.keys(plState.pending);if(!ks.length)return;
+    var items=ks.map(function(p){return {p:p,slots:plState.pending[p]};});plState.pending={};
+    for(var i=0;i<items.length;i+=150){var part=items.slice(i,i+150);
+      var r=await callScriptPost('palletSlotsSave',{items:JSON.stringify(part)});
+      if(r&&r.ok)part.forEach(function(it){if(plState.slots)plState.slots[it.p]=it.slots;});}
+  },1500);
+}
+function plMatch(b,q){if(!q)return true;return (b.art+' '+b.boxId+' '+b.name+' '+b.size+' '+b.supplier).toLowerCase().indexOf(q)>=0;}
+function plTile(b,id,q,big){
+  if(!id||!b)return '<div class="pl-slot pl-empty'+(big?' big':'')+'" title="Місце звільнилось — ящик забрали">вільно</div>';
+  var c=plColor(b.art),hit=q&&plMatch(b,q),dim=q&&!hit;
+  var left=boxLeft(b),q2=left==null?(b.qty||''):left;
+  return '<button type="button" class="pl-slot'+(big?' big':'')+(hit?' hit':'')+(dim?' dim':'')+'" style="background:'+c[0]+';border-color:'+c[1]+'" onclick="plBoxInfo(\''+esc(String(id)).replace(/'/g,'&#39;')+'\')" title="'+esc(b.name+' · '+b.art+' · ящик '+b.boxId)+'">'
+    +'<span class="pl-nm">'+esc(b.name||b.art)+'</span>'
+    +'<span class="pl-ft"><span class="pl-art">'+esc(b.boxId||b.art)+'</span><b>'+esc(String(q2))+'</b></span></button>';
+}
+function plPalletHtml(P,q,big){
+  var L=Math.max(1,Math.ceil(P.slots.length/PL_PER_LAYER)),h='<div class="pl-stack">';
+  for(var l=L-1;l>=0;l--){
+    h+='<div class="pl-layer"><span class="pl-ln">'+(l+1)+'</span>';
+    for(var k=0;k<PL_PER_LAYER;k++){var i=l*PL_PER_LAYER+k;if(i>=P.slots.length){h+='<div class="pl-slot pl-none'+(big?' big':'')+'"></div>';continue;}var id=P.slots[i];h+=plTile(id?P.on[id]:null,id,q,big);}
+    h+='</div>';
+  }
+  return h+'</div><div class="pl-base"><i></i><i></i><i></i></div>';
+}
+function plLegend(P){
+  var g={};P.slots.forEach(function(id){var b=id&&P.on[id];if(!b)return;var e=g[b.art]=g[b.art]||{art:b.art,name:b.name,n:0,pcs:0};e.n++;var l=boxLeft(b);e.pcs+=(l==null?(b.qty||0):l);});
+  return '<div class="pl-leg">'+Object.keys(g).map(function(a){var e=g[a],c=plColor(a);return '<span class="pl-chip" onclick="plState.q=\''+esc(a)+'\';renderPalletsPage()" title="Показати, де ще є цей сорт"><i style="background:'+c[0]+';border-color:'+c[1]+'"></i>'+esc(e.name||a)+' <span style="font-family:var(--mono);color:var(--mu)">'+esc(a)+'</span> <b>× '+e.n+'</b><span style="color:var(--mu)"> · '+anFmt(e.pcs)+' шт</span></span>';}).join('')+'</div>';
+}
+function renderPalletsPage(){
+  var el=G('page-pallets');if(!el)return;
+  if(!plState.slots&&!plState.loading){plLoad();}
+  var all=plBuild();if(Object.keys(plState.pending).length)plSaveSoon();
+  var q=String(plState.q||'').trim().toLowerCase();
+  var list=all.filter(function(P){return (plState.kind==='all'||P.kind===plState.kind)&&(!q||P.p.toLowerCase()===q||P.slots.some(function(id){return id&&P.on[id]&&plMatch(P.on[id],q);}));});
+  var cnt=function(k){return all.filter(function(P){return k==='all'||P.kind===k;}).length;};
+  var chip=function(k,l){var on=plState.kind===k;return '<button type="button" onclick="plState.kind=\''+k+'\';renderPalletsPage()" class="pl-k'+(on?' on':'')+'">'+l+' <span>'+cnt(k)+'</span></button>';};
+  var boxesN=list.reduce(function(t,P){return t+P.n;},0);
+  var h='<div class="pl-wrap"><div class="pl-head"><div><div class="pl-title">🧱 Схема палет</div><div class="pl-sub">Реальні ящики з «товар склад», по '+PL_PER_LAYER+' у шарі. Забрали ящик — його місце лишається порожнім, інші не зсуваються.</div></div>'
+    +'<button type="button" class="btn sm" onclick="plState.slots=null;plLoad()">'+(plState.loading?'⏳ Оновлюю…':'🔄 Оновити')+'</button></div>'
+    +'<div class="pl-tools"><input type="search" id="plQ" placeholder="№ палети, артикул, назва або ID ящика…" value="'+esc(plState.q)+'" oninput="plState.q=this.value;clearTimeout(window._plT);window._plT=setTimeout(function(){renderPalletsPage();var i=G(\'plQ\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)">'
+    +chip('pal','Палети')+chip('cell','Ячейки')+chip('other','Інше')+chip('all','Усе')+'</div>'
+    +'<div class="pl-sum">'+list.length+' місць · '+boxesN+' ящиків'+(q?' · знайдено за «'+esc(plState.q)+'»':'')+(plState.at?' · оновлено о '+new Date(plState.at).toTimeString().slice(0,5):'')+'</div>';
+  if(!all.length)h+='<div class="pl-emptyall">'+(plState.loading?'Завантажую ящики…':'Нема ящиків з розміщенням')+'</div>';
+  h+='<div class="pl-grid">'+list.slice(0,400).map(function(P){
+      var L=Math.ceil(P.slots.length/PL_PER_LAYER),gaps=P.slots.filter(function(x){return !x;}).length;
+      return '<div class="pl-card"><div class="pl-ch"><span class="pl-pn">'+(P.kind==='pal'?'Палета ':'')+esc(P.p)+'</span><span class="pl-meta">'+P.n+' ящ. · '+L+' '+(L===1?'шар':(L<5?'шари':'шарів'))+(gaps?' · <span style="color:#b26b00">'+gaps+' вільн.</span>':'')+'</span>'
+        +'<button type="button" class="pl-zoom" onclick="plOpen(\''+esc(P.p).replace(/'/g,'&#39;')+'\')" title="Великим планом і друк">⛶</button></div>'
+        +plPalletHtml(P,q,false)+plLegend(P)+'</div>';
+    }).join('')+'</div>'+(list.length>400?'<div class="pl-sum">Показано 400 з '+list.length+' — уточни пошук</div>':'')+'</div>';
+  var ae=document.activeElement&&document.activeElement.id==='plQ';
+  el.innerHTML=h;
+  if(ae){var i=G('plQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}}
+}
+function plFind(id){var all=plBuild();for(var i=0;i<all.length;i++){if(all[i].on[id])return {P:all[i],b:all[i].on[id]};}return null;}
+function plBoxInfo(id){
+  var f=plFind(id);if(!f)return;var b=f.b,c=plColor(b.art),left=boxLeft(b);
+  var others=plBuild().filter(function(P){return P.p!==f.P.p&&P.slots.some(function(x){return x&&P.on[x]&&P.on[x].art===b.art;});}).map(function(P){return P.p;});
+  var w=document.createElement('div');w.className='pl-modal';w.onclick=function(e){if(e.target===w)w.remove();};
+  w.innerHTML='<div class="pl-mbox" style="max-width:420px"><div style="height:8px;border-radius:6px;background:'+c[1]+';margin-bottom:12px"></div>'
+    +'<div style="font-size:18px;font-weight:800;line-height:1.3">'+esc(b.name||b.art)+'</div>'
+    +'<div style="font-family:var(--mono);color:var(--mu);margin:4px 0 12px">'+esc(b.art)+(b.size?' · '+esc(b.size):'')+'</div>'
+    +[['Палета / місце',f.P.p],['ID ящика',b.boxId],['В ящику',(left==null?b.qty:left)+' шт'+(left!=null&&b.qty&&left!==b.qty?' (було '+b.qty+')':'')],['Постачальник',b.supplier],['Дата',b.date],['Статус',b.boxStatus]].filter(function(r){return r[1];}).map(function(r){return '<div style="display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--gray6)"><span style="color:var(--mu);min-width:120px">'+r[0]+'</span><b>'+esc(String(r[1]))+'</b></div>';}).join('')
+    +(others.length?'<div style="margin-top:10px;font-size:13px">Цей сорт ще на: '+others.slice(0,12).map(function(p){return '<a href="#" onclick="plState.q=\''+esc(p)+'\';document.querySelector(\'.pl-modal\').remove();renderPalletsPage();return false;">'+esc(p)+'</a>';}).join(', ')+'</div>':'')
+    +'<div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn sm" onclick="plState.q=\''+esc(b.art)+'\';this.closest(\'.pl-modal\').remove();renderPalletsPage()">Усі палети з цим сортом</button><button type="button" class="btn sm" onclick="this.closest(\'.pl-modal\').remove()">Закрити</button></div></div>';
+  document.body.appendChild(w);
+}
+function plOpen(p){
+  var P=plBuild().filter(function(x){return x.p===p;})[0];if(!P)return;
+  var w=document.createElement('div');w.className='pl-modal';w.onclick=function(e){if(e.target===w)w.remove();};
+  w.innerHTML='<div class="pl-mbox" id="plPrint"><div class="pl-ch" style="margin-bottom:10px"><span class="pl-pn" style="font-size:28px">'+(P.kind==='pal'?'Палета ':'')+esc(P.p)+'</span><span class="pl-meta" style="font-size:14px">'+P.n+' ящ. · '+Math.ceil(P.slots.length/PL_PER_LAYER)+' шар.</span>'
+    +'<button type="button" class="btn sm no-print" onclick="plPrint()">🖨 Друк</button><button type="button" class="btn sm no-print" onclick="this.closest(\'.pl-modal\').remove()">✕</button></div>'
+    +plPalletHtml(P,'',true)+plLegend(P)+'</div>';
+  document.body.appendChild(w);
+}
+function plPrint(){
+  var box=G('plPrint');if(!box)return;var css=Array.from(document.querySelectorAll('style')).map(function(s){return s.textContent;}).join('\n');
+  var f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
+  var d=f.contentWindow.document;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><style>'+css+'\nbody{background:#fff;padding:16px;font-family:Geist,Arial,sans-serif}.no-print{display:none!important}.pl-mbox{box-shadow:none!important;max-width:none!important}</style></head><body>'+box.outerHTML+'</body></html>');d.close();
+  setTimeout(function(){f.contentWindow.focus();f.contentWindow.print();setTimeout(function(){f.remove();},1500);},300);
+}
+
 // ===== WELCOME SCREEN =====
 function showWelcomeScreen(){
   avatarLoadMine();   // починаємо тягнути GIF, поки йде заставка
@@ -1775,7 +1947,7 @@ function hideWelcome(){
 
 function checkSessionExpiry(){
   try{
-    var sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
+    var sess=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');
     if(!sess||Date.now()>=sess.expiresAt){
       toast('Сесія завершилась — потрібно увійти знову','wa',5000);
       setTimeout(function(){location.reload();},3000);
@@ -1795,7 +1967,7 @@ async function fetchSheet(name,range){
 
 // ===== СЕСІЯ / ТОКЕН =====
 function getSessionToken(){
-  try{var x=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');return (x&&x.token)?x.token:'';}catch(e){return '';}
+  try{var x=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');return (x&&x.token)?x.token:'';}catch(e){return '';}
 }
 // ===== АВТОВИХІД: 30 хв без дій людини =====
 // Дія — рух/клік миші, дотик, клавіша (у тому числі сканер штрихкодів), прокрутка. Автооновлення даних — не дія.
@@ -1817,10 +1989,10 @@ function idleShowWarn(left){
 async function idleLogout(){
   idleHideWarn();try{sessionStorage.setItem('logoutReason','idle');}catch(e){}
   try{await Promise.race([callScriptPost('logout',{}),new Promise(function(r){setTimeout(r,1500);})]);}catch(e){}
-  try{localStorage.removeItem(AUTH_KEY);}catch(e){}location.reload();
+  try{AUTH_STORE.removeItem(AUTH_KEY);}catch(e){}wipeLocalPII();location.reload();
 }
 function idleTick(){
-  var sess=null;try{sess=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}if(!sess||!sess.token){idleHideWarn();return;}
+  var sess=null;try{sess=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');}catch(e){}if(!sess||!sess.token){idleHideWarn();return;}
   var idle=(Date.now()-idleLast())/1000,limit=IDLE_MIN*60;
   if(idle>=limit){idleLogout();return;}
   if(idle>=limit-IDLE_WARN_SEC)idleShowWarn(limit-idle);else if(_idleWarned)idleHideWarn();
@@ -1835,7 +2007,7 @@ function idleStart(){
 }
 
 function handleSessionExpired(){
-  try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  try{AUTH_STORE.removeItem(AUTH_KEY);}catch(e){}wipeLocalPII();
   try{toast('Сесія завершилась — увійдіть знову','wa',4000);}catch(e){}
   setTimeout(function(){location.reload();},1200);
 }
@@ -2494,7 +2666,7 @@ function saveDigitWord(inp){
 // ===== ЯК ВИМОВЛЯТИ: власний текст для кожного запису (цифри, числа, фрази, імена клієнтів) =====
 // Наприклад «один» → «оодиин». Зберігається на сервері (для всіх пристроїв) і локально; діє, доки не зміниш знову.
 var DIGIT_DEFAULT={'0':'нуль','1':'один','2':'два','3':'три','4':'чотири','5':'пʼять','6':'шість','7':'сім','8':'вісім','9':'девʼять'};
-var voiceTexts={};try{voiceTexts=JSON.parse(localStorage.getItem('voiceTexts')||'{}')||{};}catch(e){voiceTexts={};}
+var voiceTexts={};   // приходить із сервера після входу; у браузері не зберігається
 (function(){try{var o=JSON.parse(localStorage.getItem('DIGIT_WORDS_OVERRIDE')||'null');if(o)Object.keys(o).forEach(function(d){if(DIGIT_DEFAULT[d]&&o[d]&&o[d]!==DIGIT_DEFAULT[d]&&!voiceTexts['digit-'+d])voiceTexts['digit-'+d]=o[d];});}catch(e){}})();
 function voiceText(key,def){var t=voiceTexts[key];return (t&&String(t).trim())?String(t).trim():def;}
 function voiceDefText(key){var k=String(key).replace(/~m$/,'');var m;
@@ -2503,7 +2675,7 @@ function voiceDefText(key){var k=String(key).replace(/~m$/,'');var m;
   if(typeof TTS_PHRASES!=='undefined'&&TTS_PHRASES[k])return TTS_PHRASES[k];
   if(typeof TTS_WORDS!=='undefined'&&TTS_WORDS[k])return TTS_WORDS[k];
   if(k.indexOf('name-')===0)return k.slice(5);return '';}
-function voiceTextsApply(obj){if(!obj||typeof obj!=='object')return;voiceTexts=obj;try{localStorage.setItem('voiceTexts',JSON.stringify(obj));}catch(e){}}
+function voiceTextsApply(obj){if(!obj||typeof obj!=='object')return;voiceTexts=obj;}
 async function voiceTextSave(key,val){
   var def=voiceDefText(key);val=String(val||'').trim();var next=Object.assign({},voiceTexts);
   if(!val||val===def)delete next[key];else next[key]=val;voiceTextsApply(next);
@@ -3574,7 +3746,7 @@ function initKb(){
 }
 
 // ===== NAV =====
-var TITLES={verify:'Перескановка',packdash:'Дашборд фасовки',dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',analytics:'Аналітика',stickers:'Друк наліпок',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
+var TITLES={pallets:'Схема палет',verify:'Перескановка',packdash:'Дашборд фасовки',dash:'Дашборд',orders:'Замовлення',picker:'Список вантажника',scan:'Прийом товару',stock:'Товари на складі',voices:'Голоси клієнтів',reserve:'Запас (зайві товари)',issues:'Не поїхало клієнтам',find:'Пошук',ref:'Довідник (ручний)',pick:'Відбір з запасу',analytics:'Аналітика',stickers:'Друк наліпок',users:'Користувачі',ai:'Бот-помічник',repack:'Фасовка',vygruzka:'Вигрузка'};
 function nav(p){
   if(typeof pageAllowed==='function'&&!pageAllowed(p))p=homePage();
   document.body.classList.remove('pick-full');
@@ -3600,6 +3772,7 @@ function nav(p){
   if(p==='repack'){renderRepackDash();}
   if(p==='verify'){renderVerifyPage();}
   if(p==='packdash'){renderPackDash();}
+  if(p==='pallets'){renderPalletsPage();}
 }
 function sbToggle(){G('sb').classList.toggle('open');G('mobOv').classList.toggle('show');}
 function sbClose(){G('sb').classList.remove('open');G('mobOv').classList.remove('show');}
@@ -3882,20 +4055,7 @@ function reloadPanel(){
 
 async function loadAll(skipCache){
   setSyncState('pend','Оновлення...');
-  // Показуємо кеш одразу поки вантажаться нові дані (тільки якщо не skipCache)
-  if(!skipCache){
-    try{
-      var cached=localStorage.getItem(CACHE_KEY);
-      if(cached){
-        var c=JSON.parse(cached);
-        if(c.orders&&c.items&&c.stock){
-          orders=c.orders;items=c.items;stock=c.stock;
-          renderAll();
-          G('updTxt').textContent='Кеш '+(c.time||'')+'...';
-        }
-      }
-    }catch(e){}
-  }
+  // Кешу в браузері більше немає (безпека): дані беремо лише з сервера після входу
   try{
     // Один запит getAllData замість 6 окремих (захищено токеном)
     var res=await callScript('getAllData',dataLite()?{lite:'1'}:{});
@@ -3920,8 +4080,7 @@ async function loadAll(skipCache){
     if(G('page-find')&&G('page-find').classList.contains('on')&&findState)renderFind();
     repack=(res.repack||[]).slice(1).map(function(r){return {date:(r[0]||'').toString().trim(),art:(r[1]||'').toString().trim(),name:(r[2]||'').toString().trim(),packQty:parseInt(r[3])||0,src:(r[4]||'').toString().trim(),operator:(r[5]||'').toString().trim(),barcode:(r[6]||'').toString().trim()};}).filter(function(x){return x.art;});
     lists=(res.lists||[]).slice(1).map(function(r){return {listNum:r[0],date:(r[1]||'').toString().trim(),orderNum:(r[2]||'').toString().trim(),client:(r[3]||'').toString().trim(),art:(r[4]||'').toString().trim(),name:(r[5]||'').toString().trim(),qty:parseInt(r[6])||0,flor:(r[9]||'').toString().trim(),loc:(r[10]||'').toString().trim()};}).filter(function(x){return x.art;});
-    // Зберегти в кеш
-    try{localStorage.setItem(CACHE_KEY,JSON.stringify({orders:orders,items:items,stock:stock,time:new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})}));}catch(e){}
+    // (кеш у localStorage вимкнено — дані клієнтів не лишаються в браузері)
     var now=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
     G('updTxt').textContent='Оновлено '+now;
     if(G('updDot'))G('updDot').className='upd-dot ok';
@@ -8023,11 +8182,11 @@ function pickFocus(){
 // ============================================================
 var ROLE_LABEL={admin:'супер-адмін',manager:'адмін',worker:'вантажник',packer:'фасувальник',viewer:'перегляд'};
 var WORKER_HIDE=['dash','picker','ref','voices','ai','vygruzka','users','analytics'];
-function curUser(){var s=null;try{s=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){}return (s&&s.user)||{login:'admin',name:'Адмін',role:'admin'};}
+function curUser(){var s=null;try{s=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');}catch(e){}return (s&&s.user)||{login:'admin',name:'Адмін',role:'admin'};}
 function isWorker(){return curUser().role==='worker';}
 var ROLE_PAGES={
-  worker:['scan','verify','stock','ref','pick','stickers','repack'],               // вантажник: прийом, перескановка, товари, довідник, відбір, наліпки, фасовка
-  packer:['packdash','picker','pick','stickers','repack']                          // фасувальник: дашборд фасовки, фасування (списки), відбір, наліпки, фасовка
+  worker:['scan','verify','stock','pallets','ref','pick','stickers','repack'],               // вантажник: прийом, перескановка, товари, довідник, відбір, наліпки, фасовка
+  packer:['packdash','picker','pick','pallets','stickers','repack']                          // фасувальник: дашборд фасовки, фасування (списки), відбір, наліпки, фасовка
 };
 var ROLE_HIDE={
   manager:['users','picker','scan','verify','stickers','voices','repack','vygruzka'],  // адмін: усе, крім цих
@@ -8045,7 +8204,7 @@ function applyRoleUI(){
   var sub=document.querySelector('.sb-sub');if(sub)sub.textContent=u.name+' · '+(ROLE_LABEL[u.role]||u.role);
 }
 async function refreshMe(){
-  try{var r=await callScript('me',{});if(r&&r.ok&&r.user){var s=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');if(s){s.user=r.user;localStorage.setItem(AUTH_KEY,JSON.stringify(s));}applyRoleUI();var on=document.querySelector('.page.on');if(on&&!pageAllowed(on.id.replace('page-','')))nav(homePage());}}catch(e){}
+  try{var r=await callScript('me',{});if(r&&r.ok&&r.user){var s=JSON.parse(AUTH_STORE.getItem(AUTH_KEY)||'null');if(s){s.user=r.user;AUTH_STORE.setItem(AUTH_KEY,JSON.stringify(s));}applyRoleUI();var on=document.querySelector('.page.on');if(on&&!pageAllowed(on.id.replace('page-','')))nav(homePage());}}catch(e){}
 }
 // ---------- сторінка «Користувачі» (лише адміністратор) ----------
 var usersCache=null;
@@ -8054,7 +8213,7 @@ async function adminSetPw(){
   var a=prompt('Новий пароль супер-адміна (вхід «admin»), щонайменше 8 символів.\nПорада: три випадкові слова з цифрами. Ніде його не записуй у таблиці чи чатах.','');if(a==null)return;
   if(a.length<8){alert('Щонайменше 8 символів');return;}var b=prompt('Повтори пароль:','');if(b==null)return;if(a!==b){alert('Паролі не збігаються');return;}
   var r=await callScriptPost('adminSetPassword',{password:a});
-  if(r&&r.ok){alert('Готово. Новий пароль збережено лише як хеш на сервері.\nСтарий пароль із коду більше не діє. Зараз увійди заново з новим паролем.');localStorage.removeItem(AUTH_KEY);location.reload();}
+  if(r&&r.ok){alert('Готово. Новий пароль збережено лише як хеш на сервері.\nСтарий пароль із коду більше не діє. Зараз увійди заново з новим паролем.');AUTH_STORE.removeItem(AUTH_KEY);location.reload();}
   else toast((r&&(r.error||r.msg))||'Не збереглось','er',4000);
 }
 async function usersToggleAdminPw(off){
