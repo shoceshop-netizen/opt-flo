@@ -750,6 +750,13 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .np-t{width:100%;border-collapse:collapse;font-size:13.5px}
 .np-l{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#b42318;text-decoration:none;border:1px solid #f0c4c0;border-radius:8px;padding:2px 7px;margin-left:6px;background:#fff;white-space:nowrap}
 .np-l:hover{background:#fde2e0}
+.np-full{font-size:11.5px;line-height:1.3;color:var(--mu);text-align:right;max-width:240px;white-space:normal}
+@media(max-width:760px){.np-full{max-width:44vw;font-size:11px}}
+.np-cards{display:flex;flex-direction:column;gap:10px}
+.np-c{background:var(--card);border:1px solid var(--bo2);border-radius:14px;padding:12px;cursor:pointer}
+.np-c-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.np-c-t{font-size:13px;line-height:1.35;margin-bottom:6px}
+.np-c .np-r span{min-width:130px}
 .np-t th{text-align:left;font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.3px;padding:8px;border-bottom:1px solid var(--bo2)}
 .np-t td{padding:8px;border-bottom:1px solid var(--gray6);vertical-align:top}
 .np-t tr:hover td{background:var(--gray6)}
@@ -1902,29 +1909,33 @@ async function loadNp(){
   try{var r=await callScript('npStatuses',{});if(!r||!r.ok)return;npApply(r);}catch(e){}
 }
 function npApply(r){
-  npRows={};(r.rows||[]).forEach(function(x){var t=String(x[0]).replace(/\D/g,'');if(t)npRows[t]={ttn:t,num:x[1],text:x[2],code:x[3],g:x[4]||'transit',since:x[5],branch:x[6],pay:x[7],recv:x[8],city:x[9],wh:x[10],upd:x[11]};});
+  npRows={};(r.rows||[]).forEach(function(x){var t=String(x[0]).replace(/\D/g,'');if(t)npRows[t]={ttn:t,num:x[1],text:x[2],code:x[3],g:x[4]||'transit',since:x[5],branch:x[6],pay:x[7],recv:x[8],city:x[9],wh:x[10],upd:x[11],created:x[12]||'',handed:x[13]||''};});
   npInfo={hasKey:!!r.hasKey,lastRun:r.lastRun||'',lastErr:r.lastErr||''};
   try{if(G('page-orders')&&G('page-orders').classList.contains('on'))renderOrders();if(G('page-parcels')&&G('page-parcels').classList.contains('on'))renderParcels();}catch(e){}
   npNavBadge();
 }
-function npTrackUrl(ttn){var t=String(ttn||'').replace(/\D/g,'');return t?'https://novaposhta.ua/tracking/?cargo_number='+t:'';}
+function npTrackUrl(ttn){var t=(npTtnsF(ttn)[0])||String(ttn||'').replace(/\D/g,'');return t?'https://novaposhta.ua/tracking/?cargo_number='+t:'';}
 function npTrackLink(ttn){var u=npTrackUrl(ttn);return u?'<a class="np-l" href="'+u+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Відкрити відстеження на сайті Нової Пошти">🔎 НП</a>':'';}
-function npOf(o){var t=String(o&&o.ttn||'').replace(/\D/g,'');return t?npRows[t]||null:null;}
+function npTtnsF(v){var s=String(v||''),m=s.match(/\d{14}/g);if(!m)m=s.replace(/[\s\-]/g,'').match(/\d{14}/g);return m||[];}
+function npOf(o){var ts=npTtnsF(o&&o.ttn);for(var i=0;i<ts.length;i++)if(npRows[ts[i]])return npRows[ts[i]];return null;}
 function npDays(s){var m=String(s||'').match(/^(\d{2})\.(\d{2})\.(\d{4})/);if(!m)return 0;return Math.floor((Date.now()-new Date(+m[3],+m[2]-1,+m[1]).getTime())/86400000);}
 function npPayStarted(p){var m=String(p&&p.pay||'').match(/^(\d{2})\.(\d{2})\.(\d{4})/);return !!m&&new Date(+m[3],+m[2]-1,+m[1]).getTime()<=Date.now();}
+function npSent(p){return p.handed||p.created||'';}
 function npLabel(p){var g=NP_G[p.g]||NP_G.transit,t=g[1];
   if(p.g==='branch'){var d=npDays(p.branch);t+=d?' · '+d+' дн.':'';}
   if(p.g==='received'&&p.recv)t+=' '+String(p.recv).slice(0,5);
+  if(p.g==='transit'&&npSent(p)){var dt=npDays(npSent(p));if(dt)t+=' · '+dt+' дн.';}
   return t;}
 function npBadge(o){
   if(!npAllowed())return '';var p=npOf(o);if(!p)return '';var g=NP_G[p.g]||NP_G.transit,warn=p.g==='branch'&&(npDays(p.branch)>=5||npPayStarted(p));
   var col=warn?'#b42318':g[2],bg=warn?'#fde2e0':g[3];
   return '<span class="np-b" style="color:'+col+';background:'+bg+';border-color:'+col+'" title="'+esc(p.text+(p.city?' · '+p.city:'')+(p.wh?' · '+p.wh:'')+(p.pay?' · платне зберігання з '+p.pay:''))+'">'+g[0]+' '+esc(npLabel(p))+'</span>';
 }
+function npFull(o){if(!npAllowed())return '';var p=npOf(o);if(!p||!p.text)return '';return '<div class="np-full">'+esc(p.text)+(p.g==='branch'&&p.city?' · '+esc(p.city):'')+'</div>';}
 function npCardHtml(o){
   if(!npAllowed())return '';var p=npOf(o);
   if(!p)return o.ttn?'<div class="np-card" style="color:var(--mu)">📦 Статус посилки ще не отримано'+(npInfo.hasKey?' — оновиться автоматично':'')+'</div>':'';
-  var rows=[['Статус НП',esc(p.text)],['Місто / відділення',esc([p.city,p.wh].filter(Boolean).join(' · '))],['На відділенні з',esc(p.branch)],['Платне зберігання з',p.pay?('<b style="color:'+(npPayStarted(p)?'#b42318':'inherit')+'">'+esc(p.pay)+'</b>'):''],['Отримано',esc(p.recv)],['Перевірено',esc(p.upd)]].filter(function(r){return r[1];});
+  var rows=[['Статус НП',esc(p.text)],['Відправлено',esc(npSent(p).slice(0,10))+(p.handed?' <span style="color:var(--mu);font-weight:400">передано НП '+esc(p.handed.slice(11))+'</span>':(p.created?' <span style="color:var(--mu);font-weight:400">(створено накладну)</span>':''))],['Місто / відділення',esc([p.city,p.wh].filter(Boolean).join(' · '))],['На відділенні з',esc(p.branch)],['Платне зберігання з',p.pay?('<b style="color:'+(npPayStarted(p)?'#b42318':'inherit')+'">'+esc(p.pay)+'</b>'):''],['Отримано',esc(p.recv)],['Перевірено',esc(p.upd)]].filter(function(r){return r[1];});
   return '<div class="np-card">'+npBadge(o)+rows.map(function(r){return '<div class="np-r"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';}).join('')+'</div>';
 }
 function npNavBadge(){var b=G('bNp');if(!b)return;var n=Object.keys(npRows).filter(function(t){var p=npRows[t];return p.g==='branch'&&npDays(p.branch)>=3||p.g==='refused'||p.g==='return'||p.g==='problem';}).length;b.textContent=n;b.style.display=n?'':'none';}
@@ -1933,6 +1944,7 @@ async function npRefreshNow(){
   try{var r=await callScriptPost('npRefresh',{});if(r&&r.ok){npApply(r);var f=r.refresh;toast(r.note?r.note:(f?('Перевірено '+(f.checked||0)+', змінилось '+(f.changed||0)):'Готово'),'ok',2500);}else toast('Не вдалося: '+((r&&(r.error||r.msg))||'?'),'er',4000);}
   finally{npBusy=false;renderParcels();}
 }
+window.addEventListener('resize',function(){clearTimeout(window._npRz);window._npRz=setTimeout(function(){var pg=G('page-parcels');if(pg&&pg.classList.contains('on'))renderParcels();},200);});
 function renderParcels(){
   var el=G('page-parcels');if(!el)return;
   var role=curUser().role,canRefresh=role==='admin'||role==='manager'||role==='super-admin';
@@ -1942,7 +1954,7 @@ function renderParcels(){
   var F={transit:function(p){return p.g==='transit'||p.g==='created';},branch:function(p){return p.g==='branch';},late:function(p){return p.g==='branch'&&npDays(p.branch)>=3;},received:function(p){return p.g==='received';},back:function(p){return p.g==='refused'||p.g==='return';},problem:function(p){return p.g==='problem'||p.g==='notfound'||p.g==='deleted';}};
   var tiles=[['transit','🚚 В дорозі'],['branch','📦 На відділенні'],['late','⏰ На відділенні ≥ 3 дн.'],['received','✅ Отримано'],['back','↩️ Відмови й повернення'],['problem','⚠️ Проблеми']];
   var q=npQ.trim().toLowerCase();
-  var list=L.filter(function(x){if(npFilter&&!F[npFilter](x.p))return false;if(!q)return true;return (x.p.ttn+' '+x.p.num+' '+(x.o?x.o.name:'')+' '+x.p.city+' '+x.p.text).toLowerCase().indexOf(q)>=0;});
+  var list=L.filter(function(x){if(npFilter&&!F[npFilter](x.p))return false;if(!q)return true;return (x.p.ttn+' '+x.p.num+' '+(x.o?x.o.name:'')+' '+x.p.city+' '+x.p.text+' '+npSent(x.p)).toLowerCase().indexOf(q)>=0;});
   var rank={problem:0,refused:1,return:1,branch:2,transit:3,created:4,notfound:0,deleted:5,received:6};
   list.sort(function(a,b){return (rank[a.p.g]-rank[b.p.g])||(npDays(b.p.branch)-npDays(a.p.branch))||String(b.p.num).localeCompare(String(a.p.num));});
   var h='<div style="padding:18px 20px"><div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px"><div style="flex:1"><div style="font-size:22px;font-weight:800">📦 Посилки Нової Пошти</div><div style="font-size:13px;color:var(--mu)">Статус за ТТН із замовлень. '+(npInfo.lastRun?'Оновлено '+esc(npInfo.lastRun)+' · ':'')+'автоматично кожні 2 години.'+(npInfo.lastErr?' <span style="color:#b42318">Помилка НП: '+esc(npInfo.lastErr)+'</span>':'')+'</div></div>'
@@ -1951,8 +1963,13 @@ function renderParcels(){
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:12px">'+tiles.map(function(t){var n=cnt(F[t[0]]),on=npFilter===t[0];return '<button type="button" onclick="npFilter=(npFilter===\''+t[0]+'\'?\'\':\''+t[0]+'\');renderParcels()" style="text-align:left;border:1.5px solid '+(on?'#37714a':'var(--bo2)')+';background:'+(on?'#e6f3ea':'var(--card)')+';border-radius:14px;padding:10px 12px;cursor:pointer;font-family:inherit;color:var(--tx)"><div style="font-size:12.5px;color:var(--mu)">'+t[1]+'</div><div style="font-size:24px;font-weight:800">'+n+'</div></button>';}).join('')+'</div>';
   h+='<input type="search" placeholder="№ замовлення, клієнт, ТТН, місто…" value="'+esc(npQ)+'" oninput="npQ=this.value;clearTimeout(window._npT);window._npT=setTimeout(function(){renderParcels();var i=document.querySelector(\'#page-parcels input[type=search]\');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250)" style="width:100%;max-width:520px;height:42px;border:1.5px solid var(--bo2);border-radius:12px;padding:0 14px;font-family:inherit;font-size:15px;margin-bottom:10px;background:var(--card);color:var(--tx)">';
   if(!list.length)h+='<div style="padding:30px;text-align:center;color:var(--mu)">'+(L.length?'Нічого не знайдено':'Ще нема даних про посилки')+'</div>';
-  else h+='<div style="overflow-x:auto"><table class="np-t"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>ТТН</th><th>Статус</th><th>Місто / відділення</th><th>Деталі</th></tr></thead><tbody>'+list.slice(0,500).map(function(x){var p=x.p,o=x.o;
-      return '<tr'+(o?' onclick="selectOrder(\''+o.id+'\')" style="cursor:pointer"':'')+'><td class="mo">'+esc(p.num||'—')+'</td><td>'+esc(o?o.name:'')+'</td><td class="mo">'+esc(p.ttn)+' <button class="cpbtn" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+p.ttn+'\');toast(\'ТТН скопійовано\',\'ok\',1500)">📋</button> '+npTrackLink(p.ttn)+'</td><td>'+npBadge(o||{ttn:p.ttn})+'</td><td>'+esc([p.city,p.wh].filter(Boolean).join(' · '))+'</td><td style="font-size:12px;color:var(--mu)">'+esc(p.text)+(p.pay?'<br>платне зберігання з '+esc(p.pay):'')+'</td></tr>';}).join('')+'</tbody></table></div>';
+  else if(window.innerWidth<=760)h+='<div class="np-cards">'+list.slice(0,500).map(function(x){var p=x.p,o=x.o;
+      return '<div class="np-c"'+(o?' onclick="selectOrder(\''+o.id+'\')"':'')+'><div class="np-c-h"><b>'+esc(o?o.name:'—')+'</b><span class="mo" style="color:var(--mu)">№ '+esc(p.num||'—')+'</span></div>'
+        +'<div style="margin:6px 0 4px">'+npBadge(o||{ttn:p.ttn})+'</div><div class="np-c-t">'+esc(p.text)+'</div>'
+        +[['Відправлено',esc(npSent(p).slice(0,10))],['Місто / відділення',esc([p.city,p.wh].filter(Boolean).join(' · '))],['Платне зберігання з',esc(p.pay)],['Отримано',esc(p.recv)]].filter(function(r){return r[1];}).map(function(r){return '<div class="np-r"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';}).join('')
+        +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span class="mo" style="font-size:13px">'+esc(p.ttn)+'</span><button class="cpbtn" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+p.ttn+'\');toast(\'ТТН скопійовано\',\'ok\',1500)">📋</button>'+npTrackLink(p.ttn)+'</div></div>';}).join('')+'</div>';
+  else h+='<div style="overflow-x:auto"><table class="np-t"><thead><tr><th>Замовлення</th><th>Клієнт</th><th>ТТН</th><th>Відправлено</th><th>Статус</th><th>Місто / відділення</th><th>Деталі</th></tr></thead><tbody>'+list.slice(0,500).map(function(x){var p=x.p,o=x.o;
+      return '<tr'+(o?' onclick="selectOrder(\''+o.id+'\')" style="cursor:pointer"':'')+'><td class="mo">'+esc(p.num||'—')+'</td><td>'+esc(o?o.name:'')+'</td><td class="mo">'+esc(p.ttn)+' <button class="cpbtn" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+p.ttn+'\');toast(\'ТТН скопійовано\',\'ok\',1500)">📋</button> '+npTrackLink(p.ttn)+'</td><td style="white-space:nowrap">'+esc(npSent(p).slice(0,10))+'</td><td>'+npBadge(o||{ttn:p.ttn})+'</td><td>'+esc([p.city,p.wh].filter(Boolean).join(' · '))+'</td><td style="font-size:12px;color:var(--mu)">'+esc(p.text)+(p.pay?'<br>платне зберігання з '+esc(p.pay):'')+'</td></tr>';}).join('')+'</tbody></table></div>';
   el.innerHTML=h+'</div>';
 }
 
@@ -4743,7 +4760,7 @@ function renderOrders(){
         +'<div class="oname">'+esc(o.name)+(orderAnomalies(o).length?' <span title="Є неузгодженості — відкрий картку" style="display:inline-block;background:var(--r);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">⚠ '+orderAnomalies(o).length+'</span>':'')+'</div><div class="onum">№ '+esc(o.num)+(oD?' · від '+esc(fmtDM(oD)):'')+(sameAsPrev?' <span style="color:var(--blue);font-weight:600">↳ ще одне замовлення цього клієнта</span>':'')+'</div>'
         +'<div class="oitem">'+(first?('<span class="osku">'+esc(first.art)+'</span>'+esc(first.name)):'—')+(more>0?'<span class="omore">+'+more+' позиц.</span>':'')+'</div>'
       +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+packWarnBadge(o)+npBadge(o)+'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+pillH(o.status)+siteStatusBadge(o)+packWarnBadge(o)+npBadge(o)+npFull(o)+'</div>'
     +'</div>';
   });
   window._ordVisible=list.map(function(o){return o.id;});
