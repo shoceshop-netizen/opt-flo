@@ -907,7 +907,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
       <div id="vmStats" class="cm-stats"></div>
     </div>
     <div style="padding:14px 20px;background:#fafafa;border-bottom:1px solid var(--bo);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <input id="vmInput" type="text" inputmode="none" placeholder="Скануй або введи артикул і натисни Enter..." style="flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--purple);border-radius:8px;font-size:15px;font-family:inherit;outline:none" autofocus>
+      <input autocomplete="off" data-lpignore="true" id="vmInput" type="text" inputmode="none" placeholder="Скануй або введи артикул і натисни Enter..." style="flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--purple);border-radius:8px;font-size:15px;font-family:inherit;outline:none" autofocus>
       <input id="vmQty" type="number" min="1" value="1" style="width:80px;padding:12px 10px;border:1px solid var(--bo);border-radius:8px;font-size:15px;text-align:center;font-family:inherit;outline:none">
       <button class="btn pr" onclick="verifyScanArt()" style="padding:12px 18px">+ Додати</button>
     </div>
@@ -998,7 +998,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
     <div class="orders-layout ord-full">
       <div class="order-list-col">
         <div class="olc-head"><span class="olc-title">Замовлення</span><span class="olc-cnt" id="orCnt">0</span></div>
-        <div class="olc-search"><input class="si" id="orSearch" placeholder="Пошук по номеру або клієнту..." oninput="renderOrders()"></div>
+        <div class="olc-search"><input autocomplete="off" data-lpignore="true" class="si" id="orSearch" placeholder="Пошук по номеру або клієнту..." oninput="renderOrders()"></div>
         <div class="olc-filters" id="orFilters"></div>
         <div class="order-list" id="orList"></div>
       </div>
@@ -1095,7 +1095,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
   <!-- STOCK -->
   <div class="page" id="page-stock">
     <div class="stk-tb">
-      <input class="si" style="max-width:280px" id="stkSearch" placeholder="Пошук артикул / назва..." oninput="renderStock()">
+      <input autocomplete="off" data-lpignore="true" class="si" style="max-width:280px" id="stkSearch" placeholder="Пошук артикул / назва..." oninput="renderStock()">
       <span id="stkCnt" style="font-size:12px;color:var(--mu)"></span>
       <button class="btn sm" onclick="reloadPanel()">🔄</button>
     </div>
@@ -1154,7 +1154,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
           <div style="font-size:13px;color:var(--mu);margin-top:4px">Зайві товари які залишились при пакуванні — підрахунок автоматичний</div>
         </div>
         <div style="display:flex;gap:8px">
-          <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="reserveSearch" placeholder="Пошук..." oninput="renderReserve()">
+          <input autocomplete="off" data-lpignore="true" class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="reserveSearch" placeholder="Пошук..." oninput="renderReserve()">
           <button class="btn sm" onclick="loadReserve()">🔄 Оновити</button>
           <button class="btn sm" onclick="exportReserve()">📥 Експорт</button>
         </div>
@@ -1220,7 +1220,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
             <div style="font-size:12px;color:var(--mu);margin-top:2px">Список з активних замовлень. Якщо немає запису — програється системний голос</div>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
-            <input class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="voicesSearch" placeholder="Пошук імені..." oninput="renderClientVoices()">
+            <input autocomplete="off" data-lpignore="true" class="si" style="max-width:240px;padding:8px 12px;font-size:13px" id="voicesSearch" placeholder="Пошук імені..." oninput="renderClientVoices()">
             <span style="font-size:12px;color:var(--mu)"><span id="namesProgress">0</span> / <span id="namesTotal">0</span></span>
           </div>
         </div>
@@ -1286,7 +1286,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
           <div>
             <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">API ключ</label>
-            <input id="elevenApiKey" type="password" placeholder="sk_..." class="si" style="width:100%;padding:8px 12px;font-size:12px;font-family:var(--mono)" autocomplete="off">
+            <input id="elevenApiKey" type="text" placeholder="sk_..." class="si" data-lpignore="true" data-1p-ignore spellcheck="false" style="-webkit-text-security:disc;width:100%;padding:8px 12px;font-size:12px;font-family:var(--mono)" autocomplete="off">
           </div>
           <div>
             <label style="font-size:11px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600">Voice ID (з URL Voice Library)</label>
@@ -1324,7 +1324,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
         <div id="aiKeyForm" style="display:none;margin-bottom:14px;background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:14px 18px;">
           <div style="font-size:12px;color:var(--mu);margin-bottom:8px;">Встав ключ Groq (безкоштовно на <b>console.groq.com</b> → API Keys). Зберігається на сервері, не в коді сторінки.</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input id="aiKeyInput" type="password" placeholder="gsk_..." autocomplete="off" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--bo);border-radius:8px;font-family:var(--mono);font-size:13px;box-sizing:border-box;background:#fff;color:var(--tx);">
+            <input id="aiKeyInput" type="text" placeholder="gsk_..." autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" style="-webkit-text-security:disc;flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--bo);border-radius:8px;font-family:var(--mono);font-size:13px;box-sizing:border-box;background:#fff;color:var(--tx);">
             <button id="aiKeySaveBtn" onclick="saveAiKey()" class="btn pr" style="padding:9px 16px;">Зберегти</button>
           </div>
         </div>
@@ -1377,7 +1377,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='10.11.2026 · безпека браузера';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='10.11.2026 · звірка відправлених';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
 var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts','pickRecent','invPresetPrice','florium_eleven_key'];
@@ -1434,7 +1434,7 @@ function showLogin(){
     ls=document.createElement('div');
     ls.id='loginScreen';
     ls.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1929,#1a3a52);z-index:99999;font-family:var(--font);';
-    ls.innerHTML='<div style="background:#fff;border-radius:20px;padding:36px 32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3);">'
+    ls.innerHTML='<form id="loginForm" autocomplete="on" onsubmit="return false" style="margin:0"><div style="background:#fff;border-radius:20px;padding:36px 32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3);">'
       +'<div style="text-align:center;margin-bottom:24px">'
         +'<div style="width:64px;height:64px;background:linear-gradient(135deg,#34c759,#248a3d);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px;box-shadow:0 6px 20px rgba(52,199,89,.3)">🌱</div>'
         +'<div style="font-size:22px;font-weight:700;color:#1d1d1f;letter-spacing:-.5px">Florium Admin</div>'
@@ -1460,10 +1460,10 @@ function showLogin(){
         +'<input id="loginPwd" type="password" placeholder="Пароль" autocomplete="current-password" style="width:100%;padding:13px 16px;border:1.5px solid #d2d2d7;border-radius:10px;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor=\'#0071e3\'" onblur="this.style.borderColor=\'#d2d2d7\'">'
       +'</div>'
       +'<div id="loginErr" style="font-size:13px;color:#ff3b30;margin-bottom:14px;min-height:18px;text-align:center;font-weight:500"></div>'
-      +'<button onclick="doLogin()" id="loginBtn" style="width:100%;padding:14px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background=\'#0060c0\'" onmouseout="this.style.background=\'#0071e3\'">Увійти</button>'
+      +'<button type="button" onclick="doLogin()" id="loginBtn" style="width:100%;padding:14px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background=\'#0060c0\'" onmouseout="this.style.background=\'#0071e3\'">Увійти</button>'
       +'</div>'
       +'<div style="text-align:center;margin-top:18px;font-size:11px;color:#86868b">Сесія діє 14 годин · код з пошти діє 10 хвилин</div>'
-    +'</div>';
+    +'</div></form>';
     document.body.appendChild(ls);
   } else {
     ls.style.display='flex';
@@ -1590,7 +1590,7 @@ function getDeviceName(){
   return os+' · '+browser;
 }
 
-function showApp(){
+function showApp(){try{var _g=document.getElementById('gsInp');if(_g)_g.value='';}catch(e){}
   bootDone();
   try{idleStart();}catch(e){}
   // Показуємо UI — але НЕ чіпаємо модалки (їх display керується inline-style)
@@ -9218,6 +9218,29 @@ function renderAnalytics(){
     h+='<div id="anDetail" style="margin-top:14px">'+anCard(isC?'👥':'📦',isC?'Усі клієнти':'Усі товари',esc(r.label)+' · '+rows.length,body)+'</div>';
   }
   var noDate=orders.filter(function(o){return anIsShipped(o)&&!anShipExact(o);}).length;
+  // Звірка з дашбордом: чому «Відправлено» в панелі ≠ відправлені замовлення в аналітиці (за весь час)
+  try{
+    var anSet={};anLines().lines.forEach(function(x){anSet[x.o.num]=1;});
+    var byNum={};orders.forEach(function(o){byNum[o.num]=o;});
+    var pS=orders.filter(function(o){return sk(o.status)==='sent';});
+    var gOther=[],gNoItems=[],gNoLines=[],gExtra=[];
+    pS.forEach(function(o){if(anSet[o.num])return;var ss=(typeof siteStatusOf==='function')?siteStatusOf(o):'';
+      if(ss&&sk(ss)!=='sent')gOther.push(esc(o.num)+' <span style="color:var(--mu)">'+esc(o.name||'')+' · у вигрузці «'+esc(ss)+'»</span>');
+      else if(!(items[o.num]||[]).length)gNoItems.push(esc(o.num)+' <span style="color:var(--mu)">'+esc(o.name||'')+'</span>');
+      else gNoLines.push(esc(o.num)+' <span style="color:var(--mu)">'+esc(o.name||'')+'</span>');});
+    Object.keys(anSet).forEach(function(n){var o=byNum[n];if(o&&sk(o.status)!=='sent')gExtra.push(esc(n)+' <span style="color:var(--mu)">'+esc(o.name||'')+' · у панелі «'+esc(o.status||'')+'»</span>');});
+    var anN=Object.keys(anSet).length;
+    if(pS.length!==anN||gOther.length||gNoItems.length||gNoLines.length||gExtra.length){
+      var grp=function(title,arr,sign){return arr.length?'<div style="margin-top:8px"><b>'+sign+arr.length+'</b> — '+title+'<div style="font-family:var(--mono);font-size:11.5px;line-height:1.6;margin-top:3px">'+arr.join('<br>')+'</div></div>':'';};
+      h+='<details style="font-size:12.5px;background:#f6f8fc;border:1px solid #d9e2f1;border-radius:10px;padding:8px 12px;margin-top:10px"><summary style="cursor:pointer;font-weight:600">Чому не збігається з дашбордом: у панелі «Відправлено» '+pS.length+', в аналітиці за весь час '+anN+'</summary>'
+        +'<div style="color:var(--mu);margin-top:6px">Дашборд рахує статус <b>у панелі</b>. Аналітика рахує статус <b>у вигрузці</b> (сайт) і лише замовлення, в яких є відправлені позиції.</div>'
+        +grp('у панелі «Відправлено», а у вигрузці інший статус',gOther,'−')
+        +grp('у панелі «Відправлено», але позицій у вигрузці нема',gNoItems,'−')
+        +grp('у панелі «Відправлено», але всі позиції зняті позначкою «не відправили»',gNoLines,'−')
+        +grp('у вигрузці «Відправлено», а в панелі ще ні',gExtra,'+')
+        +'</details>';
+    }
+  }catch(e){}
   if(noDate)h+='<div style="font-size:12px;color:#7a4a00;background:#fff8ec;border:1px solid #f0cf9a;border-radius:10px;padding:8px 12px;margin-top:10px">'+noDate+' відправлених замовлень без точного часу відправки (нема ні в журналі статусів, ні в ТТН) — вони стоять на даті з вигрузки, тому можуть не потрапити в «Сьогодні / Вчора». Завантаж їхні ТТН на «Вигрузці» → «📥 Продажі ТТН → панель» — час ТТН стане часом відправки. Нові відправки панель ловить сама (кожні 10 хв).</div>';
   el.innerHTML=h;
 }
@@ -9740,7 +9763,7 @@ function openQtyModal(art){
     +'</div>'
     +'<div style="padding:16px 18px;">'
       +'<label style="display:block;font-size:12px;color:var(--tx2);margin-bottom:6px;">Кількість (шт)</label>'
-      +'<input id="qtyInp" type="number" inputmode="numeric" min="1" step="1" placeholder="0" style="width:100%;padding:12px 14px;border:1.5px solid var(--bo2);border-radius:10px;font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;box-sizing:border-box;color:var(--tx);">'
+      +'<input autocomplete="off" data-lpignore="true" id="qtyInp" type="number" inputmode="numeric" min="1" step="1" placeholder="0" style="width:100%;padding:12px 14px;border:1.5px solid var(--bo2);border-radius:10px;font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;box-sizing:border-box;color:var(--tx);">'
     +'</div>'
     +'<div style="padding:14px 18px;border-top:1px solid var(--bo2);display:flex;gap:10px;justify-content:flex-end;">'
       +'<button onclick="closeQtyModal()" style="padding:10px 16px;border:1.5px solid var(--bo2);background:#fff;border-radius:9px;font-family:inherit;font-size:14px;cursor:pointer;color:var(--tx);">Скасувати</button>'
