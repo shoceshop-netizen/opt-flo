@@ -1377,11 +1377,12 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='02.11.2026 · посилки НП';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='10.11.2026 · безпека браузера';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
-var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts'];
-function wipeLocalPII(){try{PII_KEYS.forEach(function(k){localStorage.removeItem(k);});Object.keys(localStorage).forEach(function(k){if(/^fl_cache/.test(k))localStorage.removeItem(k);});}catch(e){}}
+var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts','pickRecent','invPresetPrice','florium_eleven_key'];
+function wipeLocalPII(){try{PII_KEYS.forEach(function(k){localStorage.removeItem(k);});Object.keys(localStorage).forEach(function(k){if(/^(fl_cache|invEdit:)/.test(k))localStorage.removeItem(k);});}catch(e){}
+  try{if(window.indexedDB)indexedDB.deleteDatabase('florium_voice_v2');}catch(e){}}
 wipeLocalPII();
 var CACHE_KEY_BASE='fl_cache';
 // Легкі дані (телефон): лише активні замовлення — у ~50–100 разів менше, ніж повні. Авто на вузькому екрані; можна перемкнути в меню.
@@ -3130,10 +3131,10 @@ var TTS_WORDS={
 function loadElevenSettings(){
   var keyEl=document.getElementById('elevenApiKey');
   var voiceEl=document.getElementById('elevenVoiceId');
-  if(keyEl)keyEl.value=localStorage.getItem(ELEVEN_KEY_STORAGE)||'';
+  if(keyEl)keyEl.value=sessionStorage.getItem(ELEVEN_KEY_STORAGE)||'';
   if(voiceEl)voiceEl.value=localStorage.getItem(ELEVEN_VOICE_STORAGE)||'';
   // Зберігаємо при зміні
-  if(keyEl)keyEl.onchange=function(){localStorage.setItem(ELEVEN_KEY_STORAGE,keyEl.value.trim());};
+  if(keyEl)keyEl.onchange=function(){sessionStorage.setItem(ELEVEN_KEY_STORAGE,keyEl.value.trim());};
   if(voiceEl)voiceEl.onchange=function(){localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceEl.value.trim());};
 }
 
@@ -3157,7 +3158,7 @@ async function ttsTestConnection(){
   var key=(document.getElementById('elevenApiKey')||{}).value||'';
   key=key.trim();
   if(!key){alert('Введи API ключ');return;}
-  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  sessionStorage.setItem(ELEVEN_KEY_STORAGE,key);
   ttsLog('Перевіряю API ключ...');
   ttsSetProgress('🔍 Перевіряю підключення...');
   // Спробуємо спочатку /user (для квоти)
@@ -3258,7 +3259,7 @@ async function ttsGenerateAll(category){
   var key=(document.getElementById('elevenApiKey')||{}).value.trim();
   var voiceInput=(document.getElementById('elevenVoiceId')||{}).value.trim();
   if(!key){alert('Спочатку введи API ключ');return;}
-  localStorage.setItem(ELEVEN_KEY_STORAGE,key);
+  sessionStorage.setItem(ELEVEN_KEY_STORAGE,key);
   localStorage.setItem(ELEVEN_VOICE_STORAGE,voiceInput);
   
   ttsSetProgress('🔍 Шукаю голос...');
@@ -3369,7 +3370,7 @@ var GEM_VOICES=[['Kore','жіночий · впевнений'],['Zephyr','жі�
 var GEM_STYLE_DEFAULT='';   // без інструкції: модель інколи зачитувала її вголос
 var GEM_STYLE_OLD='Скажи українською природно, спокійно і доброзичливо, як диспетчер складу';
 var gemStop=false,gemBusy=false;
-function gemPrefs(){var p=getVoicePrefs();var st=(p.gemStyle!=null?p.gemStyle:GEM_STYLE_DEFAULT);if(st===GEM_STYLE_OLD)st='';return {voice:(p.gender==='m'?(p.gemVoiceM||'Charon'):(p.gemVoice||'Kore')),voiceF:p.gemVoice||'Kore',voiceM:p.gemVoiceM||'Charon',style:st,auto:p.autoEngine||(localStorage.getItem(ELEVEN_KEY_STORAGE)?'eleven':'gemini')};}
+function gemPrefs(){var p=getVoicePrefs();var st=(p.gemStyle!=null?p.gemStyle:GEM_STYLE_DEFAULT);if(st===GEM_STYLE_OLD)st='';return {voice:(p.gender==='m'?(p.gemVoiceM||'Charon'):(p.gemVoice||'Kore')),voiceF:p.gemVoice||'Kore',voiceM:p.gemVoiceM||'Charon',style:st,auto:p.autoEngine||(sessionStorage.getItem(ELEVEN_KEY_STORAGE)?'eleven':'gemini')};}
 function loadGeminiSettings(){
   var p=gemPrefs();var vs=document.getElementById('gemVoice'),st=document.getElementById('gemStyle'),ae=document.getElementById('gemAutoEngine');
   if(vs){vs.innerHTML=GEM_VOICES.filter(function(v){return /жіноч/.test(v[1]);}).map(function(v){return '<option value="'+v[0]+'"'+(v[0]===p.voiceF?' selected':'')+'>'+v[0]+' — '+v[1].replace(/^жіночий · /,'')+'</option>';}).join('');vs.onchange=function(){var q=getVoicePrefs();q.gemVoice=vs.value;saveVoicePrefs(q);};}
@@ -6279,9 +6280,9 @@ function buildInvoice(list){
 var invEd=null;
 var INV_PRESETS=['Картинки','Коробки'];
 function invEdKey(nums){return 'invEdit:'+nums.slice().sort().join(',');}
-function invPresetPrice(name){try{var m=JSON.parse(localStorage.getItem('invPresetPrice')||'{}')||{};return m[name]||'';}catch(e){return '';}}
+function invPresetPrice(name){try{var m=JSON.parse(sessionStorage.getItem('invPresetPrice')||'{}')||{};return m[name]||'';}catch(e){return '';}}
 function openInvoiceEditor(d){
-  var saved={};try{saved=JSON.parse(localStorage.getItem(invEdKey(d.nums))||'{}')||{};}catch(e){saved={};}
+  var saved={};try{saved=JSON.parse(sessionStorage.getItem(invEdKey(d.nums))||'{}')||{};}catch(e){saved={};}
   var ov=saved.overrides||{};
   invEd={d:d,
     lines:d.lines.map(function(l){var o=ov[l.key]||{};return {key:l.key,art:l.art,pack:l.pack,name:o.name!=null?o.name:l.name,qty:o.qty!=null?o.qty:l.qty,price:o.price!=null?o.price:l.price,removed:!!o.removed,name0:l.name,qty0:l.qty,price0:l.price};}),
@@ -6294,7 +6295,7 @@ function invEdSave(){
   var ov={};
   invEd.lines.forEach(function(l){var o={};if(l.removed)o.removed=true;if(_num(l.qty)!==l.qty0)o.qty=_num(l.qty);if(_num(l.price)!==l.price0)o.price=_num(l.price);if(String(l.name)!==String(l.name0))o.name=l.name;if(Object.keys(o).length)ov[l.key]=o;});
   var ex=invEd.extras.filter(function(x){return String(x.name||'').trim()||x.art;});
-  try{if(!Object.keys(ov).length&&!ex.length)localStorage.removeItem(invEdKey(invEd.d.nums));else localStorage.setItem(invEdKey(invEd.d.nums),JSON.stringify({overrides:ov,extras:ex,at:Date.now()}));}catch(e){}
+  try{if(!Object.keys(ov).length&&!ex.length)sessionStorage.removeItem(invEdKey(invEd.d.nums));else sessionStorage.setItem(invEdKey(invEd.d.nums),JSON.stringify({overrides:ov,extras:ex,at:Date.now()}));}catch(e){}
 }
 var _invEdT=null;
 function invEdSaveSoon(){clearTimeout(_invEdT);_invEdT=setTimeout(invEdSave,400);}
@@ -6347,7 +6348,7 @@ function invEdArt(i,v){
   var cell=G('ies-x-'+i);if(cell){var q=_num(x.qty),pr=_num(x.price);cell.textContent=(pr&&q)?_n2(q*pr):'—';}
   invEdTotals();invEdSave();
 }
-function invEdReset(){if(!confirm('Скинути всі зміни в цій накладній?'))return;try{localStorage.removeItem(invEdKey(invEd.d.nums));}catch(e){}openInvoiceEditor(invEd.d);}
+function invEdReset(){if(!confirm('Скинути всі зміни в цій накладній?'))return;try{sessionStorage.removeItem(invEdKey(invEd.d.nums));}catch(e){}openInvoiceEditor(invEd.d);}
 function closeInvoiceEditor(){var ov=G('invEd');if(ov)ov.remove();}
 function renderInvoiceEditor(){
   var e=invEd;if(!e)return;
@@ -6429,7 +6430,7 @@ function invEdPrint(){
   if(noP&&!confirm(noP+' поз. без ціни — у накладній буде «—». Друкувати все одно?'))return;
   invEdSave();
   // ціни «Картинки»/«Коробки» запамʼятовуються для наступних накладних
-  try{var m=JSON.parse(localStorage.getItem('invPresetPrice')||'{}')||{};e.extras.forEach(function(x){var nm=String(x.name||'').trim();if(INV_PRESETS.indexOf(nm)>=0&&_num(x.price))m[nm]=_num(x.price);});localStorage.setItem('invPresetPrice',JSON.stringify(m));}catch(err){}
+  try{var m=JSON.parse(sessionStorage.getItem('invPresetPrice')||'{}')||{};e.extras.forEach(function(x){var nm=String(x.name||'').trim();if(INV_PRESETS.indexOf(nm)>=0&&_num(x.price))m[nm]=_num(x.price);});sessionStorage.setItem('invPresetPrice',JSON.stringify(m));}catch(err){}
   var h=renderInvoiceHtml(e.d,rows);
   closeInvoiceEditor();
   G('pz').innerHTML=h.html;
@@ -7575,7 +7576,7 @@ async function ttsNameOnDemand(name){
     if(eng==='off')return null;
     var say=voiceText('name-'+name,name);
     if(eng==='gemini'){var gb=await gemGenerateOne(say);if(gb)await voiceSave('name-'+name,gb);return gb;}
-    var key=localStorage.getItem(ELEVEN_KEY_STORAGE)||'';if(!key)return null;
+    var key=sessionStorage.getItem(ELEVEN_KEY_STORAGE)||'';if(!key)return null;
     var vIn=localStorage.getItem(ELEVEN_VOICE_STORAGE)||'';
     var vid=await ttsResolveVoiceId(vIn,key)||ELEVEN_DEFAULT_VOICE_ID;
     var blob=await ttsGenerateOne(key,vid,say);
@@ -7671,9 +7672,9 @@ function pickQSave(q){try{localStorage.setItem(PICKQ_KEY,JSON.stringify(q));}cat
 
 function pickQPending(){return pickQLoad().length;}
 var PICKR_KEY='pickRecent';
-function pickRecentLoad(){try{var a=JSON.parse(localStorage.getItem(PICKR_KEY)||'[]')||[];var lim=Date.now()-15*60000;return a.filter(function(x){return x&&x.t>lim;});}catch(e){return [];}}
-function pickRecentAdd(row){if(!row)return;var a=pickRecentLoad().filter(function(x){return x.row&&x.row.id!==row.id;});a.push({t:Date.now(),row:row});try{localStorage.setItem(PICKR_KEY,JSON.stringify(a.slice(-300)));}catch(e){}}
-function pickRecentDel(id){try{localStorage.setItem(PICKR_KEY,JSON.stringify(pickRecentLoad().filter(function(x){return x.row&&x.row.id!==id;})));}catch(e){}}
+function pickRecentLoad(){try{var a=JSON.parse(sessionStorage.getItem(PICKR_KEY)||'[]')||[];var lim=Date.now()-15*60000;return a.filter(function(x){return x&&x.t>lim;});}catch(e){return [];}}
+function pickRecentAdd(row){if(!row)return;var a=pickRecentLoad().filter(function(x){return x.row&&x.row.id!==row.id;});a.push({t:Date.now(),row:row});try{sessionStorage.setItem(PICKR_KEY,JSON.stringify(a.slice(-300)));}catch(e){}}
+function pickRecentDel(id){try{sessionStorage.setItem(PICKR_KEY,JSON.stringify(pickRecentLoad().filter(function(x){return x.row&&x.row.id!==id;})));}catch(e){}}
 
 async function postTimeout(action,data,ms){
   if(!SCRIPT_URL)return {ok:true};
