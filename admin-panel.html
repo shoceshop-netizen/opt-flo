@@ -1377,7 +1377,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='10.11.2026 · звірка відправлених';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='16.11.2026 · збір міксів';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
 var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts','pickRecent','invPresetPrice','florium_eleven_key'];
@@ -8155,7 +8155,13 @@ function pickDoneListHtml(rows){
 }
 
 function pickRouteHtml(btn,multi){
-  var rows=pickRouteRows();rows.forEach(function(r){if(r.open)r.pal=pickRowPallet(r);});
+  // мікси збираються окремою вкладкою «🧺 Мікси» — з закріпленим місцем і по міксах, тож палети не «стрибають»
+  var allR=pickRouteRows(),mixR=allR.filter(function(r){return r.mixArt;});
+  if(mixR.length&&!pickState.view)pickState.view=allR.some(function(r){return !r.mixArt&&r.open;})?'route':'mix';
+  if(!mixR.length)pickState.view='route';
+  var tabs=mixR.length?pickTabsHtml(allR,mixR):'';
+  if(mixR.length&&pickState.view==='mix'){pickState.lastPal='';return tabs+pickMixHtml(mixR,btn,multi);}
+  var rows=allR.filter(function(r){return !r.mixArt;});rows.forEach(function(r){if(r.open)r.pal=pickRowPallet(r);});
   var openR=rows.filter(function(r){return r.open;});
   var groups={},order=[];
   openR.forEach(function(r){var k=r.later?'~пізніше':(r.pal.loc||'~без розміщення');if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(r);});
@@ -8168,6 +8174,7 @@ function pickRouteHtml(btn,multi){
   var sb=function(label,onclick){return '<button type="button" class="btn sm" onclick="'+onclick+'" style="min-height:40px;border-radius:10px;font-weight:700;white-space:nowrap">'+label+'</button>';};
   var keyOf=function(r){return esc(r.art)+'\',\''+esc(r.listNum);};
   var h='<div style="display:flex;align-items:center;gap:10px;margin:2px 0 10px"><div style="flex:1;height:8px;border-radius:4px;background:var(--gray6);overflow:hidden"><div style="width:'+(total?Math.round((doneN+missN)/total*100):0)+'%;height:100%;background:var(--g)"></div></div><div style="font-size:12.5px;font-weight:700;white-space:nowrap">'+doneN+' з '+total+(missN?' · нема '+missN:'')+'</div></div>';
+  h=tabs+h;
   // одна картка на товар на цій палеті (навіть якщо він у кількох списках): ящики рахуються на всю потребу
   var cardFor=function(grp){
     var r=grp[0];var ls=grp.map(function(x){return x.listNum;});var csv=ls.join(',');
@@ -8255,6 +8262,74 @@ function pickRouteHtml(btn,multi){
   var nums=pickState.lists||[];var closedAll=nums.length&&nums.every(function(n){return pickListClosed(n);});
   if(nums.length===1&&pickListClosed(nums[0]))h+='<div style="margin-top:12px;background:#eef0ec;border:1px solid var(--bo);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13px"><span style="flex:1">Список закрито</span>'+sb('Відкрити знову','pickReopenList(\''+esc(nums[0])+'\')')+'</div>';
   else if(!closedAll)h+='<div style="margin-top:12px">'+btn('✓ Закрити '+(nums.length>1?'списки №'+nums.join(', №'):'список'),'pickCloseList()',false,'width:100%')+'</div>';
+  return h;
+}
+
+// ===== 🧺 ЗБІР МІКСІВ =====
+function pickTabsHtml(all,mixR){
+  var nO=all.filter(function(r){return !r.mixArt&&r.open;}).length,mO=mixR.filter(function(r){return r.open;}).length;
+  var tb=function(v,label,n){var on=pickState.view===v;return '<button type="button" onclick="pickState.view=\''+v+'\';pickState.more=null;pickState.cellsFor=null;pickState.missFor=null;renderPickPage()" style="min-height:46px;border-radius:12px;border:2px solid '+(on?'#141413':'var(--bo2)')+';background:'+(on?'#141413':'#fff')+';color:'+(on?'#fff':'#141413')+';font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer">'+label+' <span style="opacity:.7">'+n+'</span></button>';};
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 10px">'+tb('route','📦 Звичайні',nO)+tb('mix','🧺 Мікси',mO)+'</div>';
+}
+// місце сорту міксу закріплюється, щойно його показали, і не змінюється, поки воно є (інакше — наступне місце)
+function pickMixLoc(r){
+  pickState.mixLoc=pickState.mixLoc||{};var k=r.listNum+'|'+r.art,cur=pickState.mixLoc[k];
+  if(!r.done){var ok=!!cur&&(cur.indexOf('▦ ')===0?(r.cells||[]).some(function(c){return '▦ '+c.cell===cur;}):(r.locsAvail||[]).some(function(l){return l.loc===cur;}));
+    if(!ok){var p=pickRowPallet(r);cur=(p.loc&&p.loc.charAt(0)!=='~')?p.loc:'';pickState.mixLoc[k]=cur;}}
+  else if(!cur){var pl=(r.counting||[]).map(function(x){return String(x.place||'').trim();}).filter(Boolean);cur=pl.length?pl[pl.length-1]:'';if(cur)pickState.mixLoc[k]=cur;}   // відібране — місце, звідки взяли
+  return cur||'';
+}
+function pickMixHtml(mixR,btn,multi){
+  mixR.forEach(function(r){r._loc=pickMixLoc(r);});
+  var view=pickState.mixView||'mix',total=mixR.length,doneN=mixR.filter(function(r){return r.done||r.arrived;}).length,missN=mixR.filter(function(r){return r.missing;}).length;
+  var mono="font-family:'SF Mono',Menlo,monospace";
+  var h='<div style="display:flex;align-items:center;gap:10px;margin:2px 0 8px"><div style="flex:1;height:8px;border-radius:4px;background:var(--gray6);overflow:hidden"><div style="width:'+(total?Math.round((doneN+missN)/total*100):0)+'%;height:100%;background:#5a3f8f"></div></div><div style="font-size:12.5px;font-weight:700;white-space:nowrap">'+doneN+' з '+total+' сортів'+(missN?' · нема '+missN:'')+'</div></div>';
+  var sv=function(v,label){var on=view===v;return '<button type="button" onclick="pickState.mixView=\''+v+'\';renderPickPage()" style="flex:1;min-height:40px;border-radius:10px;border:1.5px solid '+(on?'#5a3f8f':'var(--bo2)')+';background:'+(on?'#f3eefa':'#fff')+';color:'+(on?'#4a2f7f':'var(--tx)')+';font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer">'+label+'</button>';};
+  h+='<div style="display:flex;gap:6px;margin:0 0 10px">'+sv('mix','🧺 По міксах')+sv('pal','🧱 Обхід по палетах')+'</div>';
+  var row=function(r,i,showMix){
+    var k=r.listNum+'|'+r.art,akey=esc(r.art)+'\',\''+esc(r.listNum),loc=r._loc;
+    var st=r.done||r.arrived?'<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#2e7d4a;color:#fff;font-weight:800">✓</span>'
+      :(r.missing?'<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#b42318;color:#fff;font-weight:800">✕</span>'
+      :'<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:2px solid #5a3f8f;color:#5a3f8f;font-weight:800">'+(i+1)+'</span>');
+    var locH=loc?(loc.indexOf('▦ ')===0?'<b style="color:#5a3f8f">▦ ячейка '+esc(loc.slice(2))+'</b>':'<b>🧱 палета '+esc(loc)+'</b>'):(r.done||r.arrived?'<span style="color:#2e7d4a;font-weight:700">✓ відібрано</span>':'<span style="color:#b42318;font-weight:700">нема місця на складі</span>');
+    var hh='<div style="display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px;border-top:1px solid var(--gray6);'+(r.done||r.arrived?'opacity:.55;background:#f6faf6':'')+'">'
+      +st
+      +'<div style="min-width:0"><div style="font-weight:800;font-size:15.5px;line-height:1.2">'+esc(r.name)+(r.size?' <span style="padding:1px 6px;border-radius:6px;background:#141413;color:#fff;font-size:12px;font-weight:800">'+esc(r.size)+'</span>':'')+'</div>'
+      +'<div style="font-size:12.5px;color:var(--tx2);margin-top:2px"><span style="'+mono+'">'+esc(r.comp.flor)+'</span> · взяти <b style="font-size:15px;color:var(--tx)">'+r.need+' '+(r.pack?'шт':'уп')+'</b> <span style="color:var(--mu)">('+r.packs+' уп × '+r.comp.per+')</span></div>'
+      +(showMix?'<div style="font-size:12.5px;color:#5a3f8f;font-weight:700;margin-top:2px">для міксу «'+esc(r.mixName)+'»'+(multi?' · №'+esc(r.listNum):'')+'</div>':'')
+      +'<div style="margin-top:3px;font-size:14px">'+locH+'</div></div>'
+      +'<div style="display:flex;gap:6px">'+(r.done?'<button type="button" onclick="pickRowUndo(\''+akey+'\')" title="Скасувати" style="min-height:44px;min-width:44px;border-radius:10px;border:1px solid var(--bo2);background:#fff;font-family:inherit;font-size:16px;cursor:pointer">↶</button>'
+        :(r.arrived?'':btn('✓','pickAll(\'pickManualDone\',\''+akey+'\')',true,'min-width:60px;min-height:48px')+btn(pickState.more===k?'✕':'⋯','pickMore(\''+akey+'\')',false,'min-width:46px;min-height:48px')))+'</div></div>';
+    if(pickState.more===k&&!r.done)hh+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px 10px">'+btn('Нема тут','pickAll(\'pickNotHere\',\''+akey+'\')')+btn('Заміна','pickStartSubst(\''+akey+'\')')+btn('З ячейки','pickCellsOpen(\''+akey+'\')')+btn('Нема на місці','pickMissOpen(\''+akey+'\')')+'</div>';
+    if(pickState.cellsFor===k)hh+='<div style="margin:0 10px 10px;background:#f6f2fb;border:1px solid #d9cdee;border-radius:12px;padding:10px"><label for="pkCellQty" style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Скільки взяв з ячейки, '+(r.pack?'шт':'уп')+'</label><input id="pkCellQty" type="number" inputmode="numeric" value="'+r.need+'" style="width:100%;box-sizing:border-box;min-height:48px;padding:0 12px;border:1.5px solid var(--bo2);border-radius:12px;font-family:inherit;font-size:18px;margin-bottom:8px">'
+      +((r.cells||[]).length?'<div style="display:grid;gap:6px">'+r.cells.map(function(c){return btn('Записати · ячейка '+esc(c.cell),'pickCellSave(\''+akey+'\',\''+esc(c.cell)+'\')',true);}).join('')+'</div>':'<div style="font-size:13px;color:var(--mu)">Для цього сорту ячейок нема.</div>')+'</div>';
+    if(pickState.missFor===k)hh+='<div style="margin:0 10px 10px;background:#fbeaea;border:1px solid #e8b4b4;border-radius:12px;padding:10px"><input id="pkMissNote" placeholder="коментар (необовʼязково)" style="width:100%;box-sizing:border-box;min-height:46px;padding:0 12px;border:1.5px solid var(--bo2);border-radius:12px;font-family:inherit;font-size:16px;margin-bottom:6px">'+btn('Позначити «нема на місці»','pickAll(\'pickMissSave\',\''+akey+'\')',true,'width:100%')+'</div>';
+    return hh;
+  };
+  var byLoc=function(a,b){return (locSort(a._loc||'~')-locSort(b._loc||'~'))||String(a._loc).localeCompare(String(b._loc))||String(a.name).localeCompare(String(b.name),'uk');};
+  if(view==='mix'){
+    var groups={},order=[];mixR.forEach(function(r){var g=r.listNum+'|'+r.mixArt;if(!groups[g]){groups[g]=[];order.push(g);}groups[g].push(r);});
+    order.sort(function(a,b){var da=groups[a].every(function(r){return r.done||r.arrived;}),db=groups[b].every(function(r){return r.done||r.arrived;});return (da-db)||0;});
+    h+=order.map(function(g){
+      var grp=groups[g].slice().sort(byLoc),r0=grp[0],dn=grp.filter(function(r){return r.done||r.arrived;}).length,full=dn===grp.length;
+      return '<div style="background:#fff;border:2px solid '+(full?'#2e7d4a':'#5a3f8f')+';border-radius:16px;margin-bottom:12px;overflow:hidden">'
+        +'<div style="background:'+(full?'#e6f1e8':'#f3eefa')+';padding:10px 12px"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:17px;font-weight:800;flex:1;line-height:1.2">🧺 '+esc(r0.mixName)+'</span><span style="font-weight:800;white-space:nowrap">'+dn+' / '+grp.length+'</span></div>'
+        +'<div style="font-size:12.5px;color:var(--tx2);margin-top:2px"><span style="'+mono+'">'+esc(r0.mixArt)+'</span> · '+r0.packs+' уп · '+pickClientsTxt(r0)+(multi?' · №'+esc(r0.listNum):'')+'</div>'
+        +(full?'<div style="margin-top:4px;font-weight:800;color:#1d5a36">✓ Усі сорти відібрано — склади мікс разом</div>':'')+'</div>'
+        +grp.map(function(r,i){return row(r,i,false);}).join('')+'</div>';
+    }).join('');
+  }else{
+    var sorted=mixR.slice().sort(function(a,b){return byLoc(a,b)||String(a.mixName).localeCompare(String(b.mixName),'uk');}),pg={},po=[];
+    sorted.forEach(function(r){var key=r._loc||'';if(!pg[key]){pg[key]=[];po.push(key);}pg[key].push(r);});
+    var n=0;
+    h+=po.map(function(key){var grp=pg[key],cell=key.indexOf('▦ ')===0,dn=grp.filter(function(r){return r.done||r.arrived;}).length;
+      return '<div style="display:flex;align-items:baseline;gap:8px;margin:14px 2px 6px"><span style="font-size:19px;font-weight:800">'+(key?(cell?'▦ Ячейка '+esc(key.slice(2)):'🧱 Палета '+esc(key)):'⚠ Без місця')+'</span><span style="font-size:12.5px;color:var(--mu)">'+dn+' з '+grp.length+'</span></div>'
+        +'<div style="background:#fff;border:2px solid var(--tx);border-radius:16px;overflow:hidden">'+grp.map(function(r){return row(r,n++,true);}).join('')+'</div>';
+    }).join('');
+  }
+  var nums=pickState.lists||[];var closedAll=nums.length&&nums.every(function(x){return pickListClosed(x);});
+  if(pickState.lastIds&&pickState.lastIds.length)h+='<div style="margin-top:10px"><button type="button" class="btn sm" onclick="pickUndoLast()" style="min-height:40px;border-radius:10px;font-weight:700">↶ Скасувати останнє</button></div>';
+  if(!closedAll)h+='<div style="margin-top:12px">'+btn('✓ Закрити '+(nums.length>1?'списки №'+nums.join(', №'):'список'),'pickCloseList()',false,'width:100%')+'</div>';
   return h;
 }
 
