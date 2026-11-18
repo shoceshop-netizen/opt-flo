@@ -1377,7 +1377,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='17.11.2026 · голоси при старті';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='18.11.2026 · привітання';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
 var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts','pickRecent','invPresetPrice','florium_eleven_key'];
@@ -2001,7 +2001,70 @@ function renderParcels(){
 // ===== WELCOME SCREEN =====
 function showWelcomeScreen(){
   avatarLoadMine();   // починаємо тягнути GIF, поки йде заставка
-  playIntro(function(){try{nav(homePage());}catch(e){}setTimeout(avatarGreet,900);});return;
+  playIntro(function(){try{nav(homePage());}catch(e){}showGreeting(function(){setTimeout(avatarGreet,300);});});return;
+}
+// ===== 💐 ПРИВІТАННЯ ПІСЛЯ ЗАСТАВКИ: імʼя людини, букети, зірочки =====
+function greetLines(name){
+  var u=curUser(),key='greetLast_'+(u.login||'x'),now=Date.now(),last=0;try{last=+localStorage.getItem(key)||0;}catch(e){}
+  try{localStorage.setItem(key,String(now));}catch(e){}
+  var h=new Date().getHours(),day=function(x){var d=new Date(x);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();};
+  var part=h<11?'Доброго ранку':(h<17?'Доброго дня':(h<22?'Доброго вечора':'Доброї ночі'));
+  if(last&&day(last)===day(now))return ['Знову ви, '+name+'! ✨','Я вже чекав.','Продовжимо з того місця, де зупинились.','Гарної роботи! 💪'];
+  if(!last||now-last>=2*86400000)return [name+', вітаю вас! 💐','Я дуже сумував…','Дуже радий, що ви повернулись!','Продуктивного вам дня! 🌷'];
+  return [part+', '+name+'! 🌼','Радий вас бачити.','Сьогодні все вийде.','Продуктивного вам дня! 🌷'];
+}
+function showGreeting(done){
+  var finished=false,fin=function(){if(finished)return;finished=true;if(typeof done==='function')done();};
+  try{if(localStorage.getItem('greetOff')==='1'){fin();return;}}catch(e){}
+  if(G('greetScreen')){fin();return;}
+  var u=curUser(),name=String(u.name||u.login||'').trim()||'друже',L=greetLines(name);
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!G('greetCss')){var st=document.createElement('style');st.id='greetCss';st.textContent=
+    '#greetScreen{position:fixed;inset:0;z-index:99975;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 40%,rgba(28,74,52,.88),rgba(10,24,17,.94));opacity:0;transition:opacity .45s ease;cursor:pointer;overflow:hidden}'
+    +'#greetScreen.on{opacity:1}#greetScreen canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}'
+    +'#greetScreen .gcard{position:relative;background:#fff;border-radius:26px;padding:26px 30px 18px;width:min(92vw,520px);text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);transform:scale(.7) translateY(30px);opacity:0;transition:transform .7s cubic-bezier(.2,1.5,.4,1),opacity .4s ease}'
+    +'#greetScreen.on .gcard{transform:none;opacity:1}'
+    +'#greetScreen .gbq{font-size:76px;line-height:1;margin:-70px auto 6px;display:block;filter:drop-shadow(0 8px 14px rgba(0,0,0,.3));animation:gbqIn 1s cubic-bezier(.2,1.6,.4,1) both,gbqSway 3.2s ease-in-out 1s infinite}'
+    +'#greetScreen .gsideL,#greetScreen .gsideR{position:absolute;bottom:-14px;font-size:46px;animation:gpop .9s cubic-bezier(.2,1.6,.4,1) .5s both}#greetScreen .gsideL{left:-18px;transform:rotate(-18deg)}#greetScreen .gsideR{right:-18px;transform:rotate(18deg)}'
+    +'@keyframes gbqIn{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}@keyframes gbqSway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}@keyframes gpop{from{opacity:0;transform:scale(0)}}'
+    +'#greetScreen .gl{margin:0;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s}#greetScreen .gl.on{opacity:1;transform:none}'
+    +'#greetScreen .gl.cur::after{content:"|";margin-left:2px;color:#9aa69d;animation:gcur 1s steps(1) infinite}@keyframes gcur{50%{opacity:0}}'
+    +'#greetScreen .g0{font-size:27px;font-weight:800;color:#163826;line-height:1.25}#greetScreen .g1,#greetScreen .g2{font-size:17px;color:#4b5a51;margin-top:8px;line-height:1.45}#greetScreen .g3{font-size:19px;font-weight:800;color:#2e7d4a;margin-top:12px}'
+    +'#greetScreen .gft{display:flex;justify-content:space-between;gap:10px;margin-top:16px;font-size:12px;color:#8a958e}#greetScreen .gft a{color:#8a958e}'
+    +'#greetScreen .gstar{position:absolute;color:#f2c14e;font-size:18px;animation:gtw 1.6s ease-in-out infinite}@keyframes gtw{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(40deg)}}';
+    document.head.appendChild(st);}
+  var el=document.createElement('div');el.id='greetScreen';
+  el.innerHTML='<canvas aria-hidden="true"></canvas><div class="gcard" role="dialog" aria-label="Привітання">'
+    +'<span class="gbq" aria-hidden="true">💐</span><span class="gsideL" aria-hidden="true">🌷</span><span class="gsideR" aria-hidden="true">🌸</span>'
+    +'<span class="gstar" style="top:14px;left:22px">✦</span><span class="gstar" style="top:30px;right:26px;animation-delay:.5s">✦</span><span class="gstar" style="bottom:52px;left:34px;font-size:13px;animation-delay:.9s">✦</span><span class="gstar" style="bottom:70px;right:40px;font-size:14px;animation-delay:1.3s">✦</span>'
+    +'<p class="gl g0"></p><p class="gl g1"></p><p class="gl g2"></p><p class="gl g3"></p>'
+    +'<div class="gft"><span>торкніться, щоб почати роботу</span><a href="#" id="greetOffLnk">не показувати привітання</a></div></div>';
+  document.body.appendChild(el);requestAnimationFrame(function(){el.classList.add('on');});
+  var cv=el.querySelector('canvas'),cx=cv.getContext&&cv.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=0,H=0,P=[],raf=0,alive=true,T=[];
+  var FL=['🌷','🌸','🌼','🌹','💐','🌺'],COL=['#f2c14e','#ffe08a','#ffffff','#ffb3c7','#9be3b4'];
+  var size=function(){W=el.clientWidth;H=el.clientHeight;if(!cx)return;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);};size();window.addEventListener('resize',size);
+  var add=function(n,ox,oy,burst){if(!cx)return;for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,sp=burst?(2+Math.random()*6):(0.3+Math.random()*1.2),k=Math.random();
+    P.push({x:ox==null?Math.random()*W:ox,y:oy==null?(burst?H/2:H+20):oy,vx:Math.cos(a)*sp,vy:burst?Math.sin(a)*sp-2:-(1+Math.random()*2.2),r:3+Math.random()*7,rot:Math.random()*6,vr:(Math.random()-.5)*.15,life:0,max:burst?70+Math.random()*50:220+Math.random()*120,
+      kind:k<.38?'star':(k<.62?'dot':'fl'),c:COL[(Math.random()*COL.length)|0],f:FL[(Math.random()*FL.length)|0],fs:16+Math.random()*16});}};
+  var star=function(x,y,r,rot,c){cx.save();cx.translate(x,y);cx.rotate(rot);cx.beginPath();for(var i=0;i<10;i++){var rr=i%2?r*.45:r,an=i*Math.PI/5;cx.lineTo(Math.sin(an)*rr,-Math.cos(an)*rr);}cx.closePath();cx.fillStyle=c;cx.fill();cx.restore();};
+  var tick=function(){if(!alive||!cx)return;cx.clearRect(0,0,W,H);
+    if(P.length<140&&Math.random()<.35)add(1);
+    for(var i=P.length-1;i>=0;i--){var p=P[i];p.life++;p.x+=p.vx;p.y+=p.vy;p.vy+=p.kind==='fl'?-0.004:0.03;p.vx*=.995;p.rot+=p.vr;
+      var a=Math.max(0,Math.min(1,p.life/12,(p.max-p.life)/40));if(p.life>p.max||p.y<-60||p.y>H+80){P.splice(i,1);continue;}
+      cx.globalAlpha=a;if(p.kind==='star')star(p.x,p.y,p.r,p.rot,p.c);else if(p.kind==='dot'){cx.beginPath();cx.arc(p.x,p.y,p.r*.35*(0.6+0.4*Math.sin(p.life/4)),0,7);cx.fillStyle=p.c;cx.fill();}
+      else{cx.font=p.fs+'px serif';cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot*.3);cx.fillText(p.f,-p.fs/2,p.fs/3);cx.restore();}}
+    cx.globalAlpha=1;raf=requestAnimationFrame(tick);};
+  if(!reduce&&cx){add(40);T.push(setTimeout(function(){add(70,W/2,H/2-60,true);},350));tick();}
+  var lines=[].slice.call(el.querySelectorAll('.gl'));
+  var type=function(i){if(!alive)return;if(i>=lines.length){T.push(setTimeout(close,5200));return;}
+    var e=lines[i],txt=L[i],k=0;e.classList.add('on','cur');
+    if(!reduce&&i>0){var cr=el.querySelector('.gcard').getBoundingClientRect(),rc=e.getBoundingClientRect(),y=rc.top+rc.height/2,n=i===3?34:16;add(n,cr.left-6,y,true);add(n,cr.right+6,y,true);}   // сплески з боків картки
+    (function step(){if(!alive)return;e.textContent=txt.slice(0,k++);if(k<=txt.length)T.push(setTimeout(step,i===0?50:34));else{e.classList.remove('cur');T.push(setTimeout(function(){type(i+1);},i===0?550:420));}})();};
+  T.push(setTimeout(function(){type(0);},reduce?100:700));
+  function close(){if(!alive)return;alive=false;T.forEach(clearTimeout);cancelAnimationFrame(raf);window.removeEventListener('resize',size);document.removeEventListener('keydown',close);
+    el.classList.remove('on');setTimeout(function(){el.remove();},460);fin();}
+  el.addEventListener('click',function(e){if(e.target&&e.target.id==='greetOffLnk'){e.preventDefault();try{localStorage.setItem('greetOff','1');}catch(_){}toast('Привітання вимкнено. Повернути — «▶ привітання» внизу бічного меню','in',3500);}close();});
+  document.addEventListener('keydown',close);
 }
 function showWelcomeScreenOld(){
   if(G('welcomeScreen'))return;
@@ -3836,7 +3899,7 @@ function toggleKb(){
   var el=G('scInp');if(el){el.blur();setTimeout(function(){el.focus();},60);}
 }
 function init(){
-  var fv=G('frontVer');if(fv)fv.innerHTML=esc('версія панелі: '+FRONT_BUILD)+' · <a href="#" onclick="try{localStorage.removeItem(\'introOff\')}catch(e){};playIntro();return false;" style="color:inherit">▶ заставка</a>';
+  var fv=G('frontVer');if(fv)fv.innerHTML=esc('версія панелі: '+FRONT_BUILD)+' · <a href="#" onclick="try{localStorage.removeItem(\'introOff\')}catch(e){};playIntro();return false;" style="color:inherit">▶ заставка</a> · <a href="#" onclick="try{localStorage.removeItem(\'greetOff\')}catch(e){};showGreeting();return false;" style="color:inherit">▶ привітання</a>';
   applyKbMode();renderDataModeBox();applyRoleUI();refreshMe();
   setTimeout(function(){var on=document.querySelector('.page.on');if(!on||!pageAllowed(on.id.replace('page-','')))nav(homePage());},60);
   // відкрити потрібну сторінку з посилання/іконки програми: admin-panel.html?page=scan
