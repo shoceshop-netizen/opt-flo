@@ -647,7 +647,7 @@ body.role-worker #odTbl th:nth-child(5),body.role-worker #odTbl td:nth-child(5),
 .orders-layout.ord-full .order-list{padding:0 6px;}
 .ord-modal-ov{position:fixed;inset:0;background:rgba(8,12,10,.5);display:none;justify-content:center;z-index:300;padding:24px;overflow-y:auto;}
 .ord-modal-ov.show{display:flex;align-items:flex-start;}
-.ord-modal{background:var(--card);border-radius:16px;width:100%;max-width:820px;box-shadow:0 24px 70px rgba(0,0,0,.28);position:relative;margin:auto;}
+.ord-modal{background:var(--card);border-radius:16px;width:100%;max-width:min(1320px,96vw);box-shadow:0 24px 70px rgba(0,0,0,.28);position:relative;margin:auto;}
 .ord-modal-x{position:absolute;top:14px;right:14px;z-index:5;width:34px;height:34px;border-radius:8px;border:1px solid var(--bo);background:var(--card);color:var(--tx3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .ord-modal-x:hover{background:var(--red-l);color:var(--red);border-color:var(--red);}
 .ord-modal-x svg{width:17px;height:17px;stroke-width:2;}
@@ -1377,7 +1377,7 @@ html[data-theme="dark"] svg text[fill="#333"],html[data-theme="dark"] svg text[f
 // Всі секрети тепер у Apps Script. Тут лише публічний URL сесійного бекенду.
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxFL9F5oaqs5SHck8zrOqWM_41FwGiTT7NzLcoPK-2iowSBzut-t6Tt3lzGDJ_MYzJL_g/exec';
 var SHEET_ID='1Qq-Ci3ORJAVuxM-DDzoi-Hc8AK7s0T7Jth6pVkPaA94'; // лише для кнопки «↗ Таблиця»
-var FRONT_BUILD='18.11.2026 · привітання';   // міняється з кожною версією — видно в меню і на екрані входу
+var FRONT_BUILD='19.11.2026 · ширша картка замовлення';   // міняється з кожною версією — видно в меню і на екрані входу
 // БЕЗПЕКА: дані клієнтів (замовлення, телефони, адреси, ТТН) у браузері НЕ зберігаємо — лише в памʼяті вкладки.
 // Старі копії, які могли лишитись від попередніх версій, стираємо одразу при відкритті сторінки, ще до входу.
 var PII_KEYS=['fl_cache','fl_cache_lite','voiceTexts','pickRecent','invPresetPrice','florium_eleven_key'];
